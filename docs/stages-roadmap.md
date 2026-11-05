@@ -1037,3 +1037,6 @@ Premium stages, without any price pop-up.
    stage id + replay count), never change difficulty.
 
 ---
+
+> **Next up (not yet built):** `w1-lotus-lake` — an attempt reused Monsoon Meadow's exact encounter timings with new hints only, so it was rejected as a duplicate. Build it with its own layout (lotus-leaf orbs, bamboo beams, lily-pad blocks, surprises at ~45/90/135 s).
+> **Also next up:** `w2-sun-temple-run`, `w3-arcade-rush`, `w4-cloud-ridge` — first attempts reused existing stages' encounter layouts (Oasis Caravan, Neon Night Market, Glacier Pass) and were rejected as duplicates. Each needs its own layout. Check with a duplicate-layout comparison before adding to the catalogue.

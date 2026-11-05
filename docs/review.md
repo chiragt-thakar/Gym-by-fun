@@ -298,3 +298,8 @@ Clean areas (none found):
 - ✅ Fixed R3-1: session queue access is serialised; after an upload only the uploaded versions are removed (re-read), so concurrent adds/updates are never lost.
 - ✅ Fixed R3-2: 429 and 408 are retried later like 5xx instead of dropping the batch.
 - ⏳ Open: R3-3 (sign out should clear queue/coach history/pending code — use wipeLocalData minus settings), R3-4 (server logout endpoint to revoke refresh token), R3-5 (QuestScreen must reject locked Premium levelId), R3-6 (show an error when account deletion fails), R3-7 (side-step confirm reset on direction flip), R3-8 (update comment/docs for Gentle+assist 1.5x).
+
+## Round 4 checks (verification agents)
+- motion_core 57 and game_director 346 tests green; all breathers orbs-only, all hints ≤ 80 chars, checkpoints present, no gap > 60 s.
+- ⏳ Open (design): 9 older levels (w1-forest-escape, w1-guardian-grove, w1-river-crossing, w2-desert-dunes, w2-sandstorm-temple, w3-neon-city-chase, w3-neon-city-rooftops, w4-mountain-trail, w4-summit-storm) have 4–6 orbs in a row in their breathers, which conflicts with the "no type > 3 in a row" fun rule. Decide: exempt breathers from the run rule (they are rest beats), or cap breathers at 3 orbs with a non-orb before/after. Then add the fun-rule check (scratchpad funcheck.py logic) as a content test so CI enforces it.
+- ⏳ Open (process): add a duplicate-layout test (no two levels share identical encounter timings/types/lanes).
