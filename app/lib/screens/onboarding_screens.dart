@@ -21,50 +21,58 @@ class WelcomeScreen extends ConsumerWidget {
         children: [
           const Positioned.fill(child: ForestBackdrop()),
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const StepProgress(current: 0, total: 3),
-                  const Spacer(),
-                  const Center(child: _LanternMark()),
-                  const SizedBox(height: 16),
-                  Text(
-                    'MotionQuest',
-                    style: Theme.of(context).textTheme.displaySmall,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    str.t('tagline'),
-                    style: Theme.of(context).textTheme.titleLarge
-                        ?.copyWith(color: Lantern.glow),
-                    textAlign: TextAlign.center,
-                  ),
-                  const Spacer(),
-                  Text(
-                    str.t('choose_language'),
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                  const SizedBox(height: 12),
-                  for (final l in AppLanguage.values)
-                    BigButton(
-                      l.label,
-                      secondary: s.language != l,
-                      icon: s.language == l ? Icons.check : null,
-                      onPressed: () => ref
-                          .read(settingsProvider.notifier)
-                          .update((x) => x.copyWith(language: l)),
+            // Scrolls on short screens; Spacers still centre on tall ones.
+            child: LayoutBuilder(
+              builder: (context, box) => SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: box.maxHeight - 48),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const StepProgress(current: 0, total: 3),
+                        const Spacer(),
+                        const Center(child: _LanternMark()),
+                        const SizedBox(height: 16),
+                        Text(
+                          'MotionQuest',
+                          style: Theme.of(context).textTheme.displaySmall,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          str.t('tagline'),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(color: Lantern.glow),
+                          textAlign: TextAlign.center,
+                        ),
+                        const Spacer(),
+                        Text(
+                          str.t('choose_language'),
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                        const SizedBox(height: 12),
+                        for (final l in AppLanguage.values)
+                          BigButton(
+                            l.label,
+                            secondary: s.language != l,
+                            icon: s.language == l ? Icons.check : null,
+                            onPressed: () => ref
+                                .read(settingsProvider.notifier)
+                                .update((x) => x.copyWith(language: l)),
+                          ),
+                        const SizedBox(height: 16),
+                        BigButton(
+                          str.t('continue'),
+                          icon: Icons.arrow_forward,
+                          onPressed: () => context.go('/age'),
+                        ),
+                      ],
                     ),
-                  const SizedBox(height: 16),
-                  BigButton(
-                    str.t('continue'),
-                    icon: Icons.arrow_forward,
-                    onPressed: () => context.go('/age'),
                   ),
-                ],
+                ),
               ),
             ),
           ),

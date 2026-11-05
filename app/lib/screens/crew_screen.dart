@@ -5,6 +5,7 @@ import '../app/router.dart';
 import '../l10n/tr.dart';
 import '../services/api_client.dart';
 import '../services/settings.dart';
+import '../app/theme.dart';
 import '../widgets/common.dart';
 import 'home_screen.dart';
 
@@ -100,7 +101,6 @@ class _CrewState extends ConsumerState<CrewScreen> {
             decoration: InputDecoration(
               labelText: tr('Gym code'),
               hintText: 'IRON-AB12CD',
-              border: OutlineInputBorder(),
             ),
           ),
           SwitchListTile(
@@ -112,9 +112,13 @@ class _CrewState extends ConsumerState<CrewScreen> {
             ),
           ),
           if (_error != null)
-            Text(
-              _error!,
-              style: const TextStyle(color: Colors.orangeAccent, fontSize: 17),
+            LanternCard(
+              tone: LanternTone.warning,
+              icon: Icons.error_outline,
+              child: Text(
+                _error!,
+                style: const TextStyle(color: Lantern.warning, fontSize: 17),
+              ),
             ),
           BigButton(tr('Join crew'), icon: Icons.groups, onPressed: _join),
         ],
@@ -131,12 +135,11 @@ class _CrewState extends ConsumerState<CrewScreen> {
         if (_board.isEmpty)
           Text(tr('No sessions yet this week. Be the first!')),
         for (final e in _board.cast<Map<String, dynamic>>())
-          Card(
-            color: e['isMe'] == true
-                ? Theme.of(context).colorScheme.primaryContainer
-                : null,
+          LanternCard(
+            tone: e['isMe'] == true ? LanternTone.glow : LanternTone.plain,
+            padding: const EdgeInsets.symmetric(vertical: 4),
             child: ListTile(
-              leading: CircleAvatar(child: Text('${e['rank']}')),
+              leading: _RankMedal('${e['rank']}', me: e['isMe'] == true),
               title: Text(
                 e['name'] as String,
                 style: const TextStyle(fontSize: 20),
@@ -166,4 +169,44 @@ class _CrewState extends ConsumerState<CrewScreen> {
       ],
     );
   }
+}
+
+/// Rank medallion; the player's own row also gets a lantern icon so it is
+/// not marked by colour alone.
+class _RankMedal extends StatelessWidget {
+  const _RankMedal(this.rank, {required this.me});
+  final String rank;
+  final bool me;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      if (me) ...[
+        const Icon(Icons.local_fire_department_rounded, color: Lantern.glow),
+        const SizedBox(width: 4),
+      ],
+      Container(
+        width: 44,
+        height: 44,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: me ? Lantern.glow : Lantern.moss,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: me ? Lantern.ember : Lantern.ridge,
+            width: 2.5,
+          ),
+        ),
+        child: Text(
+          rank,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+            color: me ? Lantern.onGlow : Lantern.parchment,
+          ),
+        ),
+      ),
+    ],
+  );
 }

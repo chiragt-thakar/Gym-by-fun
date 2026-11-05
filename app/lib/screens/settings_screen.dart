@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../l10n/strings.dart';
 import '../services/api_client.dart';
 import '../services/settings.dart';
+import '../app/theme.dart';
 import '../widgets/common.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -206,6 +207,21 @@ class _H extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(top: 24, bottom: 8),
-    child: Text(text, style: Theme.of(context).textTheme.titleLarge),
+    child: Row(
+      children: [
+        Container(
+          width: 14,
+          height: 14,
+          decoration: BoxDecoration(
+            color: Lantern.scarf,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Text(text, style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(width: 12),
+        const Expanded(child: Divider()),
+      ],
+    ),
   );
 }

@@ -9,6 +9,7 @@ import '../l10n/tr.dart';
 import '../services/pose_service.dart';
 import '../services/settings.dart';
 import '../services/voice.dart';
+import '../app/theme.dart';
 import '../widgets/common.dart';
 
 /// About 30 seconds: stand still, arms up, two squats, lean left, lean right.
@@ -107,9 +108,15 @@ class _CalibrationState extends ConsumerState<CalibrationScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            LinearProgressIndicator(
-              value: idx / (CalibrationStep.values.length - 1),
-              minHeight: 10,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: idx / (CalibrationStep.values.length - 1),
+                  minHeight: 14,
+                ),
+              ),
             ),
             Expanded(
               child: CustomPaint(
@@ -117,7 +124,7 @@ class _CalibrationState extends ConsumerState<CalibrationScreen> {
                 child: const SizedBox.expand(),
               ),
             ),
-            Padding(
+            LanternCard(
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
@@ -135,20 +142,35 @@ class _CalibrationState extends ConsumerState<CalibrationScreen> {
                   SizedBox(
                     width: 64,
                     height: 64,
-                    child: CircularProgressIndicator(
-                      value: _cal.progress,
-                      strokeWidth: 8,
-                    ),
+                    child: _cal.progress >= 1
+                        ? const SuccessBadge(size: 64)
+                        : CircularProgressIndicator(
+                            value: _cal.progress,
+                            strokeWidth: 8,
+                            strokeCap: StrokeCap.round,
+                          ),
                   ),
                   if (_paused)
                     Padding(
-                      padding: EdgeInsets.only(top: 12),
-                      child: Text(
-                        tr('Make sure your whole body is in the frame.'),
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.amberAccent,
-                        ),
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.warning_amber_rounded,
+                            color: Lantern.warning,
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              tr('Make sure your whole body is in the frame.'),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                color: Lantern.warning,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   const SizedBox(height: 8),

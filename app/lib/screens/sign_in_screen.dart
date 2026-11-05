@@ -84,7 +84,7 @@ class _SignInState extends ConsumerState<SignInScreen> {
           decoration: InputDecoration(
             prefixText: '+91 ',
             labelText: tr('Mobile number'),
-                      ),
+          ),
         ),
         if (_sent) ...[
           const SizedBox(height: 12),
@@ -93,9 +93,7 @@ class _SignInState extends ConsumerState<SignInScreen> {
             keyboardType: TextInputType.number,
             maxLength: 6,
             style: const TextStyle(fontSize: 26, letterSpacing: 8),
-            decoration: InputDecoration(
-              labelText: tr('6-digit code'),
-                          ),
+            decoration: InputDecoration(labelText: tr('6-digit code')),
           ),
         ],
         if (_error != null)

@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../services/pose_service.dart';
 import '../services/settings.dart';
+import '../app/theme.dart';
 import '../widgets/common.dart';
 
 /// Records landmark sessions as JSON for the replay tests — never video.
@@ -98,12 +99,21 @@ class _RecorderState extends ConsumerState<RecorderScreen> {
       height: 72,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: _held.contains(m) ? Colors.green : Colors.white12,
-        borderRadius: BorderRadius.circular(14),
+        color: _held.contains(m) ? Lantern.scarf : Lantern.moss,
+        borderRadius: BorderRadius.circular(Lantern.radius),
+        border: Border.all(
+          color: _held.contains(m) ? Lantern.parchment : Lantern.ridge,
+          width: _held.contains(m) ? 4 : 2.5,
+        ),
       ),
       child: Text(
         text,
-        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1,
+          color: _held.contains(m) ? Lantern.onGlow : Lantern.parchment,
+        ),
       ),
     ),
   );
