@@ -1,0 +1,522 @@
+{
+  "$schema": "../schema/level.schema.json",
+  "id": "w1-monsoon-meadow",
+  "version": 1,
+  "schemaVersion": 1,
+  "world": 1,
+  "name": "Monsoon Meadow",
+  "lanes": 3,
+  "durationS": 180,
+  "hearts": 3,
+  "music": {
+    "track": "forest_run",
+    "bpmByDifficulty": {
+      "beginner": 100,
+      "intermediate": 112,
+      "advanced": 124
+    }
+  },
+  "difficulty": {
+    "beginner": {
+      "warningMs": 2200,
+      "maxDemandingInRow": 3,
+      "hints": "always",
+      "lowImpactDefault": true
+    },
+    "intermediate": {
+      "warningMs": 1600,
+      "maxDemandingInRow": 5,
+      "hints": "firstTime",
+      "lowImpactDefault": true
+    },
+    "advanced": {
+      "warningMs": 1300,
+      "maxDemandingInRow": 7,
+      "hints": "off",
+      "lowImpactDefault": false
+    }
+  },
+  "scoring": {
+    "beam": 100,
+    "laneBlock": 100,
+    "orb": 50,
+    "gate": 150
+  },
+  "segments": [
+    {
+      "id": "practice",
+      "kind": "practice",
+      "startS": 0,
+      "endS": 30,
+      "hint": "Gentle rain on the meadow. Catch the drops."
+    },
+    {
+      "id": "learn",
+      "kind": "learn",
+      "startS": 30,
+      "endS": 90
+    },
+    {
+      "id": "breather",
+      "kind": "breather",
+      "startS": 90,
+      "endS": 105,
+      "hint": "Drizzle pause. Breathe in... and out. Grab the drops."
+    },
+    {
+      "id": "combos",
+      "kind": "combo",
+      "startS": 105,
+      "endS": 150,
+      "hint": "Lean, squat, reach. Splash through the meadow!"
+    },
+    {
+      "id": "checkpoint",
+      "kind": "checkpoint",
+      "startS": 150,
+      "endS": 151,
+      "hint": "Checkpoint! A heart comes back."
+    },
+    {
+      "id": "finale",
+      "kind": "finale",
+      "startS": 151,
+      "endS": 180,
+      "hint": "Almost there! The sun is breaking through."
+    }
+  ],
+  "encounters": [
+    {
+      "atS": 6,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "Rain-drop orb! Raise both arms to catch it."
+    },
+    {
+      "atS": 10,
+      "type": "beam",
+      "hint": "A fallen branch. Squat to slip under."
+    },
+    {
+      "atS": 14,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 18,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ],
+      "hint": "A puddle in the middle. Lean left or right."
+    },
+    {
+      "atS": 22,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 24.5,
+      "type": "beam",
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 27,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 31,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 33,
+      "type": "beam"
+    },
+    {
+      "atS": 35,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 37,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 39,
+      "type": "beam"
+    },
+    {
+      "atS": 41,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 42.5,
+      "type": "beam",
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 45,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "Rainbow! Follow the bonus rain-drop trail."
+    },
+    {
+      "atS": 46.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 48,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 51,
+      "type": "beam"
+    },
+    {
+      "atS": 54,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 57,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 60,
+      "type": "beam"
+    },
+    {
+      "atS": 62,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 63.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 65,
+      "type": "beam"
+    },
+    {
+      "atS": 67,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 69,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 71,
+      "type": "beam"
+    },
+    {
+      "atS": 72.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 74,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 76,
+      "type": "orb",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 78,
+      "type": "beam"
+    },
+    {
+      "atS": 80,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 83,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 85,
+      "type": "beam"
+    },
+    {
+      "atS": 87.5,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 92,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "Soft drizzle. Breathe in, reach up slowly."
+    },
+    {
+      "atS": 96.5,
+      "type": "orb",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 101,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 106,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 108,
+      "type": "beam"
+    },
+    {
+      "atS": 110,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 112,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 114,
+      "type": "beam"
+    },
+    {
+      "atS": 115.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 117,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 119,
+      "type": "beam"
+    },
+    {
+      "atS": 121,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 123,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 125,
+      "type": "beam"
+    },
+    {
+      "atS": 128,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 131.5,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 135,
+      "type": "gate",
+      "hint": "Almost there! A rainbow gate. Reach up through it."
+    },
+    {
+      "atS": 137.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 140,
+      "type": "beam"
+    },
+    {
+      "atS": 142,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 144,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 146.5,
+      "type": "beam"
+    },
+    {
+      "atS": 152,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 154,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 156,
+      "type": "beam"
+    },
+    {
+      "atS": 159,
+      "type": "gate"
+    },
+    {
+      "atS": 161,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 163,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 165,
+      "type": "beam"
+    },
+    {
+      "atS": 168,
+      "type": "gate"
+    },
+    {
+      "atS": 170.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 172.5,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 175,
+      "type": "gate"
+    },
+    {
+      "atS": 177.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "Last reach! The meadow sparkles."
+    }
+  ]
+}

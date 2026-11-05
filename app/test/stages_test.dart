@@ -61,7 +61,7 @@ void main() {
     expect(isUnlocked(stages[2], {forestEscapeId}), isFalse);
     // World 2 opens after the World 1 finale.
     expect(
-      isUnlocked(stageById('w2-desert-dunes')!, {'w1-garba-quest-event'}),
+      isUnlocked(stageById('w2-desert-dunes')!, {'w1-monsoon-meadow'}),
       isTrue,
     );
     expect(

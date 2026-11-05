@@ -83,6 +83,16 @@ const stages = <Stage>[
     theme: SceneTheme.neon,
   ),
   Stage(
+    levelId: 'w1-monsoon-meadow',
+    world: 1,
+    worldName: 'Forest Awakening',
+    stageNumber: 6,
+    title: 'Monsoon Meadow',
+    description:
+        'Rain-drop orbs, fallen branches and puddles, then a drizzle breather.',
+    theme: SceneTheme.forest,
+  ),
+  Stage(
     levelId: 'w2-desert-dunes',
     world: 2,
     worldName: 'Desert Trials',

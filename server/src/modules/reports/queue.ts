@@ -19,14 +19,17 @@ export async function scheduleJobs(redisUrl: string) {
   return q;
 }
 
+/** Dispatches a job by name. Pure so it can be tested without BullMQ. */
+export async function runJob(ctx: AppContext, name: string) {
+  if (name === 'weekly-gym-reports') return sendWeeklyReports(ctx);
+  if (name === 'purge-deleted-accounts') return { purged: await purgeDeletedAccounts(ctx) };
+  throw new Error(`Unknown job ${name}`);
+}
+
 export function startWorker(ctx: AppContext) {
   return new Worker(
     QUEUE,
-    async (job) => {
-      if (job.name === 'weekly-gym-reports') return sendWeeklyReports(ctx);
-      if (job.name === 'purge-deleted-accounts') return { purged: await purgeDeletedAccounts(ctx) };
-      throw new Error(`Unknown job ${job.name}`);
-    },
+    async (job) => runJob(ctx, job.name),
     { connection: connection(ctx.config.REDIS_URL), concurrency: 1 },
   );
 }

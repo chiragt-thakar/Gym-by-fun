@@ -77,33 +77,55 @@ class SessionQueue {
   /// Queues a session. A session with the same clientId replaces the queued
   /// one (e.g. the results screen saves first, then again with the effort
   /// rating), so the latest version is what gets uploaded.
-  Future<void> add(Map<String, Object?> session) async {
+  Future<void> add(Map<String, Object?> session) => _locked(() async {
     final all = await pending()
       ..removeWhere((s) => s['clientId'] == session['clientId'])
       ..add(session);
     await _write(all);
-  }
+  });
 
   /// Uploads pending sessions in batches of 50. Returns how many were synced.
-  Future<int> flush() async {
-    var all = await pending();
-    if (all.isEmpty || !_api.tokens.hasSession) return 0;
+  ///
+  /// Queue access is serialised, and after each upload the file is re-read
+  /// and only the uploaded versions are removed, so a session added or
+  /// updated meanwhile is never lost.
+  Future<int> flush() => _locked(() async {
+    if (!_api.tokens.hasSession) return 0;
     var synced = 0;
-    while (all.isNotEmpty) {
-      final batch = all.take(50).toList();
+    while (true) {
+      final batch = (await pending()).take(50).toList();
+      if (batch.isEmpty) break;
       try {
         await _api.uploadSessions(batch);
       } on SocketException {
         break;
       } on ApiException catch (e) {
-        if (e.status >= 500 || e.status == 401) break;
-        // A permanently invalid session would block the queue forever: drop it.
+        // Retry later on server errors, auth, rate limits and timeouts.
+        if (e.status >= 500 ||
+            e.status == 401 ||
+            e.status == 429 ||
+            e.status == 408) {
+          break;
+        }
+        // Other 4xx: permanently invalid; drop the batch so it can't block the queue.
       }
+      final sent = {for (final s in batch) '${s['clientId']}': jsonEncode(s)};
+      final rest = (await pending())
+          .where((s) => sent['${s['clientId']}'] != jsonEncode(s))
+          .toList();
+      await _write(rest);
       synced += batch.length;
-      all = all.skip(batch.length).toList();
-      await _write(all);
     }
     return synced;
+  });
+
+  static Future<void> _tail = Future.value();
+
+  /// Runs [f] after any queue operation already in progress.
+  static Future<T> _locked<T>(Future<T> Function() f) {
+    final result = _tail.then((_) => f());
+    _tail = result.then((_) {}, onError: (_) {});
+    return result;
   }
 
   Future<void> _write(List<Map<String, Object?>> all) async {

@@ -346,6 +346,24 @@ const stageInfos = <String, StageInfo>{
     references: [who2020, acsm11, garber2011],
     tier: StageTier.premium,
   ),
+  'w1-monsoon-meadow': StageInfo(
+    levelId: 'w1-monsoon-meadow',
+    primary: [
+      BodyRegion.quads,
+      BodyRegion.glutes,
+      BodyRegion.obliques,
+      BodyRegion.shoulders,
+    ],
+    secondary: [BodyRegion.core, BodyRegion.hamstrings, BodyRegion.upperBack],
+    movements: _all,
+    intensity: Intensity.light,
+    benefits: [
+      'A steady mix of squats, leans and reaches.',
+      'Adds active minutes to your week.',
+    ],
+    references: [who2020, acsm11],
+    tier: StageTier.free,
+  ),
 };
 
 /// Info for a stage. Every stage in [stages] has an entry (see tests).

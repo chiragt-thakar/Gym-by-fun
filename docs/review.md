@@ -267,3 +267,34 @@ Read-only review of today's additions. Severity: High = crash, wrong outcome, or
 ✅ Fixed: R2-3 — `MotionSession.stop()` remembers a stall/paused engine; the next `start()` sends `TrackingResumed` (unless the engine is still paused and will send its own), so the HUD banner clears. Test: "stop during a stall then start resumes tracking (R2-3)".
 ✅ Fixed: R2-4 — after the camera starts in `_beginRun`, a non-`resumed` app lifecycle state pauses the run immediately.
 ✅ Fixed: R2-5 — `_ExerciseFlow` has a `_done` guard; `_beginRun` and `_complete` are re-entrancy safe (`_runBegun`, `_completed`).
+
+## Round 3 review
+
+Scope: commits `afd0388`..`ebd0de8` (play-style warning multiplier, settings play style / sign out / wipe, R2 fixes, extra recognisers, server request id and shutdown).
+
+| ID | Sev | File:line | What's wrong | Fix |
+|---|---|---|---|---|
+| R3-1 | High | app/lib/services/session_queue.dart:88-106 | `flush()` reads the queue once, awaits the upload, then writes `all.skip(n)` back. A session `add`ed meanwhile is overwritten and lost. For example, the results screen saves with the effort rating while the home `flush` is running, or `_persist` in initState races the Done `_save`. The write also brings back the stale version without the effort rating. | Serialise queue access with a single in-process lock or future chain. After an upload, re-read the file and remove only the uploaded clientIds. |
+| R3-2 | Med | app/lib/services/session_queue.dart:98-101 | Every `ApiException` other than 5xx/401 drops the whole batch of up to 50 sessions. That includes 429 (rate limit), 408 and 403. One bad session or one throttle response throws away 49 valid runs. | Treat 429/408 like 5xx (break and retry later). On a 4xx validation error, bisect or upload one by one, and drop only the rejected session. |
+| R3-3 | Med | app/lib/screens/settings_screen.dart:215-231 | Sign out clears tokens only. The offline session queue, Kavi history and `pendingGymCode` stay on the device. If a different person signs in next, `flush()` uploads the previous player's queued runs to the new account. | On sign out, clear the session queue file or tag queued sessions with the user id and drop mismatches. Also offer to clear coach history. |
+| R3-4 | Low | app/lib/screens/settings_screen.dart:217-220 + server identity | Sign out never revokes the refresh token on the server. There is no logout endpoint, so a copied refresh token stays valid until it expires. | Add `POST /auth/logout` that revokes the refresh-token family, and call it (best effort) before `tokenStore.clear()`. |
+| R3-5 | Med | app/lib/screens/quest_screen.dart:136-138 | R2-1 is only half fixed. `nextStage(premiumLocked:)` skips locked stages, but `QuestScreen._prepare` still accepts any `levelId` without checking `isUnlocked` or the premium lock, so `/quest?level=w2-…` (a deep link or a stale route) plays a locked or Premium stage. | In `_prepare`, if the stage is not `isUnlocked`, or is premium-locked while `paymentsEnabled && !premium`, fall back to `nextStage(...)` or pop with a message. |
+| R3-6 | Low | app/lib/screens/settings_screen.dart:207-213 | Delete account: `catch (_) {}` hides every failure (offline, 5xx). The player taps Delete and nothing happens, with no message. If `wipeLocalData` throws after the server delete succeeds, the account is gone but the app still looks signed in. | Show a SnackBar on API failure. Run the wipe, reset and navigation in their own try block after a successful delete. |
+| R3-7 | Low | packages/motion_core/lib/src/extra_recognisers.dart:226-258 | SideStep confirm: `_confirm` keeps counting when `dir` flips between left and right on consecutive frames, so a jitter across centre can confirm a step in the last-seen direction. In the held state, a direct left-to-right swing (|f| never drops below `stepEnd`) keeps reporting `stepLeft` held. | Store the pending direction and reset `_confirm` when it changes. In held, end the step if `sign(f)` is opposite to the held direction. |
+| R3-8 | Low | app/lib/services/settings.dart:66-67 | The doc comment on `warningMultiplier` still says "for future director use", but the director now uses it. Gentle also turns assist on, so the effective warning is 1.2 × 1.25 = 1.5×. That is not documented in game-design.md next to the 1.0–1.5 clamp. | Update the comment and document the combined lead in game-design.md. |
+
+Clean areas (none found):
+- `Director._warnAt`: it keeps the base warning, caps the extension at the previous arrival, and keeps the wide-block extra.
+- `RunSettings.warningMultiplier`: clamping and the NaN guard are correct.
+- `wipeLocalData`: its key list matches the keys used in the app.
+- Coach history `record` replaces by clientId.
+- Results `_persist` in initState (R2-6).
+- Home header small-screen change.
+- BarrierHold recogniser.
+- Server `genReqId`: the header is validated by a regex and echoed in `onRequest`.
+- `onShutdown`: one close, a second signal forces exit, the timer is unref'd.
+
+### Round 3 fix status
+- ✅ Fixed R3-1: session queue access is serialised; after an upload only the uploaded versions are removed (re-read), so concurrent adds/updates are never lost.
+- ✅ Fixed R3-2: 429 and 408 are retried later like 5xx instead of dropping the batch.
+- ⏳ Open: R3-3 (sign out should clear queue/coach history/pending code — use wipeLocalData minus settings), R3-4 (server logout endpoint to revoke refresh token), R3-5 (QuestScreen must reject locked Premium levelId), R3-6 (show an error when account deletion fails), R3-7 (side-step confirm reset on direction flip), R3-8 (update comment/docs for Gentle+assist 1.5x).
