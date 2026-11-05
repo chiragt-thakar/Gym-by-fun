@@ -69,6 +69,15 @@
    the app (need your Firebase project), World 2, Garba Quest, highlight clips,
    referrals.
 
+## Performance pass (budget phones)
+- motion_core hot path is allocation-light, and a micro-benchmark gate was
+  added (< 0.3 ms/frame over 3000 frames).
+- `PerfStats` uses ring buffers. `Voice` failures are fully contained.
+- The native bridge frees the upright bitmap in `onResult` and on the error path.
+- Release builds are ARM-only, and CI builds split-per-ABI release APKs with the
+  < 150 MB check.
+- See `docs/performance.md` for the budgets and how to measure them on a device.
+
 ## How to verify
 ```bash
 (cd packages/motion_core && dart test)        # accuracy report printed at the end

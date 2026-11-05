@@ -8,6 +8,7 @@ import '../l10n/tr.dart';
 
 import 'package:motion_core/motion_core.dart';
 
+import '../app/theme.dart';
 import '../game/forest_game.dart';
 import '../services/pose_service.dart';
 import '../services/settings.dart';
@@ -108,31 +109,23 @@ class _SetupState extends ConsumerState<SetupScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  const Icon(Icons.lock, size: 36),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      str.t('video_never_leaves'),
-                      style: const TextStyle(fontSize: 18),
-                    ),
-                  ),
-                ],
-              ),
+          LanternCard(
+            tone: LanternTone.scarf,
+            icon: Icons.lock,
+            child: Text(
+              str.t('video_never_leaves'),
+              style: const TextStyle(fontSize: 18),
             ),
           ),
           if (_denied)
-            Padding(
-              padding: EdgeInsets.all(8),
+            LanternCard(
+              tone: LanternTone.warning,
+              icon: Icons.videocam_off,
               child: Text(
                 tr(
                   'Camera permission is needed to play. You can allow it in Android Settings → Apps → MotionQuest.',
                 ),
-                style: TextStyle(color: Colors.orangeAccent, fontSize: 17),
+                style: const TextStyle(color: Lantern.warning, fontSize: 17),
               ),
             ),
           BigButton(
@@ -160,10 +153,21 @@ class _SetupState extends ConsumerState<SetupScreen> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  Text(
-                    hint,
-                    style: Theme.of(context).textTheme.titleLarge,
-                    textAlign: TextAlign.center,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (_ready) ...[
+                        const SuccessBadge(size: 44),
+                        const SizedBox(width: 12),
+                      ],
+                      Flexible(
+                        child: Text(
+                          hint,
+                          style: Theme.of(context).textTheme.titleLarge,
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   BigButton(
@@ -185,8 +189,8 @@ class _Step extends StatelessWidget {
   final IconData icon;
   final String text;
   @override
-  Widget build(BuildContext context) => ListTile(
-    leading: Icon(icon, size: 36),
-    title: Text(text, style: const TextStyle(fontSize: 18)),
+  Widget build(BuildContext context) => LanternCard(
+    icon: icon,
+    child: Text(text, style: const TextStyle(fontSize: 18)),
   );
 }

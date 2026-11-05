@@ -49,6 +49,10 @@ internal class PosePipeline(
     @Volatile private var frameH = 0
     @Volatile private var captureMs = 0L
 
+    // The one upright bitmap handed to MediaPipe (busy == true while set).
+    // Freed in onResult, or in analyze() if detectAsync never accepted it.
+    @Volatile private var inFlight: Bitmap? = null
+
     fun start(onStarted: (Map<String, Any>) -> Unit) {
         executor.execute {
             try {
@@ -121,6 +125,7 @@ internal class PosePipeline(
             image.close() // drop: inference still busy with the previous frame
             return
         }
+        var upright: Bitmap? = null
         try {
             val rotation = image.imageInfo.rotationDegrees
             val raw = image.toBitmap()
@@ -131,16 +136,20 @@ internal class PosePipeline(
                 postRotate(rotation.toFloat())
                 postScale(-1f, 1f)
             }
-            val upright = Bitmap.createBitmap(raw, 0, 0, raw.width, raw.height, m, true)
-            if (upright !== raw) raw.recycle()
-            frameW = upright.width
-            frameH = upright.height
+            val rotated = Bitmap.createBitmap(raw, 0, 0, raw.width, raw.height, m, true)
+            if (rotated !== raw) raw.recycle()
+            upright = rotated
+            frameW = rotated.width
+            frameH = rotated.height
             var ts = SystemClock.uptimeMillis()
             if (ts <= lastTs) ts = lastTs + 1
             lastTs = ts
             captureMs = ts
-            lm.detectAsync(BitmapImageBuilder(upright).build(), ts)
+            inFlight = rotated
+            lm.detectAsync(BitmapImageBuilder(rotated).build(), ts)
         } catch (e: Exception) {
+            inFlight = null
+            upright?.let { if (!it.isRecycled) it.recycle() }
             busy.set(false)
             image.close()
             onError("Frame failed: ${e.message}")
@@ -148,20 +157,26 @@ internal class PosePipeline(
     }
 
     private fun onResult(result: PoseLandmarkerResult, input: com.google.mediapipe.framework.image.MPImage) {
-        busy.set(false)
-        input.close()
-        val ts = result.timestampMs()
         val inference = (SystemClock.uptimeMillis() - captureMs).toDouble()
+        val w = frameW
+        val h = frameH
+        // Release pixels before accepting the next frame, so at most one
+        // upright bitmap exists at a time (budget phones have little RAM).
+        input.close()
+        inFlight?.let { if (!it.isRecycled) it.recycle() }
+        inFlight = null
+        busy.set(false)
+        val ts = result.timestampMs()
         val poses = result.landmarks()
         val out: DoubleArray
         if (poses.isEmpty()) {
-            out = doubleArrayOf(ts.toDouble(), frameW.toDouble(), frameH.toDouble(), inference)
+            out = doubleArrayOf(ts.toDouble(), w.toDouble(), h.toDouble(), inference)
         } else {
             val pose = poses[0]
             out = DoubleArray(4 + pose.size * 4)
             out[0] = ts.toDouble()
-            out[1] = frameW.toDouble()
-            out[2] = frameH.toDouble()
+            out[1] = w.toDouble()
+            out[2] = h.toDouble()
             out[3] = inference
             for ((i, p) in pose.withIndex()) {
                 val o = 4 + i * 4

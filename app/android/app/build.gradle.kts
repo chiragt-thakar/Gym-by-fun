@@ -65,6 +65,15 @@ android {
             signingConfig = if (release.storeFile != null) release else signingConfigs.getByName("debug")
             isMinifyEnabled = true
             isShrinkResources = true
+            // Budget phones in India are ARM: ship only ARM native libs (the
+            // MediaPipe .so files dominate APK size). `--split-per-abi` makes
+            // Flutter configure ABI splits itself, and AGP rejects ndk
+            // abiFilters alongside splits, so only filter the fat APK.
+            if (!project.hasProperty("split-per-abi")) {
+                ndk {
+                    abiFilters.addAll(listOf("arm64-v8a", "armeabi-v7a"))
+                }
+            }
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }

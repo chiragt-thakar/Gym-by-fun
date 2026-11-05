@@ -1,0 +1,414 @@
+{
+  "$schema": "../schema/level.schema.json",
+  "id": "w3-neon-city-rooftops",
+  "version": 1,
+  "schemaVersion": 1,
+  "world": 3,
+  "name": "Neon City Rooftops",
+  "lanes": 3,
+  "durationS": 180,
+  "hearts": 3,
+  "music": {
+    "track": "neon_rooftops",
+    "bpmByDifficulty": {
+      "beginner": 116,
+      "intermediate": 128,
+      "advanced": 138
+    }
+  },
+  "difficulty": {
+    "beginner": {
+      "warningMs": 2000,
+      "maxDemandingInRow": 3,
+      "hints": "always",
+      "lowImpactDefault": true
+    },
+    "intermediate": {
+      "warningMs": 1600,
+      "maxDemandingInRow": 5,
+      "hints": "firstTime",
+      "lowImpactDefault": true
+    },
+    "advanced": {
+      "warningMs": 1300,
+      "maxDemandingInRow": 7,
+      "hints": "off",
+      "lowImpactDefault": false
+    }
+  },
+  "scoring": {
+    "beam": 100,
+    "laneBlock": 100,
+    "orb": 50,
+    "gate": 150
+  },
+  "segments": [
+    {
+      "id": "practice",
+      "kind": "practice",
+      "startS": 0,
+      "endS": 30,
+      "hint": "Rooftop warm-up. Watch the signs and drones."
+    },
+    {
+      "id": "learn",
+      "kind": "learn",
+      "startS": 30,
+      "endS": 90
+    },
+    {
+      "id": "breather",
+      "kind": "breather",
+      "startS": 90,
+      "endS": 105,
+      "hint": "Recharge! Catch the power cells."
+    },
+    {
+      "id": "combos",
+      "kind": "combo",
+      "startS": 105,
+      "endS": 150,
+      "hint": "Quick combos ahead. Stay sharp!"
+    },
+    {
+      "id": "checkpoint",
+      "kind": "checkpoint",
+      "startS": 150,
+      "endS": 151,
+      "hint": "Checkpoint! Systems restored, a heart returns."
+    },
+    {
+      "id": "finale",
+      "kind": "finale",
+      "startS": 151,
+      "endS": 180,
+      "hint": "Run the gates to the tower top!"
+    }
+  ],
+  "encounters": [
+    {
+      "atS": 9,
+      "type": "beam",
+      "hint": "A neon sign hangs low! Squat to slip under it."
+    },
+    {
+      "atS": 12.5,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 16,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ],
+      "hint": "A drone hovers ahead! Lean left or right."
+    },
+    {
+      "atS": 19.0,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 22,
+      "type": "beam"
+    },
+    {
+      "atS": 24.5,
+      "type": "beam",
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 27,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "A power cell! Raise both arms to catch it."
+    },
+    {
+      "atS": 33,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 36.5,
+      "type": "beam"
+    },
+    {
+      "atS": 40.0,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 43.4,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 46.8,
+      "type": "beam"
+    },
+    {
+      "atS": 50.1,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 53.3,
+      "type": "orb",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 56.5,
+      "type": "beam"
+    },
+    {
+      "atS": 59.6,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 62.6,
+      "type": "beam"
+    },
+    {
+      "atS": 65.6,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 68.5,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 71.4,
+      "type": "beam"
+    },
+    {
+      "atS": 74.2,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 77.0,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 79.8,
+      "type": "beam"
+    },
+    {
+      "atS": 82.5,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 92,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 96,
+      "type": "orb",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 100,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 103.5,
+      "type": "orb",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 105.2,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 106,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 107.7,
+      "type": "beam"
+    },
+    {
+      "atS": 110.9,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 112.6,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 115.8,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 117.5,
+      "type": "beam"
+    },
+    {
+      "atS": 120.7,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 122.4,
+      "type": "beam"
+    },
+    {
+      "atS": 125.6,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 127.3,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 130.5,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 132.2,
+      "type": "beam"
+    },
+    {
+      "atS": 135.4,
+      "type": "beam"
+    },
+    {
+      "atS": 138.4,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 140.1,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 143.1,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 154,
+      "type": "gate",
+      "hint": "Security gate! Arms up to power it open."
+    },
+    {
+      "atS": 157.5,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 160.5,
+      "type": "beam"
+    },
+    {
+      "atS": 164.0,
+      "type": "gate"
+    },
+    {
+      "atS": 167.5,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 170.5,
+      "type": "beam"
+    },
+    {
+      "atS": 174.0,
+      "type": "gate"
+    },
+    {
+      "atS": 177.5,
+      "type": "gate",
+      "hint": "Final gate. Reach the tower top!"
+    }
+  ]
+}

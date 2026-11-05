@@ -1,7 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:motion_core/motion_core.dart';
 
-/// Big tap target for sweaty hands.
+import '../app/theme.dart';
+import 'quest_button.dart';
+import 'forest_backdrop.dart';
+
+export 'forest_backdrop.dart';
+export 'lantern_card.dart';
+export 'quest_button.dart';
+export 'step_progress.dart';
+export 'success_badge.dart';
+
+/// Big tap target for sweaty hands. Kept as the app-wide name; the look
+/// comes from [QuestButton].
 class BigButton extends StatelessWidget {
   const BigButton(
     this.label, {
@@ -16,32 +27,16 @@ class BigButton extends StatelessWidget {
   final bool secondary;
 
   @override
-  Widget build(BuildContext context) {
-    final style = ButtonStyle(
-      minimumSize: const WidgetStatePropertyAll(Size.fromHeight(64)),
-      textStyle: const WidgetStatePropertyAll(
-        TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-      ),
-      shape: WidgetStatePropertyAll(
-        RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
-    );
-    final child = Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if (icon != null) ...[Icon(icon, size: 28), const SizedBox(width: 12)],
-        Flexible(child: Text(label, textAlign: TextAlign.center)),
-      ],
-    );
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: secondary
-          ? OutlinedButton(onPressed: onPressed, style: style, child: child)
-          : FilledButton(onPressed: onPressed, style: style, child: child),
-    );
-  }
+  Widget build(BuildContext context) => QuestButton(
+    label,
+    onPressed: onPressed,
+    icon: icon,
+    secondary: secondary,
+  );
 }
 
+/// Standard screen: transparent bar with a lantern tab beside the title,
+/// the forest backdrop behind, and a padded scrolling column.
 class ScreenScaffold extends StatelessWidget {
   const ScreenScaffold({
     super.key,
@@ -58,12 +53,33 @@ class ScreenScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: Text(title),
+      title: Row(
+        children: [
+          Container(
+            width: 8,
+            height: 28,
+            decoration: BoxDecoration(
+              color: Lantern.glow,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(child: Text(title, overflow: TextOverflow.ellipsis)),
+        ],
+      ),
       automaticallyImplyLeading: showBack,
       actions: actions,
     ),
-    body: SafeArea(
-      child: ListView(padding: const EdgeInsets.all(20), children: children),
+    body: Stack(
+      children: [
+        const Positioned.fill(child: ForestBackdrop()),
+        SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+            children: children,
+          ),
+        ),
+      ],
     ),
   );
 }
@@ -78,17 +94,13 @@ class TrackingDot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (icon, color, label) = switch (light) {
-      TrackingLight.green => (
-        Icons.circle,
-        Colors.greenAccent,
-        'Tracking good',
-      ),
+      TrackingLight.green => (Icons.circle, Lantern.scarf, 'Tracking good'),
       TrackingLight.amber => (
         Icons.change_history,
-        Colors.amberAccent,
+        Lantern.warning,
         'Tracking shaky',
       ),
-      TrackingLight.red => (Icons.square, Colors.redAccent, 'Tracking paused'),
+      TrackingLight.red => (Icons.square, Lantern.danger, 'Tracking paused'),
     };
     return Semantics(
       label: label,

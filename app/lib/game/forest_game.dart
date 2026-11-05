@@ -261,6 +261,38 @@ class SceneTheme {
     block: Color(0xFFA9773F),
     props: SceneProps.cacti,
   );
+
+  /// World 3: night city, glowing magenta and cyan.
+  static const neon = SceneTheme(
+    background: Color(0xFF0B0820),
+    skyTop: Color(0xFF1A0B3D),
+    skyBottom: Color(0xFF6A1B9A),
+    sun: Color(0xFFFF4FD8),
+    hillFar: Color(0xFF261A55),
+    hillNear: Color(0xFF1B1240),
+    ground: Color(0xFF151030),
+    road: Color(0xFF3A3560),
+    propTrunk: Color(0xFF00E5FF),
+    propCrown: Color(0xFF2A1F66),
+    beam: Color(0xFFFF4FD8),
+    block: Color(0xFF00B8D4),
+  );
+
+  /// World 4: cool mountain air, snow and pine.
+  static const mountain = SceneTheme(
+    background: Color(0xFF1C2B3A),
+    skyTop: Color(0xFF9EC9F5),
+    skyBottom: Color(0xFFE3F1FF),
+    sun: Color(0xFFFFFFFF),
+    hillFar: Color(0xFF8DA3B8),
+    hillNear: Color(0xFF61788F),
+    ground: Color(0xFFDCE6EE),
+    road: Color(0xFF8A7F73),
+    propTrunk: Color(0xFF4A3526),
+    propCrown: Color(0xFF1F4D3A),
+    beam: Color(0xFF6D4C3D),
+    block: Color(0xFF7D8590),
+  );
 }
 
 /// Procedural 2.5D forest: layered parallax, perspective lanes, big clear

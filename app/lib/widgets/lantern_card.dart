@@ -25,11 +25,7 @@ class LanternCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final (bg, border, iconColor) = switch (tone) {
       LanternTone.plain => (Lantern.canopy, Lantern.ridge, Lantern.glow),
-      LanternTone.glow => (
-        const Color(0xFF3A2410),
-        Lantern.glow,
-        Lantern.glow,
-      ),
+      LanternTone.glow => (const Color(0xFF3A2410), Lantern.glow, Lantern.glow),
       LanternTone.scarf => (
         const Color(0xFF0E2F2B),
         Lantern.scarf,

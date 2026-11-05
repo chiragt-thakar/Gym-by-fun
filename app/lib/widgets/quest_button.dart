@@ -40,8 +40,18 @@ class _QuestButtonState extends State<QuestButton> {
         Lantern.onGlow,
         Lantern.ember,
       ),
-      (true, true) => (Lantern.moss, Lantern.chunkyShadow, Lantern.parchment, Lantern.scarf),
-      (_, false) => (Lantern.canopy, Lantern.chunkyShadow, Lantern.fog, Lantern.ridge),
+      (true, true) => (
+        Lantern.moss,
+        Lantern.chunkyShadow,
+        Lantern.parchment,
+        Lantern.scarf,
+      ),
+      (_, false) => (
+        Lantern.canopy,
+        Lantern.chunkyShadow,
+        Lantern.fog,
+        Lantern.ridge,
+      ),
     };
     final offset = _down && enabled ? _lip : 0.0;
     final radius = BorderRadius.circular(Lantern.radius);

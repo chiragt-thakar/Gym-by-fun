@@ -1,0 +1,499 @@
+{
+  "$schema": "../schema/level.schema.json",
+  "id": "w3-neon-city-chase",
+  "version": 1,
+  "schemaVersion": 1,
+  "world": 3,
+  "name": "Neon City Chase",
+  "lanes": 3,
+  "durationS": 210,
+  "hearts": 3,
+  "music": {
+    "track": "neon_chase",
+    "bpmByDifficulty": {
+      "beginner": 118,
+      "intermediate": 130,
+      "advanced": 140
+    }
+  },
+  "difficulty": {
+    "beginner": {
+      "warningMs": 2000,
+      "maxDemandingInRow": 3,
+      "hints": "always",
+      "lowImpactDefault": true
+    },
+    "intermediate": {
+      "warningMs": 1600,
+      "maxDemandingInRow": 5,
+      "hints": "firstTime",
+      "lowImpactDefault": true
+    },
+    "advanced": {
+      "warningMs": 1300,
+      "maxDemandingInRow": 7,
+      "hints": "off",
+      "lowImpactDefault": false
+    }
+  },
+  "scoring": {
+    "beam": 100,
+    "laneBlock": 100,
+    "orb": 50,
+    "gate": 150
+  },
+  "segments": [
+    {
+      "id": "practice",
+      "kind": "practice",
+      "startS": 0,
+      "endS": 30,
+      "hint": "The chase is on. Warm up while you run."
+    },
+    {
+      "id": "learn",
+      "kind": "learn",
+      "startS": 30,
+      "endS": 100
+    },
+    {
+      "id": "breather",
+      "kind": "breather",
+      "startS": 100,
+      "endS": 115,
+      "hint": "You lost them for now. Grab the cells."
+    },
+    {
+      "id": "combos",
+      "kind": "combo",
+      "startS": 115,
+      "endS": 175,
+      "hint": "They found you! Combos come thick and fast."
+    },
+    {
+      "id": "checkpoint",
+      "kind": "checkpoint",
+      "startS": 175,
+      "endS": 176,
+      "hint": "Checkpoint! Signal boosted, a heart returns."
+    },
+    {
+      "id": "finale",
+      "kind": "finale",
+      "startS": 176,
+      "endS": 210,
+      "hint": "Gate run! Open every gate to escape."
+    }
+  ],
+  "encounters": [
+    {
+      "atS": 8,
+      "type": "beam",
+      "hint": "A sign swings low! Squat under it."
+    },
+    {
+      "atS": 11,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 14,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ],
+      "hint": "Patrol drone! Lean to dodge it."
+    },
+    {
+      "atS": 20,
+      "type": "beam"
+    },
+    {
+      "atS": 23,
+      "type": "beam",
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 25,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 28.5,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 29,
+      "type": "orb",
+      "lanes": [
+        0
+      ],
+      "hint": "Power cell! Arms up to grab it."
+    },
+    {
+      "atS": 33,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 36.4,
+      "type": "beam"
+    },
+    {
+      "atS": 39.7,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 42.9,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 46.1,
+      "type": "beam"
+    },
+    {
+      "atS": 49.2,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 52.2,
+      "type": "beam"
+    },
+    {
+      "atS": 55.2,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 58.1,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 61.0,
+      "type": "beam"
+    },
+    {
+      "atS": 63.9,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 66.7,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 69.5,
+      "type": "beam"
+    },
+    {
+      "atS": 72.3,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 75.0,
+      "type": "beam"
+    },
+    {
+      "atS": 77.7,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 80.4,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 83.1,
+      "type": "beam"
+    },
+    {
+      "atS": 85.8,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 88.5,
+      "type": "beam"
+    },
+    {
+      "atS": 91.2,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 93.9,
+      "type": "orb",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 96.6,
+      "type": "beam"
+    },
+    {
+      "atS": 102,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 105.5,
+      "type": "orb",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 109.0,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 112.5,
+      "type": "orb",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 114.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 116,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 117.7,
+      "type": "beam"
+    },
+    {
+      "atS": 120.9,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 122.6,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 125.8,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 127.5,
+      "type": "beam"
+    },
+    {
+      "atS": 130.7,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 132.4,
+      "type": "beam"
+    },
+    {
+      "atS": 135.6,
+      "type": "beam"
+    },
+    {
+      "atS": 138.6,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 140.3,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 143.5,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 145.2,
+      "type": "beam"
+    },
+    {
+      "atS": 148.4,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 150.1,
+      "type": "beam"
+    },
+    {
+      "atS": 153.3,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 155.0,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 158.2,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 159.9,
+      "type": "beam"
+    },
+    {
+      "atS": 163.1,
+      "type": "beam"
+    },
+    {
+      "atS": 166.1,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 167.8,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 179,
+      "type": "gate",
+      "hint": "Chase gate! Arms up to burst through."
+    },
+    {
+      "atS": 182.2,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 185.2,
+      "type": "gate"
+    },
+    {
+      "atS": 188.4,
+      "type": "beam"
+    },
+    {
+      "atS": 191.6,
+      "type": "gate"
+    },
+    {
+      "atS": 194.8,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 197.8,
+      "type": "gate"
+    },
+    {
+      "atS": 201.0,
+      "type": "beam"
+    },
+    {
+      "atS": 204.2,
+      "type": "gate"
+    },
+    {
+      "atS": 207.4,
+      "type": "gate",
+      "hint": "Last gate. Break free!"
+    }
+  ]
+}

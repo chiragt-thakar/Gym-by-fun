@@ -1,0 +1,401 @@
+{
+  "$schema": "../schema/level.schema.json",
+  "id": "w4-mountain-trail",
+  "version": 1,
+  "schemaVersion": 1,
+  "world": 4,
+  "name": "Mountain Trail",
+  "lanes": 3,
+  "durationS": 180,
+  "hearts": 3,
+  "music": {
+    "track": "mountain_trail",
+    "bpmByDifficulty": {
+      "beginner": 104,
+      "intermediate": 114,
+      "advanced": 124
+    }
+  },
+  "difficulty": {
+    "beginner": {
+      "warningMs": 2000,
+      "maxDemandingInRow": 3,
+      "hints": "always",
+      "lowImpactDefault": true
+    },
+    "intermediate": {
+      "warningMs": 1600,
+      "maxDemandingInRow": 5,
+      "hints": "firstTime",
+      "lowImpactDefault": true
+    },
+    "advanced": {
+      "warningMs": 1300,
+      "maxDemandingInRow": 7,
+      "hints": "off",
+      "lowImpactDefault": false
+    }
+  },
+  "scoring": {
+    "beam": 100,
+    "laneBlock": 100,
+    "orb": 50,
+    "gate": 150
+  },
+  "segments": [
+    {
+      "id": "practice",
+      "kind": "practice",
+      "startS": 0,
+      "endS": 30,
+      "hint": "Easy pace on the trail. Find your rhythm."
+    },
+    {
+      "id": "learn",
+      "kind": "learn",
+      "startS": 30,
+      "endS": 90
+    },
+    {
+      "id": "breather",
+      "kind": "breather",
+      "startS": 90,
+      "endS": 105,
+      "hint": "Enjoy the view. Reach for the flags."
+    },
+    {
+      "id": "combos",
+      "kind": "combo",
+      "startS": 105,
+      "endS": 150,
+      "hint": "The trail winds on. Mix it up."
+    },
+    {
+      "id": "checkpoint",
+      "kind": "checkpoint",
+      "startS": 150,
+      "endS": 151,
+      "hint": "Checkpoint at the shelter. A heart returns."
+    },
+    {
+      "id": "finale",
+      "kind": "finale",
+      "startS": 151,
+      "endS": 180,
+      "hint": "The ridge gates are ahead!"
+    }
+  ],
+  "encounters": [
+    {
+      "atS": 9,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ],
+      "hint": "A boulder on the path! Lean left or right."
+    },
+    {
+      "atS": 13,
+      "type": "beam",
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 16,
+      "type": "beam",
+      "hint": "A low rock arch! Squat to pass under."
+    },
+    {
+      "atS": 20,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 23,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "Prayer flags! Raise both arms to touch them."
+    },
+    {
+      "atS": 26,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 32,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 35.8,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 39.6,
+      "type": "beam"
+    },
+    {
+      "atS": 43.6,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 47.2,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 50.8,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 54.4,
+      "type": "beam"
+    },
+    {
+      "atS": 58.4,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 61.9,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 65.4,
+      "type": "orb",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 68.9,
+      "type": "beam"
+    },
+    {
+      "atS": 72.9,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 76.3,
+      "type": "orb",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 79.7,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 83.1,
+      "type": "beam"
+    },
+    {
+      "atS": 87.1,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 92,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 96,
+      "type": "orb",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 100,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 103.5,
+      "type": "orb",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 105.0,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 106,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 108.0,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 111.0,
+      "type": "beam"
+    },
+    {
+      "atS": 114.5,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 116.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 119.5,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 121.5,
+      "type": "beam"
+    },
+    {
+      "atS": 125.0,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 128.0,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 130.0,
+      "type": "orb",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 133.0,
+      "type": "beam"
+    },
+    {
+      "atS": 136.5,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 138.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 141.5,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 143.5,
+      "type": "beam"
+    },
+    {
+      "atS": 154,
+      "type": "gate",
+      "hint": "A trail gate! Arms up to swing it open."
+    },
+    {
+      "atS": 158,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 162,
+      "type": "gate"
+    },
+    {
+      "atS": 166,
+      "type": "beam"
+    },
+    {
+      "atS": 170,
+      "type": "gate"
+    },
+    {
+      "atS": 174,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 178,
+      "type": "gate",
+      "hint": "The last gate. You made the ridge!"
+    }
+  ]
+}

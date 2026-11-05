@@ -147,7 +147,8 @@ ThemeData buildTheme({Color seed = Lantern.glow}) {
           TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
         ),
         backgroundColor: WidgetStateProperty.resolveWith(
-          (s) => s.contains(WidgetState.selected) ? Lantern.scarf : Lantern.moss,
+          (s) =>
+              s.contains(WidgetState.selected) ? Lantern.scarf : Lantern.moss,
         ),
         foregroundColor: WidgetStateProperty.resolveWith(
           (s) => s.contains(WidgetState.selected)

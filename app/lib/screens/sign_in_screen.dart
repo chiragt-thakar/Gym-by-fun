@@ -7,6 +7,7 @@ import '../l10n/tr.dart';
 import '../app/router.dart';
 import '../services/api_client.dart';
 import '../services/settings.dart';
+import '../app/theme.dart';
 import '../widgets/common.dart';
 
 /// Phone OTP sign-in. Optional: the game works offline and syncs later.
@@ -83,8 +84,7 @@ class _SignInState extends ConsumerState<SignInScreen> {
           decoration: InputDecoration(
             prefixText: '+91 ',
             labelText: tr('Mobile number'),
-            border: OutlineInputBorder(),
-          ),
+                      ),
         ),
         if (_sent) ...[
           const SizedBox(height: 12),
@@ -95,16 +95,16 @@ class _SignInState extends ConsumerState<SignInScreen> {
             style: const TextStyle(fontSize: 26, letterSpacing: 8),
             decoration: InputDecoration(
               labelText: tr('6-digit code'),
-              border: OutlineInputBorder(),
-            ),
+                          ),
           ),
         ],
         if (_error != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
+          LanternCard(
+            tone: LanternTone.warning,
+            icon: Icons.error_outline,
             child: Text(
               _error!,
-              style: const TextStyle(color: Colors.orangeAccent),
+              style: const TextStyle(color: Lantern.warning, fontSize: 17),
             ),
           ),
         const SizedBox(height: 12),

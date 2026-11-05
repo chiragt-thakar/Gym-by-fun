@@ -41,10 +41,7 @@ class SuccessBadge extends StatelessWidget {
           if (text != null) ...[
             const SizedBox(width: 12),
             Flexible(
-              child: Text(
-                text,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
+              child: Text(text, style: Theme.of(context).textTheme.titleLarge),
             ),
           ],
         ],

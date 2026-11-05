@@ -38,13 +38,16 @@ void main() {
     expect(stageById('nope'), isNull);
   });
 
-  test('worlds 1 and 2 are playable, later worlds coming soon', () {
+  test('worlds 1–4 are playable, later worlds coming soon', () {
     final w = worlds;
     expect(w.length, 9);
-    expect(w[0].comingSoon, isFalse);
-    expect(w[1].comingSoon, isFalse);
+    for (var i = 0; i < 4; i++) {
+      expect(w[i].comingSoon, isFalse);
+    }
     expect(w[1].name, 'Desert Trials');
-    expect(w.skip(2).every((x) => x.comingSoon), isTrue);
+    expect(w[2].name, 'Neon City');
+    expect(w[3].name, 'Mountain Expedition');
+    expect(w.skip(4).every((x) => x.comingSoon), isTrue);
     expect([for (final x in w) x.number], [for (var i = 1; i <= 9; i++) i]);
   });
 

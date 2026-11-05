@@ -1,0 +1,472 @@
+{
+  "$schema": "../schema/level.schema.json",
+  "id": "w4-summit-storm",
+  "version": 1,
+  "schemaVersion": 1,
+  "world": 4,
+  "name": "Summit Storm",
+  "lanes": 3,
+  "durationS": 210,
+  "hearts": 3,
+  "music": {
+    "track": "summit_storm",
+    "bpmByDifficulty": {
+      "beginner": 110,
+      "intermediate": 122,
+      "advanced": 132
+    }
+  },
+  "difficulty": {
+    "beginner": {
+      "warningMs": 2000,
+      "maxDemandingInRow": 3,
+      "hints": "always",
+      "lowImpactDefault": true
+    },
+    "intermediate": {
+      "warningMs": 1600,
+      "maxDemandingInRow": 5,
+      "hints": "firstTime",
+      "lowImpactDefault": true
+    },
+    "advanced": {
+      "warningMs": 1300,
+      "maxDemandingInRow": 7,
+      "hints": "off",
+      "lowImpactDefault": false
+    }
+  },
+  "scoring": {
+    "beam": 100,
+    "laneBlock": 100,
+    "orb": 50,
+    "gate": 150
+  },
+  "segments": [
+    {
+      "id": "practice",
+      "kind": "practice",
+      "startS": 0,
+      "endS": 30,
+      "hint": "Storm clouds gather. Warm up on the climb."
+    },
+    {
+      "id": "learn",
+      "kind": "learn",
+      "startS": 30,
+      "endS": 100
+    },
+    {
+      "id": "breather",
+      "kind": "breather",
+      "startS": 100,
+      "endS": 115,
+      "hint": "Calm in the lee of the rock. Catch the flags."
+    },
+    {
+      "id": "combos",
+      "kind": "combo",
+      "startS": 115,
+      "endS": 175,
+      "hint": "The storm returns! Gusts and rockfall mix."
+    },
+    {
+      "id": "checkpoint",
+      "kind": "checkpoint",
+      "startS": 175,
+      "endS": 176,
+      "hint": "Checkpoint at base camp. A heart returns."
+    },
+    {
+      "id": "finale",
+      "kind": "finale",
+      "startS": 176,
+      "endS": 210,
+      "hint": "Summit gates! Push through the storm."
+    }
+  ],
+  "encounters": [
+    {
+      "atS": 9,
+      "type": "beam",
+      "hint": "A wind gust! Squat low and let it pass."
+    },
+    {
+      "atS": 12.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 16,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ],
+      "hint": "Rockfall in two lanes! Lean to the clear one."
+    },
+    {
+      "atS": 22,
+      "type": "beam"
+    },
+    {
+      "atS": 24.5,
+      "type": "beam",
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 27,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "Prayer flag! Arms up to catch it."
+    },
+    {
+      "atS": 33,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 36.5,
+      "type": "beam"
+    },
+    {
+      "atS": 39.9,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 43.2,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 46.5,
+      "type": "beam"
+    },
+    {
+      "atS": 49.7,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 52.8,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 55.9,
+      "type": "beam"
+    },
+    {
+      "atS": 58.9,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 61.9,
+      "type": "beam"
+    },
+    {
+      "atS": 64.9,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 67.8,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 70.7,
+      "type": "beam"
+    },
+    {
+      "atS": 73.6,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 76.4,
+      "type": "orb",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 79.2,
+      "type": "beam"
+    },
+    {
+      "atS": 82.0,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 84.8,
+      "type": "beam"
+    },
+    {
+      "atS": 87.6,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 90.4,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 93.2,
+      "type": "beam"
+    },
+    {
+      "atS": 96.0,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 102,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 105.5,
+      "type": "orb",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 109.0,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 112.5,
+      "type": "orb",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 114.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 116,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 117.7,
+      "type": "beam"
+    },
+    {
+      "atS": 120.9,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 122.6,
+      "type": "orb",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 125.8,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 127.5,
+      "type": "beam"
+    },
+    {
+      "atS": 130.7,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 132.4,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 135.6,
+      "type": "beam"
+    },
+    {
+      "atS": 138.6,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 140.3,
+      "type": "beam"
+    },
+    {
+      "atS": 143.5,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 145.2,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 148.4,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 150.1,
+      "type": "beam"
+    },
+    {
+      "atS": 153.3,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 155.0,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 158.2,
+      "type": "beam"
+    },
+    {
+      "atS": 161.2,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 162.9,
+      "type": "orb",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 179,
+      "type": "gate",
+      "hint": "Summit gate! Arms up to force it open."
+    },
+    {
+      "atS": 182.5,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 185.8,
+      "type": "beam"
+    },
+    {
+      "atS": 189.1,
+      "type": "gate"
+    },
+    {
+      "atS": 192.4,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 195.7,
+      "type": "gate"
+    },
+    {
+      "atS": 199.0,
+      "type": "beam"
+    },
+    {
+      "atS": 202.3,
+      "type": "gate"
+    },
+    {
+      "atS": 205.8,
+      "type": "gate",
+      "hint": "The summit! Open the final gate."
+    }
+  ]
+}

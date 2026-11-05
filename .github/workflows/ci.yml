@@ -55,18 +55,26 @@ jobs:
       - name: Analyze + test
         working-directory: app
         run: flutter pub get && flutter analyze --fatal-infos && flutter test
-      - name: Build debug APK
+      - name: Build release APKs (ARM only, one per ABI)
         working-directory: app
-        run: flutter build apk --debug
-      - name: Install size budget (< 150 MB)
+        # Without upload-key secrets the release build falls back to the
+        # debug key (see app/android/app/build.gradle.kts), so this always
+        # builds; Play-ready signing comes from MQ_KEYSTORE_* secrets.
+        run: flutter build apk --release --split-per-abi --target-platform android-arm,android-arm64
+      - name: Install size budget (< 150 MB per APK)
         run: |
-          size=$(stat -c %s app/build/app/outputs/flutter-apk/app-debug.apk)
-          echo "APK size: $((size / 1024 / 1024)) MB"
-          test "$size" -lt $((150 * 1024 * 1024))
+          shopt -s nullglob
+          apks=(app/build/app/outputs/flutter-apk/*-release.apk)
+          test "${#apks[@]}" -gt 0 || { echo "no release APKs built"; exit 1; }
+          for apk in "${apks[@]}"; do
+            size=$(stat -c %s "$apk")
+            echo "$(basename "$apk"): $((size / 1024 / 1024)) MB"
+            test "$size" -lt $((150 * 1024 * 1024)) || { echo "$apk over budget"; exit 1; }
+          done
       - uses: actions/upload-artifact@v4
         with:
-          name: motionquest-debug-apk
-          path: app/build/app/outputs/flutter-apk/app-debug.apk
+          name: motionquest-release-apks
+          path: app/build/app/outputs/flutter-apk/*-release.apk
 
   server:
     name: Server (real PostgreSQL + Redis)
