@@ -138,8 +138,9 @@ class ForestGame extends FlameGame {
           audio.say(text);
         case EncounterResolved(:final outcome):
           if (outcome == Outcome.cleared) audio.cue('clear');
-          if (outcome == Outcome.hit && e.encounter.type.damages)
+          if (outcome == Outcome.hit && e.encounter.type.damages) {
             audio.cue('hit');
+          }
           hud.value = hud.value.copyWith(lastOutcome: outcome);
         case CheckpointReached():
           audio.cue('checkpoint');

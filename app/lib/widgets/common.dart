@@ -130,12 +130,14 @@ class SkeletonPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
     Offset p(int i) => Offset(f[i].x * size.width, f[i].y * size.height);
     for (final (a, b) in Lm.edges) {
-      if (f[a].visibility > 0.4 && f[b].visibility > 0.4)
+      if (f[a].visibility > 0.4 && f[b].visibility > 0.4) {
         canvas.drawLine(p(a), p(b), bone);
+      }
     }
     for (final i in Lm.smoothed) {
-      if (f[i].visibility > 0.4)
+      if (f[i].visibility > 0.4) {
         canvas.drawCircle(p(i), 7, Paint()..color = Colors.white);
+      }
     }
   }
 

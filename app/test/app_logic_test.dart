@@ -20,49 +20,86 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'fakes.dart';
 
-LevelConfig forest() => LevelConfig.decode(File('assets/levels/w1-forest-escape.json').readAsStringSync());
+LevelConfig forest() => LevelConfig.decode(
+  File('assets/levels/w1-forest-escape.json').readAsStringSync(),
+);
 
 void main() {
   test('bundled levels match the canonical content/levels', () {
-    for (final f in Directory('../content/levels').listSync().whereType<File>()) {
+    for (final f in Directory(
+      '../content/levels',
+    ).listSync().whereType<File>()) {
       final bundled = File('assets/levels/${f.uri.pathSegments.last}');
       expect(bundled.existsSync(), isTrue, reason: 'run tools/sync_content.sh');
-      expect(bundled.readAsStringSync(), f.readAsStringSync(), reason: 'run tools/sync_content.sh');
+      expect(
+        bundled.readAsStringSync(),
+        f.readAsStringSync(),
+        reason: 'run tools/sync_content.sh',
+      );
     }
   });
 
-  test('onboarding order: age → readiness → setup → calibrate → tutorial → home', () {
-    var s = const Settings();
-    expect(nextOnboardingStep(s), '/welcome');
-    s = s.copyWith(ageConfirmed: true);
-    expect(nextOnboardingStep(s), '/readiness');
-    s = s.copyWith(readinessDone: true);
-    expect(nextOnboardingStep(s), '/setup');
-    s = s.copyWith(setupDone: true);
-    expect(nextOnboardingStep(s), '/calibrate');
-    s = s.copyWith(calibration: CalibrationProfile.fromStanding(PoseFrame(timestampMs: 0, landmarks: SyntheticBody(noise: 0).pose())));
-    expect(nextOnboardingStep(s), '/tutorial');
-    s = s.copyWith(tutorialDone: true);
-    expect(nextOnboardingStep(s), isNull);
-  });
+  test(
+    'onboarding order: age → readiness → setup → calibrate → tutorial → home',
+    () {
+      var s = const Settings();
+      expect(nextOnboardingStep(s), '/welcome');
+      s = s.copyWith(ageConfirmed: true);
+      expect(nextOnboardingStep(s), '/readiness');
+      s = s.copyWith(readinessDone: true);
+      expect(nextOnboardingStep(s), '/setup');
+      s = s.copyWith(setupDone: true);
+      expect(nextOnboardingStep(s), '/calibrate');
+      s = s.copyWith(
+        calibration: CalibrationProfile.fromStanding(
+          PoseFrame(timestampMs: 0, landmarks: SyntheticBody(noise: 0).pose()),
+        ),
+      );
+      expect(nextOnboardingStep(s), '/tutorial');
+      s = s.copyWith(tutorialDone: true);
+      expect(nextOnboardingStep(s), isNull);
+    },
+  );
 
   test('settings round-trip; low-impact is the default', () {
     const s = Settings();
     expect(s.lowImpact, isTrue);
     expect(s.thresholds.allowOneArm, isTrue);
-    final back = Settings.fromJson(jsonDecode(jsonEncode(s.copyWith(language: AppLanguage.gu, difficulty: Difficulty.advanced, seenTypes: {EncounterType.beam}).toJson())) as Map<String, dynamic>);
+    final back = Settings.fromJson(
+      jsonDecode(
+        jsonEncode(
+          s
+              .copyWith(
+                language: AppLanguage.gu,
+                difficulty: Difficulty.advanced,
+                seenTypes: {EncounterType.beam},
+              )
+              .toJson(),
+        ),
+      ) as Map<String, dynamic>,
+    );
     expect(back.language, AppLanguage.gu);
     expect(back.difficulty, Difficulty.advanced);
     expect(back.seenTypes, {EncounterType.beam});
   });
 
-  test('every UI string has English; voice cues exist in all three languages', () {
-    for (final key in ['squat_hint', 'lean_hint', 'orb_hint', 'gate_hint', 'step_back', 'checkpoint']) {
-      for (final l in AppLanguage.values) {
-        expect(S(l).t(key), isNot(key), reason: '$key/$l');
+  test(
+    'every UI string has English; voice cues exist in all three languages',
+    () {
+      for (final key in [
+        'squat_hint',
+        'lean_hint',
+        'orb_hint',
+        'gate_hint',
+        'step_back',
+        'checkpoint',
+      ]) {
+        for (final l in AppLanguage.values) {
+          expect(S(l).t(key), isNot(key), reason: '$key/$l');
+        }
       }
-    }
-  });
+    },
+  );
 
   test('tutorial is the practice segment only', () {
     final t = tutorialFrom(forest());
@@ -74,11 +111,13 @@ void main() {
   test('motion session turns replayed landmarks into move events', () async {
     final s = SyntheticSession(SyntheticBody(seed: 3));
     final cal = s.calibrate();
-    final src = ReplayPoseSource(s.record([
-      const ScriptStep(Action.idle, 1000),
-      const ScriptStep(Action.squat, 1400),
-      const ScriptStep(Action.idle, 800),
-    ]).frames);
+    final src = ReplayPoseSource(
+      s.record([
+        const ScriptStep(Action.idle, 1000),
+        const ScriptStep(Action.squat, 1400),
+        const ScriptStep(Action.idle, 800),
+      ]).frames,
+    );
     final session = MotionSession(src, initialCalibration: cal);
     expect(await session.start(), isTrue);
     final events = <MotionEvent>[];
@@ -93,7 +132,10 @@ void main() {
   });
 
   test('camera permission denied → session does not start', () async {
-    final session = MotionSession(ReplayPoseSource(const [], permission: false), initialCalibration: null);
+    final session = MotionSession(
+      ReplayPoseSource(const [], permission: false),
+      initialCalibration: null,
+    );
     expect(await session.start(), isFalse);
   });
 
@@ -120,14 +162,33 @@ void main() {
     late Directory tmp;
     setUp(() async {
       tmp = await Directory.systemTemp.createTemp('mq');
-      SharedPreferences.setMockInitialValues({'auth.access': 'a', 'auth.refresh': 'r'});
+      SharedPreferences.setMockInitialValues({
+        'auth.access': 'a',
+        'auth.refresh': 'r',
+      });
     });
     tearDown(() => tmp.delete(recursive: true));
 
     RunResult result() => const RunResult(
-        levelId: 'w1-forest-escape', completed: true, score: 900, hearts: 2, cleared: 10, hit: 1, forgiven: 0, energy: 3,
-        reps: {Move.squat: 4, Move.leanLeft: 2, Move.leanRight: 2, Move.raiseArms: 3},
-        gameMs: 181000, activeMs: 175000, difficulty: Difficulty.beginner, lowImpact: true);
+      levelId: 'w1-forest-escape',
+      completed: true,
+      score: 900,
+      hearts: 2,
+      cleared: 10,
+      hit: 1,
+      forgiven: 0,
+      energy: 3,
+      reps: {
+        Move.squat: 4,
+        Move.leanLeft: 2,
+        Move.leanRight: 2,
+        Move.raiseArms: 3,
+      },
+      gameMs: 181000,
+      activeMs: 175000,
+      difficulty: Difficulty.beginner,
+      lowImpact: true,
+    );
 
     test('keeps sessions while offline and uploads them later', () async {
       final prefs = await SharedPreferences.getInstance();
@@ -136,10 +197,23 @@ void main() {
       final client = MockClient((req) async {
         if (!online) throw const SocketException('offline');
         uploaded.addAll((jsonDecode(req.body) as Map)['sessions'] as List);
-        return http.Response(jsonEncode({'accepted': [], 'duplicates': [], 'flagged': []}), 200);
+        return http.Response(
+          jsonEncode({'accepted': [], 'duplicates': [], 'flagged': []}),
+          200,
+        );
       });
-      final q = SessionQueue(ApiClient(TokenStore(prefs), client: client, base: 'http://x'), dir: () async => tmp);
-      await q.add(SessionQueue.fromResult(result(), clientId: 'abc12345', startedAt: DateTime.utc(2026, 11, 4), durationS: 300));
+      final q = SessionQueue(
+        ApiClient(TokenStore(prefs), client: client, base: 'http://x'),
+        dir: () async => tmp,
+      );
+      await q.add(
+        SessionQueue.fromResult(
+          result(),
+          clientId: 'abc12345',
+          startedAt: DateTime.utc(2026, 11, 4),
+          durationS: 300,
+        ),
+      );
       expect(await q.flush(), 0);
       expect((await q.pending()).length, 1);
       online = true;

@@ -40,10 +40,11 @@ class _CrewState extends ConsumerState<CrewScreen> {
     try {
       final mine = await api.myGym();
       _gym = mine['gym'] as Map<String, dynamic>?;
-      if (_gym != null)
+      if (_gym != null) {
         _board =
             (await api.crewBoard(_gym!['id'] as String))['entries']
                 as List<dynamic>;
+      }
     } catch (_) {
       _error = tr('Needs a connection.');
     }
@@ -79,8 +80,9 @@ class _CrewState extends ConsumerState<CrewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading)
+    if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     final gym = _gym;
     if (gym == null) {
       return ScreenScaffold(

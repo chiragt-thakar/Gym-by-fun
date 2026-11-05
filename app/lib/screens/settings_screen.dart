@@ -23,15 +23,17 @@ class SettingsScreen extends ConsumerWidget {
     Future<void> consent(String purpose, bool granted) async {
       try {
         await api.setConsents({purpose: granted});
-        if (context.mounted)
+        if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(granted ? 'Turned on' : 'Turned off')),
           );
+        }
       } catch (_) {
-        if (context.mounted)
+        if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Needs a connection and sign-in')),
           );
+        }
       }
     }
 
@@ -126,12 +128,13 @@ class SettingsScreen extends ConsumerWidget {
                     text: const JsonEncoder.withIndent('  ').convert(data),
                   ),
                 );
-                if (context.mounted)
+                if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Your data was copied to the clipboard.'),
                     ),
                   );
+                }
               } catch (_) {}
             },
           ),

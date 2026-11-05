@@ -116,8 +116,9 @@ class MotionSession {
   Future<bool> start({DeviceTier tier = DeviceTier.mid}) async {
     if (!await source.ensurePermission()) return false;
     final c = initialCalibration;
-    if (c != null)
+    if (c != null) {
       _engine = MotionEngine(calibration: c, thresholds: thresholds);
+    }
     delegate = await source.start(tier: tier);
     _sub = source.frames.listen(_onFrame);
     return true;

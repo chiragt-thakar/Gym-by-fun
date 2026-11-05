@@ -54,8 +54,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         }
         return nextOnboardingStep(s) ?? (s.signedIn ? '/crew' : '/sign-in');
       }
-      if (_onboarding.contains(path) || path == '/debug' || path == '/recorder')
+      if (_onboarding.contains(path) ||
+          path == '/debug' ||
+          path == '/recorder') {
         return null;
+      }
       return nextOnboardingStep(s);
     },
     routes: [

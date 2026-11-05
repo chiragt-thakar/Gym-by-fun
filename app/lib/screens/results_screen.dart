@@ -122,11 +122,12 @@ class _ResultsState extends ConsumerState<ResultsScreen> {
   @override
   Widget build(BuildContext context) {
     final d = widget.data;
-    if (d == null)
+    if (d == null) {
       return ScreenScaffold(
         title: tr('Results'),
         children: [BigButton(tr('Home'), onPressed: () => context.go('/home'))],
       );
+    }
     final r = d.result;
     final s = ref.watch(settingsProvider).s;
     return ScreenScaffold(

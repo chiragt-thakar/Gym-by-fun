@@ -49,8 +49,9 @@ class Voice {
     if (!_ready) return;
     final now = DateTime.now();
     if (!force &&
-        now.difference(_lastSpoke) < const Duration(milliseconds: 1200))
+        now.difference(_lastSpoke) < const Duration(milliseconds: 1200)) {
       return;
+    }
     _lastSpoke = now;
     await _tts.stop();
     await _tts.speak(text);

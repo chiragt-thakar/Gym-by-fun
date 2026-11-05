@@ -59,16 +59,18 @@ class ApiClient {
     bool retried = false,
   }) async {
     final headers = {'content-type': 'application/json'};
-    if (auth && tokens.access != null)
+    if (auth && tokens.access != null) {
       headers['authorization'] = 'Bearer ${tokens.access}';
+    }
     final req = http.Request(method, _u(path))..headers.addAll(headers);
     if (body != null) req.body = jsonEncode(body);
     final res = await http.Response.fromStream(
       await _http.send(req).timeout(const Duration(seconds: 15)),
     );
     if (res.statusCode == 401 && auth && !retried && tokens.refresh != null) {
-      if (await _refresh())
+      if (await _refresh()) {
         return _send(method, path, body: body, auth: auth, retried: true);
+      }
     }
     final decoded = res.body.isEmpty
         ? <String, dynamic>{}

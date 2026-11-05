@@ -85,10 +85,11 @@ class _CalibrationState extends ConsumerState<CalibrationScreen> {
     ref
         .read(settingsProvider.notifier)
         .update((s) => s.copyWith(calibration: profile));
-    if (mounted)
+    if (mounted) {
       context.go(
         ref.read(settingsProvider).tutorialDone ? '/home' : '/tutorial',
       );
+    }
   }
 
   @override

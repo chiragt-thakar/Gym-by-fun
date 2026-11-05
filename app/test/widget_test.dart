@@ -12,19 +12,27 @@ Future<void> pumpApp(WidgetTester t) async {
   t.view.physicalSize = const Size(1080, 2400);
   t.view.devicePixelRatio = 2.6;
   addTearDown(t.view.reset);
-  await t.pumpWidget(ProviderScope(overrides: [sharedPrefsProvider.overrideWithValue(prefs)], child: const MotionQuestApp()));
+  await t.pumpWidget(
+    ProviderScope(
+      overrides: [sharedPrefsProvider.overrideWithValue(prefs)],
+      child: const MotionQuestApp(),
+    ),
+  );
   await t.pumpAndSettle();
 }
 
 void main() {
-  testWidgets('a new player lands on the welcome screen and can switch language', (t) async {
-    await pumpApp(t);
-    expect(find.text('MotionQuest'), findsOneWidget);
-    expect(find.text('Your body is the controller.'), findsOneWidget);
-    await t.tap(find.text('ગુજરાતી'));
-    await t.pumpAndSettle();
-    expect(find.text('તમારું શરીર જ કંટ્રોલર છે.'), findsOneWidget);
-  });
+  testWidgets(
+    'a new player lands on the welcome screen and can switch language',
+    (t) async {
+      await pumpApp(t);
+      expect(find.text('MotionQuest'), findsOneWidget);
+      expect(find.text('Your body is the controller.'), findsOneWidget);
+      await t.tap(find.text('ગુજરાતી'));
+      await t.pumpAndSettle();
+      expect(find.text('તમારું શરીર જ કંટ્રોલર છે.'), findsOneWidget);
+    },
+  );
 
   testWidgets('under-18 players cannot continue', (t) async {
     await pumpApp(t);
@@ -36,7 +44,9 @@ void main() {
     expect(find.text('I am 18 or older'), findsNothing);
   });
 
-  testWidgets('a "yes" in the readiness check advises seeing a doctor', (t) async {
+  testWidgets('a "yes" in the readiness check advises seeing a doctor', (
+    t,
+  ) async {
     await pumpApp(t);
     await t.tap(find.text('Continue'));
     await t.pumpAndSettle();
@@ -50,13 +60,23 @@ void main() {
     expect(find.textContaining('talk to a doctor'), findsOneWidget);
   });
 
-  testWidgets('a gym QR deep link remembers the code through onboarding', (t) async {
+  testWidgets('a gym QR deep link remembers the code through onboarding', (
+    t,
+  ) async {
     await pumpApp(t);
-    final container = ProviderScope.containerOf(t.element(find.byType(MotionQuestApp)));
+    final container = ProviderScope.containerOf(
+      t.element(find.byType(MotionQuestApp)),
+    );
     container.read(routerProvider).go('/join?code=iron-ab12cd');
     await t.pumpAndSettle();
-    expect(container.read(sharedPrefsProvider).getString(pendingGymCodeKey), 'IRON-AB12CD');
-    expect(find.text('Your body is the controller.'), findsOneWidget); // onboarding first
+    expect(
+      container.read(sharedPrefsProvider).getString(pendingGymCodeKey),
+      'IRON-AB12CD',
+    );
+    expect(
+      find.text('Your body is the controller.'),
+      findsOneWidget,
+    ); // onboarding first
   });
 
   testWidgets('choosing Hindi translates the following screens', (t) async {
