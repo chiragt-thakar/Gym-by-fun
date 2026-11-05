@@ -128,6 +128,19 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ],
               ),
+              if (premium.premium)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Chip(
+                    avatar: const Icon(Icons.workspace_premium),
+                    label: Text(
+                      premium.source == 'gym'
+                          ? tr('Premium via your gym')
+                          : tr('Premium'),
+                      style: const TextStyle(fontSize: 17),
+                    ),
+                  ),
+                ),
               const SizedBox(height: 8),
               Card(
                 child: ListTile(
