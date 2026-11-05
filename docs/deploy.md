@@ -123,4 +123,4 @@ Both endpoints are idempotent per event id. Send a test event from each dashboar
   - Alert on `unhandled error` and on `job failed`.
   - Review `pain report received` entries within 7 days.
 - **Database**: alert on CPU above 80%, storage above 80%, connection count, and replication or backup failures.
-- **Worker**: alert if the Monday report run is missing (no `job completed` for `weekly-reports` by Monday 12:00 IST).
+- **Worker**: alert if the Monday report run is missing (no `job completed` for `weekly-gym-reports` by Monday 12:00 IST).
