@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:motion_core/motion_core.dart';
 import 'package:pose_bridge/pose_bridge.dart';
@@ -113,7 +114,11 @@ class MotionSession {
     this.source, {
     required this.initialCalibration,
     this.thresholds = const MotionThresholds(),
+    this.stallAfter = const Duration(milliseconds: 500),
   });
+
+  /// No frame for this long while running counts as lost tracking (rule 5).
+  final Duration stallAfter;
 
   final PoseSource source;
   final CalibrationProfile? initialCalibration;
@@ -139,6 +144,16 @@ class MotionSession {
   Stream<PoseFrame> get frames => _frames.stream;
   MotionEngine? get engine => _engine;
 
+  /// True while the frame watchdog has paused tracking (no frames arriving).
+  bool get stalled => _stalled;
+  bool _stalled = false;
+  Timer? _watchdog;
+  final Stopwatch _sinceFrame = Stopwatch();
+
+  /// Tracking light for the HUD: red whenever frames have stopped.
+  TrackingLight get light =>
+      _stalled ? TrackingLight.red : (_engine?.light ?? TrackingLight.red);
+
   set calibration(CalibrationProfile c) =>
       _engine = MotionEngine(calibration: c, thresholds: thresholds);
 
@@ -149,8 +164,33 @@ class MotionSession {
       _engine = MotionEngine(calibration: c, thresholds: thresholds);
     }
     delegate = await source.start(tier: tier);
-    _sub = source.frames.listen(_onFrame);
+    _sub = source.frames.listen(_onFrame, onError: _onStreamError);
+    _sinceFrame
+      ..reset()
+      ..start();
+    final period = Duration(
+      microseconds: (stallAfter.inMicroseconds ~/ 5).clamp(1000, 100000),
+    );
+    _watchdog = Timer.periodic(period, (_) => _checkStall());
     return true;
+  }
+
+  void _checkStall() {
+    if (_stalled || _sinceFrame.elapsed < stallAfter) return;
+    _stall();
+  }
+
+  void _stall() {
+    if (_stalled || _events.isClosed) return;
+    _stalled = true;
+    final ts = (lastFrame?.timestampMs ?? 0) + _sinceFrame.elapsedMilliseconds;
+    _events.add(TrackingPaused(ts, TrackingIssue.noPerson));
+  }
+
+  void _onStreamError(Object error, StackTrace st) {
+    // A native pose error must not crash the zone; treat it as lost tracking.
+    debugPrint('pose stream error: $error');
+    _stall();
   }
 
   // Reused for every frame instead of allocating a Stopwatch each time.
@@ -161,6 +201,9 @@ class MotionSession {
       ..reset()
       ..start();
     lastFrame = f;
+    _sinceFrame
+      ..reset()
+      ..start();
     final out = _engine?.process(f) ?? const <MotionEvent>[];
     perf.add(f, _sw.elapsedMicroseconds / 1000);
     _frames.add(f);
@@ -176,20 +219,33 @@ class MotionSession {
       }
       _events.add(e);
     }
+    if (_stalled) {
+      _stalled = false;
+      // The engine never saw the stall; if it is not paused itself, tell the
+      // game tracking is back. Otherwise its own TrackingResumed will follow.
+      final engine = _engine;
+      if (engine != null && !engine.paused) {
+        _events.add(TrackingResumed(f.timestampMs));
+      }
+    }
   }
 
+  /// Only measured counts are reported. False triggers and per-move latency
+  /// are not measured on device, so they are omitted rather than invented.
   Map<String, Map<String, int>> moveStats() => {
     for (final m in Move.values)
       m.name: {
         'attempts': started[m]! + rejected[m]!,
-        'falseTriggers': 0,
-        'avgLatencyMs': perf.pipelineMs.round(),
         'recognised': started[m]!,
         for (final r in RejectReason.values) r.name: rejectedBy[m]![r]!,
       },
   };
 
   Future<void> stop() async {
+    _watchdog?.cancel();
+    _watchdog = null;
+    _sinceFrame.stop();
+    _stalled = false;
     await _sub?.cancel();
     _sub = null;
     await source.stop();

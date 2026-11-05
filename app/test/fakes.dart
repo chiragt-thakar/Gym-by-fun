@@ -29,6 +29,12 @@ class ReplayPoseSource implements PoseSource {
     }
   }
 
+  /// Pushes a single frame.
+  void push(PoseFrame f) => _c.add(f);
+
+  /// Simulates a native pose error on the frame stream.
+  void fail(Object error) => _c.addError(error);
+
   @override
   Stream<PoseFrame> get frames => _c.stream;
 

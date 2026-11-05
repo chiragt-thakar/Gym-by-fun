@@ -187,7 +187,7 @@ export async function identityRoutes(app: FastifyInstance, ctx: AppContext) {
   /** Data export (DPDP): everything we hold about the player. */
   app.get('/me/export', { preHandler: auth }, async (req) => {
     const id = req.userId;
-    const [user, consents, devices, calibrations, sessions, progress, memberships, entitlements, pain] = await Promise.all([
+    const [user, consents, devices, calibrations, sessions, progress, memberships, entitlements, pain, crewScores, signIns] = await Promise.all([
       publicUser(ctx, id),
       ctx.db.selectFrom('consents').selectAll().where('user_id', '=', id).execute(),
       ctx.db.selectFrom('devices').selectAll().where('user_id', '=', id).execute(),
@@ -195,8 +195,20 @@ export async function identityRoutes(app: FastifyInstance, ctx: AppContext) {
       ctx.db.selectFrom('sessions').selectAll().where('user_id', '=', id).orderBy('started_at').execute(),
       ctx.db.selectFrom('progress').selectAll().where('user_id', '=', id).executeTakeFirst(),
       ctx.db.selectFrom('memberships').selectAll().where('user_id', '=', id).execute(),
-      ctx.db.selectFrom('entitlements').selectAll().where('user_id', '=', id).execute(),
+      ctx.db
+        .selectFrom('entitlements')
+        .select(['source', 'product', 'source_ref', 'active_until', 'updated_at'])
+        .where('user_id', '=', id)
+        .execute(),
       ctx.db.selectFrom('pain_reports').selectAll().where('user_id', '=', id).execute(),
+      ctx.db.selectFrom('crew_scores').selectAll().where('user_id', '=', id).orderBy('week').execute(),
+      // Sign-in sessions: metadata only, never token hashes.
+      ctx.db
+        .selectFrom('refresh_tokens')
+        .select(['family_id', 'created_at', 'expires_at', 'revoked_at'])
+        .where('user_id', '=', id)
+        .orderBy('created_at')
+        .execute(),
     ]);
     const sessionIds = sessions.map((s) => s.id);
     const moves = sessionIds.length ? await ctx.db.selectFrom('session_moves').selectAll().where('session_id', 'in', sessionIds).execute() : [];
@@ -212,14 +224,21 @@ export async function identityRoutes(app: FastifyInstance, ctx: AppContext) {
       progress: progress ?? null,
       memberships,
       entitlements,
+      // Billing linkage: each entitlement names its source (Play purchase token / gym id) in `source_ref`.
+      billing: entitlements.map((e) => ({ source: e.source, reference: e.source_ref })),
       painReports: pain,
+      crewScores,
+      signInSessions: signIns,
     };
   });
 
   /**
-   * Account deletion: immediate soft delete (identifiers scrubbed, tokens
-   * revoked, gym sharing stopped); a nightly job hard-deletes after the
-   * retention window.
+   * Account deletion. Immediately: identifiers scrubbed, tokens revoked, gym
+   * sharing stopped, and all personal and activity rows deleted (pain reports,
+   * devices, calibrations, sessions + moves, progress, crew scores). Kept until
+   * the nightly hard delete after the retention window, linked only to the
+   * scrubbed user id: entitlements (billing/accounting linkage), consent
+   * history (withdrawn), memberships (marked left), revoked refresh tokens.
    */
   app.delete('/me', { preHandler: auth }, async (req, reply) => {
     const id = req.userId;
@@ -232,6 +251,10 @@ export async function identityRoutes(app: FastifyInstance, ctx: AppContext) {
       await tx.updateTable('memberships').set({ left_at: ctx.now(), shares_activity: false }).where('user_id', '=', id).where('left_at', 'is', null).execute();
       await tx.deleteFrom('calibrations').where('user_id', '=', id).execute();
       await tx.deleteFrom('crew_scores').where('user_id', '=', id).execute();
+      await tx.deleteFrom('pain_reports').where('user_id', '=', id).execute();
+      await tx.deleteFrom('sessions').where('user_id', '=', id).execute(); // session_moves cascade
+      await tx.deleteFrom('progress').where('user_id', '=', id).execute();
+      await tx.deleteFrom('devices').where('user_id', '=', id).execute();
       await tx.updateTable('consents').set({ withdrawn_at: ctx.now() }).where('user_id', '=', id).where('withdrawn_at', 'is', null).execute();
     });
     await revokeAllForUser(ctx, id);

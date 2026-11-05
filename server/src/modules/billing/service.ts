@@ -50,15 +50,31 @@ export async function revokeGymEntitlement(ctx: AppContext, userId: string, gymI
     .execute();
 }
 
-/** Records a webhook event once. Returns false if it was already processed. */
-export async function markProcessed(ctx: AppContext, provider: 'revenuecat' | 'razorpay', eventId: string, raw: string) {
-  const r = await ctx.db
-    .insertInto('billing_events')
-    .values({ provider, event_id: eventId, payload_hash: sha256(raw), processed_at: ctx.now() })
-    .onConflict((oc) => oc.columns(['provider', 'event_id']).doNothing())
-    .returning('event_id')
-    .executeTakeFirst();
-  return !!r;
+export type WebhookStatus = 'applied' | 'ignored' | 'duplicate';
+
+/**
+ * Processes a webhook event exactly once. The `billing_events` marker and the
+ * change it records are written in one transaction: if `apply` throws, the
+ * marker is rolled back too, so the provider's retry is applied rather than
+ * reported as a duplicate.
+ */
+export async function processWebhookOnce(
+  ctx: AppContext,
+  provider: 'revenuecat' | 'razorpay',
+  eventId: string,
+  raw: string,
+  apply: (txCtx: AppContext) => Promise<'applied' | 'ignored'>,
+): Promise<WebhookStatus> {
+  return ctx.db.transaction().execute(async (tx) => {
+    const r = await tx
+      .insertInto('billing_events')
+      .values({ provider, event_id: eventId, payload_hash: sha256(raw), processed_at: ctx.now() })
+      .onConflict((oc) => oc.columns(['provider', 'event_id']).doNothing())
+      .returning('event_id')
+      .executeTakeFirst();
+    if (!r) return 'duplicate';
+    return apply({ ...ctx, db: tx });
+  });
 }
 
 export interface RevenueCatEvent {
@@ -111,7 +127,7 @@ export async function applyGymPayment(ctx: AppContext, notes: GymPaymentNotes): 
   const now = ctx.now();
   const from = new Date(gym.licence_until) > now ? new Date(gym.licence_until) : now;
   const until = addMonths(from, months);
-  await ctx.db.transaction().execute(async (tx) => {
+  const write = async (tx: AppContext['db']) => {
     await tx.updateTable('gyms').set({ licence_until: until, status: 'active', plan }).where('id', '=', gym.id).execute();
     await tx
       .updateTable('entitlements')
@@ -120,7 +136,10 @@ export async function applyGymPayment(ctx: AppContext, notes: GymPaymentNotes): 
       .where('source_ref', '=', gym.id)
       .where('user_id', 'in', tx.selectFrom('memberships').select('user_id').where('gym_id', '=', gym.id).where('left_at', 'is', null))
       .execute();
-  });
+  };
+  // Already inside the webhook transaction? Then join it; otherwise open one.
+  if (ctx.db.isTransaction) await write(ctx.db);
+  else await ctx.db.transaction().execute(write);
   return 'applied';
 }
 

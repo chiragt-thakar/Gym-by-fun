@@ -131,6 +131,65 @@ void main() {
     await session.dispose();
   });
 
+  test('frame watchdog pauses tracking when frames stop (rule 5)', () async {
+    final s = SyntheticSession(SyntheticBody(seed: 4));
+    final cal = s.calibrate();
+    final frames = s.record([const ScriptStep(Action.idle, 1000)]).frames;
+    final src = ReplayPoseSource(frames.take(20).toList());
+    final session = MotionSession(
+      src,
+      initialCalibration: cal,
+      stallAfter: const Duration(milliseconds: 60),
+    );
+    expect(await session.start(), isTrue);
+    final events = <MotionEvent>[];
+    final sub = session.events.listen(events.add);
+    src.playAll();
+    await Future<void>.delayed(Duration.zero);
+    expect(session.stalled, isFalse);
+    expect(session.light, isNot(TrackingLight.red));
+
+    // Camera goes silent: one pause, red light, no repeats.
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    expect(session.stalled, isTrue);
+    expect(session.light, TrackingLight.red);
+    final paused = events.whereType<TrackingPaused>().toList();
+    expect(paused, hasLength(1));
+    expect(paused.single.issue, TrackingIssue.noPerson);
+
+    // Frames return: tracking resumes.
+    src.push(frames[20]);
+    await Future<void>.delayed(Duration.zero);
+    expect(session.stalled, isFalse);
+    expect(events.last, isA<TrackingResumed>());
+    await sub.cancel();
+    await session.dispose();
+  });
+
+  test('a native pose error pauses tracking instead of crashing', () async {
+    final src = ReplayPoseSource(const []);
+    final session = MotionSession(src, initialCalibration: null);
+    expect(await session.start(), isTrue);
+    final events = <MotionEvent>[];
+    final sub = session.events.listen(events.add);
+    src.fail('pose_error');
+    await Future<void>.delayed(Duration.zero);
+    expect(events.single, isA<TrackingPaused>());
+    expect(session.light, TrackingLight.red);
+    await sub.cancel();
+    await session.dispose();
+  });
+
+  test('move stats report only measured values', () async {
+    final session = MotionSession(
+      ReplayPoseSource(const []),
+      initialCalibration: null,
+    );
+    final squat = session.moveStats()['squat']!;
+    expect(squat.containsKey('falseTriggers'), isFalse);
+    expect(squat.containsKey('avgLatencyMs'), isFalse);
+  });
+
   test('camera permission denied → session does not start', () async {
     final session = MotionSession(
       ReplayPoseSource(const [], permission: false),

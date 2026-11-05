@@ -1,5 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { sql } from 'kysely';
+
 import { hmacSha256Hex } from '../src/lib/crypto.js';
 import { admin, setup, signUp, TEST_ENV, type TestApp } from './helpers.js';
 
@@ -38,6 +40,26 @@ describe('RevenueCat (Play Billing) webhooks', () => {
     const u = await signUp(t);
     const e = { id: 'dup-1', type: 'INITIAL_PURCHASE', app_user_id: u.userId, expiration_at_ms: t.clock.now.getTime() + 1e9 };
     expect((await rc(e)).json().status).toBe('applied');
+    expect((await rc(e)).json().status).toBe('duplicate');
+  });
+
+  it('a failed apply leaves no processed marker, so the provider retry is applied', async () => {
+    const u = await signUp(t);
+    const e = { id: 'retry-1', type: 'INITIAL_PURCHASE', app_user_id: u.userId, original_transaction_id: 'GPA.retry', expiration_at_ms: t.clock.now.getTime() + 1e9 };
+    // Make the entitlement write fail (simulated DB blip) until the trigger is dropped below.
+    await sql`create or replace function fail_entitlement_once() returns trigger as $$
+      begin raise exception 'simulated db blip'; end $$ language plpgsql`.execute(t.ctx.db);
+    await sql`create trigger fail_entitlement_once before insert on entitlements for each row execute function fail_entitlement_once()`.execute(t.ctx.db);
+    try {
+      expect((await rc(e)).statusCode).toBe(500);
+      const marker = await t.ctx.db.selectFrom('billing_events').select('event_id').where('event_id', '=', 'retry-1').executeTakeFirst();
+      expect(marker).toBeUndefined();
+    } finally {
+      await sql`drop trigger if exists fail_entitlement_once on entitlements`.execute(t.ctx.db);
+    }
+    // The retry is applied, and the one after that is a duplicate.
+    expect((await rc(e)).json().status).toBe('applied');
+    expect((await t.app.inject({ method: 'GET', url: '/v1/entitlements', headers: u.auth })).json().premium).toBe(true);
     expect((await rc(e)).json().status).toBe('duplicate');
   });
 
@@ -81,6 +103,13 @@ describe('Razorpay (gym licence) webhooks', () => {
     // Replays are ignored.
     const again = await send({ event: 'payment_link.paid', payload: {} }, undefined, 'evt_pl_1');
     expect(again.json().status).toBe('duplicate');
+  });
+
+  it('does not record unhandled event types, so they can be replayed later', async () => {
+    const r = await send({ event: 'refund.created', payload: {} }, undefined, 'evt_unhandled_1');
+    expect(r.json().status).toBe('ignored');
+    const marker = await t.ctx.db.selectFrom('billing_events').select('event_id').where('event_id', '=', 'evt_unhandled_1').executeTakeFirst();
+    expect(marker).toBeUndefined();
   });
 
   it('rejects a forged signature', async () => {

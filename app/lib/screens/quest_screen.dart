@@ -2,13 +2,12 @@ import 'dart:async';
 
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:game_director/game_director.dart';
 import 'package:go_router/go_router.dart';
 
 import '../l10n/tr.dart';
-
-import 'package:motion_core/motion_core.dart';
 
 import '../game/forest_game.dart';
 import '../game/stages.dart';
@@ -87,7 +86,9 @@ class QuestScreen extends ConsumerStatefulWidget {
   ConsumerState<QuestScreen> createState() => _QuestState();
 }
 
-class _QuestState extends ConsumerState<QuestScreen> implements GameAudio {
+class _QuestState extends ConsumerState<QuestScreen>
+    with WidgetsBindingObserver
+    implements GameAudio {
   _Phase _phase = _Phase.loading;
   MotionSession? _session;
   ForestGame? _game;
@@ -97,12 +98,22 @@ class _QuestState extends ConsumerState<QuestScreen> implements GameAudio {
   late DateTime _startedAt;
   final _clientId = SessionQueue.newClientId();
   String? _error;
+  DeviceTier _tier = DeviceTier.mid;
+
+  /// The run (or exercise flow) is paused: by the player, or by the app
+  /// going to the background. Pausing never costs hearts or progress.
+  bool _paused = false;
+
+  /// A failed run past the checkpoint, waiting for the player's choice.
+  RunResult? _checkpointOffer;
+  bool _disposed = false;
 
   Voice get _voice => ref.read(voiceProvider);
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _prepare();
   }
 
@@ -114,52 +125,182 @@ class _QuestState extends ConsumerState<QuestScreen> implements GameAudio {
       return;
     }
     final bundle = DefaultAssetBundle.of(context);
-    await _voice.init(s.language);
-    _stage = widget.tutorial
-        ? stages.first
-        : (stageById(widget.levelId ?? forestEscapeId) ?? stages.first);
-    final level = widget.tutorial
-        ? tutorialFrom(await loadForest(bundle))
-        : LevelConfig.decode(await bundle.loadString(_stage.asset));
-    final runSettings = widget.tutorial
-        ? RunSettings(
-            difficulty: Difficulty.beginner,
-            lowImpact: s.lowImpact,
-            assist: true,
-          )
-        : s.runSettings;
-    final session = MotionSession(
-      ref.read(poseSourceProvider),
-      initialCalibration: cal,
-      thresholds: s.thresholds,
-    );
-    if (!await session.start(tier: s.deviceTier ?? DeviceTier.mid)) {
-      setState(() => _error = tr('Camera permission is needed to play.'));
+    try {
+      await _voice.init(s.language);
+      if (!mounted) return;
+      _stage = widget.tutorial
+          ? stages.first
+          : (stageById(widget.levelId ?? forestEscapeId) ?? stages.first);
+      final level = widget.tutorial
+          ? tutorialFrom(await loadForest(bundle))
+          : LevelConfig.decode(await bundle.loadString(_stage.asset));
+      if (!mounted) return;
+      final runSettings = widget.tutorial
+          ? RunSettings(
+              difficulty: Difficulty.beginner,
+              lowImpact: s.lowImpact,
+              assist: true,
+            )
+          : s.runSettings;
+      _tier = s.deviceTier ?? DeviceTier.mid;
+      final session = MotionSession(
+        ref.read(poseSourceProvider),
+        initialCalibration: cal,
+        thresholds: s.thresholds,
+      );
+      _session = session;
+      _game = ForestGame(
+        engine: RunEngine(level, runSettings),
+        motionEvents: session.events,
+        audio: this,
+        theme: _stage.theme,
+        lightOf: () => session.light,
+        onFinished: (r) => WidgetsBinding.instance.addPostFrameCallback(
+          (_) => _onRunFinished(r),
+        ),
+      )..pauseWhenBackgrounded = false;
+    } catch (e) {
+      if (mounted) setState(() => _error = tr('Something went wrong.'));
       return;
     }
-    _session = session;
+    // The camera starts only when the run begins (not during warm-up).
+    if (widget.tutorial) {
+      await _beginRun();
+    } else {
+      setState(() => _phase = _Phase.warmup);
+    }
+  }
+
+  /// Starts the camera session and the run. Returns false on failure.
+  Future<bool> _startCamera() async {
+    final session = _session;
+    if (session == null) return false;
+    bool ok;
+    try {
+      ok = await session.start(tier: _tier);
+    } on PlatformException catch (e) {
+      debugPrint('pose start failed: ${e.code}');
+      ok = false;
+      if (mounted) {
+        setState(
+          () => _error = e.code == 'no_permission'
+              ? tr('Camera permission is needed to play.')
+              : tr('The camera could not start. Please try again.'),
+        );
+      }
+      await session.stop();
+      return false;
+    }
+    if (!mounted || _disposed) {
+      // The player left while the camera was starting: release it.
+      await session.dispose();
+      return false;
+    }
+    if (!ok) {
+      setState(() => _error = tr('Camera permission is needed to play.'));
+      return false;
+    }
+    return true;
+  }
+
+  Future<void> _beginRun() async {
+    setState(() => _phase = _Phase.loading);
+    if (!await _startCamera()) return;
     _startedAt = DateTime.now();
-    _game = ForestGame(
-      engine: RunEngine(level, runSettings),
-      motionEvents: session.events,
-      audio: this,
-      theme: _stage.theme,
-      lightOf: () => session.engine?.light ?? TrackingLight.red,
-      onFinished: (r) => WidgetsBinding.instance.addPostFrameCallback(
-        (_) => _onRunFinished(r),
-      ),
-    );
-    setState(() => _phase = widget.tutorial ? _Phase.run : _Phase.warmup);
+    setState(() => _phase = _Phase.run);
   }
 
   void _onRunFinished(RunResult r) {
+    if (!mounted) return;
+    final game = _game;
+    if (!r.completed &&
+        !widget.tutorial &&
+        game != null &&
+        game.engine.atCheckpoint) {
+      game.pauseEngine();
+      setState(() => _checkpointOffer = r);
+      return;
+    }
+    _finishRun(r);
+  }
+
+  void _finishRun(RunResult r) {
     _result = r;
+    _checkpointOffer = null;
     _stats = _session?.moveStats();
     _session?.stop();
     if (widget.tutorial) {
       _complete();
     } else {
       setState(() => _phase = _Phase.cooldown);
+    }
+  }
+
+  void _continueFromCheckpoint() {
+    final game = _game;
+    if (game == null || !game.engine.restartFromCheckpoint()) {
+      final r = _checkpointOffer;
+      if (r != null) _finishRun(r);
+      return;
+    }
+    setState(() => _checkpointOffer = null);
+    game.resumeEngine();
+  }
+
+  // ------------------------------------------------------------ pausing
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    switch (state) {
+      case AppLifecycleState.inactive ||
+          AppLifecycleState.hidden ||
+          AppLifecycleState.paused:
+        _pause();
+      case AppLifecycleState.resumed || AppLifecycleState.detached:
+        break;
+    }
+  }
+
+  /// Freezes the run: game loop, camera and voice. Resume needs the player.
+  void _pause() {
+    if (_paused || _error != null || _phase == _Phase.loading) return;
+    _paused = true;
+    _voice.stop();
+    if (_phase == _Phase.run) {
+      _game?.pauseEngine();
+      _session?.stop();
+    }
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _resume() async {
+    if (!_paused) return;
+    if (_phase == _Phase.run) {
+      if (!await _startCamera()) return;
+      // A pending checkpoint choice keeps the game frozen until answered.
+      if (_checkpointOffer == null) _game?.resumeEngine();
+    }
+    if (mounted) setState(() => _paused = false);
+  }
+
+  /// Leaves without saving: the player chose this explicitly.
+  Future<void> _quit() async {
+    final session = _session;
+    _session = null;
+    _game?.pauseEngine();
+    _voice.stop();
+    await session?.dispose();
+    if (mounted) context.go('/home');
+  }
+
+  void _onBack() {
+    switch (_phase) {
+      case _Phase.loading:
+        _quit();
+      case _Phase.cooldown:
+        _complete();
+      case _Phase.warmup || _Phase.run:
+        _pause();
     }
   }
 
@@ -183,15 +324,22 @@ class _QuestState extends ConsumerState<QuestScreen> implements GameAudio {
       moveStats: stats,
       tutorial: widget.tutorial,
     );
+    final engine = _game?.engine;
+    final seen = <EncounterType>{
+      if (engine != null)
+        for (final p in engine.plan)
+          if (p.arriveMs <= engine.clockMs) p.type,
+    };
     ref
         .read(settingsProvider.notifier)
         .update(
           (x) => x.copyWith(
-            tutorialDone: true,
+            // A failed tutorial is offered again next time.
+            tutorialDone: s.tutorialDone || r.completed,
             sessionsPlayed: widget.tutorial
                 ? s.sessionsPlayed
                 : s.sessionsPlayed + 1,
-            seenTypes: {...s.seenTypes, ...EncounterType.values},
+            seenTypes: {...s.seenTypes, ...seen},
             completedLevels: !widget.tutorial && r.completed
                 ? {...s.completedLevels, _stage.levelId}
                 : null,
@@ -202,6 +350,8 @@ class _QuestState extends ConsumerState<QuestScreen> implements GameAudio {
 
   @override
   void dispose() {
+    _disposed = true;
+    WidgetsBinding.instance.removeObserver(this);
     _session?.dispose();
     _voice.stop();
     super.dispose();
@@ -227,7 +377,7 @@ class _QuestState extends ConsumerState<QuestScreen> implements GameAudio {
       );
     }
     final s = ref.watch(settingsProvider).s;
-    return switch (_phase) {
+    final body = switch (_phase) {
       _Phase.loading => const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       ),
@@ -235,23 +385,113 @@ class _QuestState extends ConsumerState<QuestScreen> implements GameAudio {
         title: s.t('warmup'),
         exercises: warmup,
         voice: _voice,
-        onDone: () => setState(() => _phase = _Phase.run),
+        paused: _paused,
+        onDone: _beginRun,
       ),
-      _Phase.run => _RunView(game: _game!, s: s),
+      _Phase.run => _RunView(game: _game!, s: s, onPause: _pause),
       _Phase.cooldown => _ExerciseFlow(
         title: s.t('cooldown'),
         exercises: cooldown,
         voice: _voice,
+        paused: _paused,
         onDone: _complete,
       ),
     };
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _onBack();
+      },
+      child: Stack(
+        children: [
+          body,
+          if (_checkpointOffer != null)
+            _Overlay(
+              title: tr('Out of hearts'),
+              text: tr('Your checkpoint is saved.'),
+              actions: [
+                BigButton(
+                  tr('Continue from checkpoint'),
+                  onPressed: _continueFromCheckpoint,
+                ),
+                BigButton(
+                  tr('Finish run'),
+                  secondary: true,
+                  onPressed: () => _finishRun(_checkpointOffer!),
+                ),
+              ],
+            )
+          else if (_paused)
+            _Overlay(
+              title: tr('Paused'),
+              text: tr('Ready? Step back into view and tap Resume.'),
+              actions: [
+                BigButton(tr('Resume'), onPressed: _resume),
+                BigButton(
+                  tr('Quit (this run is not saved)'),
+                  secondary: true,
+                  onPressed: _quit,
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
   }
 }
 
+/// Full-screen modal card used for pause and checkpoint choices.
+class _Overlay extends StatelessWidget {
+  const _Overlay({
+    required this.title,
+    required this.text,
+    required this.actions,
+  });
+  final String title;
+  final String text;
+  final List<Widget> actions;
+
+  @override
+  Widget build(BuildContext context) => Positioned.fill(
+    child: Material(
+      color: Colors.black87,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 34,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                text,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 20, color: Colors.white),
+              ),
+              const SizedBox(height: 24),
+              ...actions,
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 class _RunView extends StatelessWidget {
-  const _RunView({required this.game, required this.s});
+  const _RunView({required this.game, required this.s, required this.onPause});
   final ForestGame game;
   final S s;
+  final VoidCallback onPause;
 
   @override
   Widget build(BuildContext context) {
@@ -299,6 +539,12 @@ class _RunView extends StatelessWidget {
                         ),
                         const SizedBox(width: 12),
                         TrackingDot(h.light, size: 36),
+                        IconButton(
+                          tooltip: tr('Pause'),
+                          iconSize: 36,
+                          icon: const Icon(Icons.pause_circle_filled),
+                          onPressed: onPause,
+                        ),
                       ],
                     ),
                   ),
@@ -360,10 +606,14 @@ class _ExerciseFlow extends StatefulWidget {
     required this.exercises,
     required this.voice,
     required this.onDone,
+    this.paused = false,
   });
   final String title;
   final List<Exercise> exercises;
   final Voice voice;
+
+  /// While paused the countdown holds and nothing is spoken.
+  final bool paused;
   final VoidCallback onDone;
   @override
   State<_ExerciseFlow> createState() => _ExerciseFlowState();
@@ -394,7 +644,7 @@ class _ExerciseFlowState extends State<_ExerciseFlow> {
     widget.voice.say('${tr(e.name)}. ${tr(e.cue)}', force: true);
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (!mounted) return;
+      if (!mounted || widget.paused) return;
       if (_left <= 1) {
         _begin(_i + 1);
       } else {

@@ -5,7 +5,7 @@ import type { AppContext } from '../../context.js';
 import { requireUser } from '../../lib/auth.js';
 import { hmacSha256Hex, safeEqual } from '../../lib/crypto.js';
 import { badRequest, unauthorized } from '../../lib/errors.js';
-import { applyGymPayment, applyRevenueCat, getEntitlement, markProcessed, type GymPaymentNotes } from './service.js';
+import { applyGymPayment, applyRevenueCat, getEntitlement, processWebhookOnce, type GymPaymentNotes } from './service.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -37,10 +37,7 @@ export async function billingRoutes(app: FastifyInstance, ctx: AppContext) {
       .safeParse(req.body);
     if (!body.success) throw badRequest('bad_payload');
     const e = body.data.event;
-    if (!(await markProcessed(ctx, 'revenuecat', e.id, req.rawBody ?? JSON.stringify(req.body)))) {
-      return reply.send({ status: 'duplicate' });
-    }
-    const status = await applyRevenueCat(ctx, e);
+    const status = await processWebhookOnce(ctx, 'revenuecat', e.id, req.rawBody ?? JSON.stringify(req.body), (tx) => applyRevenueCat(tx, e));
     req.log.info({ type: e.type, status }, 'revenuecat event');
     return reply.send({ status });
   });
@@ -54,11 +51,11 @@ export async function billingRoutes(app: FastifyInstance, ctx: AppContext) {
     const body = req.body as { event?: string; payload?: Record<string, { entity?: { id?: string; notes?: GymPaymentNotes } }> };
     const eventId = (req.headers['x-razorpay-event-id'] as string | undefined) ?? `${body.event}:${Object.values(body.payload ?? {})[0]?.entity?.id ?? ''}`;
     if (!body.event) throw badRequest('bad_payload');
-    if (!(await markProcessed(ctx, 'razorpay', eventId, raw))) return reply.send({ status: 'duplicate' });
+    // Unhandled event types are not recorded, so they can be replayed once supported.
     if (!RAZORPAY_EVENTS.has(body.event)) return reply.send({ status: 'ignored' });
     const p = body.payload ?? {};
     const notes = p.payment_link?.entity?.notes ?? p.invoice?.entity?.notes ?? p.subscription?.entity?.notes ?? p.payment?.entity?.notes ?? {};
-    const status = await applyGymPayment(ctx, notes);
+    const status = await processWebhookOnce(ctx, 'razorpay', eventId, raw, (tx) => applyGymPayment(tx, notes));
     req.log.info({ event: body.event, status }, 'razorpay event');
     return reply.send({ status });
   });

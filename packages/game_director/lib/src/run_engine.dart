@@ -164,6 +164,11 @@ class RunEngine {
   /// Last level-clock time at which tracking was lost (red).
   int? _lastLostClock;
 
+  /// Last wall-clock time at which tracking was lost (red). The level clock
+  /// is slowed or stopped around a loss, so reaction time after recovery is
+  /// measured in wall time.
+  int? _lastLostWall;
+
   int _nextCue = 0;
   int _nextResolve = 0;
   bool _checkpointDone = false;
@@ -174,6 +179,14 @@ class RunEngine {
   /// Grace windows (wall-clock ms), widened in assist mode.
   int get _raiseWindowMs => settings.assist ? 900 : 600;
   int get _squatGraceMs => settings.assist ? 400 : 200;
+
+  /// Wall-clock green tracking the player needs before an arrival for it to
+  /// be judged; less than this after a loss and the encounter is forgiven.
+  int get _reactionMs => settings.assist ? 1200 : 800;
+
+  /// Level-clock margin before a cue in which a loss still forgives it (a
+  /// loss just before the cue means the cue may have been missed).
+  static const _cueMarginMs = 300;
 
   bool get atCheckpoint => _checkpointSaved;
 
@@ -204,6 +217,7 @@ class RunEngine {
       case TrackingPaused(:final issue):
         _light = TrackingLight.red;
         _lastLostClock = at;
+        _lastLostWall = _wallMs;
         ducking = false;
         armsUp = false;
         out.add(TrackingHint(at, issue));
@@ -234,7 +248,10 @@ class RunEngine {
     if (scale > 0) activeMs += dtMs;
     clockMs += dtMs * scale;
     final now = clockMs.round();
-    if (_light == TrackingLight.red) _lastLostClock = now;
+    if (_light == TrackingLight.red) {
+      _lastLostClock = now;
+      _lastLostWall = _wallMs;
+    }
 
     final seg = level.segmentAt(now);
     if (seg != null && seg != _segment) {
@@ -273,10 +290,14 @@ class RunEngine {
 
   List<RunEvent> _resolve(PlannedEncounter p, int now) {
     final out = <RunEvent>[];
-    // Lost at any point between the cue and arrival: the player could not
-    // have answered fairly, so it is forgiven.
+    // Forgiven (rule 5) when the player could not have answered fairly:
+    // tracking is lost now, was lost at any point from just before the cue
+    // to arrival (level clock), or came back less than a reaction time ago
+    // (wall clock: the level clock was slowed or stopped meanwhile).
     final trackingLost = _light == TrackingLight.red ||
-        (_lastLostClock != null && _lastLostClock! >= p.warnMs);
+        (_lastLostClock != null &&
+            _lastLostClock! >= p.warnMs - _cueMarginMs) ||
+        (_lastLostWall != null && _wallMs - _lastLostWall! < _reactionMs);
     Outcome outcome;
     if (trackingLost) {
       outcome = Outcome.forgiven;
@@ -321,16 +342,36 @@ class RunEngine {
       (_lastRaiseWall != null && _wallMs - _lastRaiseWall! <= _raiseWindowMs);
 
   /// After running out of hearts past the checkpoint, continue from there.
+  ///
+  /// Only valid once the run has ended on hearts; calling it again before
+  /// another loss does nothing, so hearts cannot be refilled twice. All
+  /// transient state is reset so nothing from the failed attempt (an old
+  /// tracking loss, a held squat, a streak) carries over, and the
+  /// checkpoint segment and its hint replay.
   bool restartFromCheckpoint() {
     final cp = level.checkpoint;
-    if (!_checkpointSaved || cp == null) return false;
+    if (!_checkpointSaved || cp == null || !finished || hearts > 0) {
+      return false;
+    }
     finished = false;
     hearts = level.hearts;
     clockMs = cp.startMs.toDouble();
-    _nextCue = plan.indexWhere((p) => p.warnMs >= cp.startMs);
-    if (_nextCue < 0) _nextCue = plan.length;
+    _light = TrackingLight.green;
+    _lastLostClock = null;
+    _lastLostWall = null;
+    ducking = false;
+    armsUp = false;
+    _lastRaiseWall = null;
+    _lastSquatEndWall = null;
+    streak = 0;
+    _segment = null;
+    pacer.reset();
     _nextResolve = plan.indexWhere((p) => p.arriveMs >= cp.startMs);
     if (_nextResolve < 0) _nextResolve = plan.length;
+    _nextCue = plan.indexWhere((p) => p.warnMs >= cp.startMs);
+    if (_nextCue < 0) _nextCue = plan.length;
+    // Encounters still to resolve get their cue again.
+    if (_nextResolve < _nextCue) _nextCue = _nextResolve;
     return true;
   }
 

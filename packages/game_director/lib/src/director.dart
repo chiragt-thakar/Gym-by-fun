@@ -186,6 +186,9 @@ class Pacer {
   double _scale = 1;
   double get scale => _scale;
 
+  /// Back to full pace (e.g. on a checkpoint restart).
+  void reset() => _scale = 1;
+
   /// [light]: 0 = green, 1 = amber, 2 = red (paused).
   double update(int dtMs, int light) {
     final target = switch (light) { 0 => 1.0, 1 => amberScale, _ => 0.0 };

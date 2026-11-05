@@ -10,7 +10,8 @@
 | Consent per purpose (account, gym_sharing, analytics, calibration_backup), versioned, withdrawable | `server/src/modules/identity/routes.ts` |
 | Calibration (body measurements) stays on device unless backup consent is on; withdrawing deletes the backup | `PUT /me/calibration`, `PUT /me/consents` |
 | Gyms see only members who opted in to sharing, first names and activity summaries — never body measurements | `gyms/service.ts` `crewBoard`, `reports/service.ts` |
-| Data export and account deletion in settings | `GET /me/export`, `DELETE /me` (immediate scrub, hard delete after `DELETION_GRACE_DAYS`) |
+| Data export in settings: every user-linked table (incl. crew scores, entitlements/billing linkage, sign-in session metadata — never token or phone hashes); a test fails if a new `user_id` table is not exported | `GET /me/export` |
+| Account deletion in settings. Immediate scrub: name, phone, Google id cleared; tokens revoked; gym sharing stopped; pain reports, devices, calibrations, sessions (+ moves), progress and crew scores deleted. Kept until the hard delete after `DELETION_GRACE_DAYS`, linked only to the scrubbed user id: entitlements (billing/accounting linkage), withdrawn consent records, memberships marked left, revoked refresh tokens | `DELETE /me`, nightly `purgeDeletedAccounts` |
 | Adults only: 18+ confirmation before an account is created | app age gate + `age_confirmation_required` on the server |
 | Readiness answers are never stored | `ReadinessScreen` keeps them in widget state only |
 | Phone numbers encrypted at rest (AES-256-GCM) with keyed-hash lookup | `server/src/lib/crypto.ts` |
@@ -22,7 +23,7 @@
 | Control | Where |
 |---|---|
 | Every webhook verified: RevenueCat shared auth header, Razorpay HMAC-SHA256 over the raw body; constant-time compare | `billing/routes.ts` |
-| Each webhook event processed once (`billing_events` primary key) | `billing/service.ts markProcessed` |
+| Each webhook event processed exactly once: the `billing_events` marker and the change it records commit in one transaction, so a failed apply leaves no marker and the provider retry succeeds; unhandled Razorpay event types are not recorded | `billing/service.ts processWebhookOnce` |
 | Premium decided on the server only | `GET /entitlements` |
 | OTP: 6 digits, 5-minute expiry, 5 attempts, hashed at rest, rate-limited per phone (3/10 min) and per IP (10/h) | `identity/routes.ts` |
 | Short-lived access JWTs (15 min); opaque rotating refresh tokens stored hashed; reuse revokes the whole family | `identity/tokens.ts` |

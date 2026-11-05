@@ -1,5 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { sql } from 'kysely';
+
 import { nextPhone, setup, signUp, type TestApp } from './helpers.js';
 
 let t: TestApp;
@@ -128,6 +130,38 @@ describe('account, consent, export, deletion', () => {
     expect(body.note).toMatch(/never stores camera images/);
   });
 
+  it('exports every user-linked table, sign-in metadata without hashes, and crew scores', async () => {
+    const u = await signUp(t);
+    const r = await t.app.inject({ method: 'GET', url: '/v1/me/export', headers: u.auth });
+    const body = r.json();
+    // Every table with a user_id column must appear in the export. Add new tables here AND to /me/export.
+    const exportKeyFor: Record<string, string> = {
+      refresh_tokens: 'signInSessions',
+      consents: 'consents',
+      devices: 'devices',
+      calibrations: 'calibrations',
+      sessions: 'sessions',
+      progress: 'progress',
+      pain_reports: 'painReports',
+      memberships: 'memberships',
+      crew_scores: 'crewScores',
+      entitlements: 'entitlements',
+    };
+    const tables = await sql<{ table_name: string }>`
+      select table_name from information_schema.columns
+      where table_schema = 'public' and column_name = 'user_id'`.execute(t.ctx.db);
+    for (const { table_name } of tables.rows) {
+      expect(exportKeyFor[table_name], `user-linked table ${table_name} is not exported`).toBeDefined();
+      expect(body).toHaveProperty(exportKeyFor[table_name]!);
+    }
+    expect(Array.isArray(body.crewScores)).toBe(true);
+    expect(Array.isArray(body.billing)).toBe(true);
+    expect(body.signInSessions.length).toBeGreaterThan(0);
+    expect(body.signInSessions[0]).toHaveProperty('created_at');
+    expect(body.signInSessions[0]).toHaveProperty('expires_at');
+    expect(JSON.stringify(body)).not.toMatch(/token_hash|phone_hash|phone_enc/);
+  });
+
   it('deletes the account: scrubs identifiers and blocks access', async () => {
     const u = await signUp(t);
     const r = await t.app.inject({ method: 'DELETE', url: '/v1/me', headers: u.auth });
@@ -137,5 +171,24 @@ describe('account, consent, export, deletion', () => {
     expect(row.phone_hash).toBeNull();
     expect((await t.app.inject({ method: 'GET', url: '/v1/me', headers: u.auth })).statusCode).toBe(401);
     expect((await t.app.inject({ method: 'POST', url: '/v1/auth/refresh', payload: { refreshToken: u.refreshToken } })).statusCode).toBe(401);
+  });
+
+  it('deletes pain reports, devices and activity immediately, keeping only anonymised billing linkage', async () => {
+    const u = await signUp(t);
+    const dev = await t.app.inject({ method: 'POST', url: '/v1/devices', headers: u.auth, payload: { model: 'Pixel 6a', perfTier: 'mid', appVersion: '1.0.0' } });
+    expect(dev.statusCode).toBe(201);
+    const pain = await t.app.inject({ method: 'POST', url: '/v1/me/pain-reports', headers: u.auth, payload: { area: 'knees', note: 'sore' } });
+    expect(pain.statusCode).toBe(201);
+    await t.ctx.db
+      .insertInto('entitlements')
+      .values({ user_id: u.userId, source: 'play', product: 'premium', source_ref: 'GPA.del', active_until: t.clock.now, updated_at: t.clock.now })
+      .execute();
+    expect((await t.app.inject({ method: 'DELETE', url: '/v1/me', headers: u.auth })).statusCode).toBe(202);
+    const count = async (table: 'pain_reports' | 'devices' | 'calibrations' | 'sessions' | 'progress' | 'crew_scores' | 'entitlements') =>
+      Number((await t.ctx.db.selectFrom(table).select((e) => e.fn.countAll().as('n')).where('user_id', '=', u.userId).executeTakeFirstOrThrow()).n);
+    for (const table of ['pain_reports', 'devices', 'calibrations', 'sessions', 'progress', 'crew_scores'] as const) {
+      expect(await count(table), table).toBe(0);
+    }
+    expect(await count('entitlements')).toBe(1);
   });
 });
