@@ -32,3 +32,6 @@ dist/
 *.mp4
 *.mov
 *.webm
+
+# Local Redis snapshots
+dump.rdb
