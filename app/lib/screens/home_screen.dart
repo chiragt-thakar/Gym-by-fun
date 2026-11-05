@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../app/theme.dart';
 import '../game/stages.dart';
 import '../l10n/tr.dart';
 
@@ -9,6 +10,7 @@ import '../services/api_client.dart';
 import '../services/premium.dart';
 import '../services/session_queue.dart';
 import '../services/settings.dart';
+import '../widgets/lantern_card.dart';
 import 'stage_info_sheet.dart';
 
 /// Gym branding and progress, if signed in. Null when offline or signed out.
@@ -105,6 +107,7 @@ class HomeScreen extends ConsumerWidget {
                 '${progress?['streak'] ?? '–'}',
               ),
             ),
+            const SizedBox(width: 8),
             Expanded(
               child: _Tile(
                 Icons.shield,
@@ -112,6 +115,7 @@ class HomeScreen extends ConsumerWidget {
                 '${progress?['shields'] ?? 2}',
               ),
             ),
+            const SizedBox(width: 8),
             Expanded(
               child: _Tile(
                 Icons.star,
@@ -165,7 +169,7 @@ class HomeScreen extends ConsumerWidget {
       child: Text(
         s.s.t('not_medical'),
         textAlign: TextAlign.center,
-        style: const TextStyle(fontSize: 14, color: Colors.white60),
+        style: const TextStyle(fontSize: 14, color: Lantern.fog),
       ),
     );
     return Scaffold(
@@ -186,7 +190,7 @@ class HomeScreen extends ConsumerWidget {
           // footer exist at any time. Each world card has its own repaint
           // layer so scrolling never repaints its stage tiles.
           child: ListView.builder(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             itemCount: worldList.length + 2,
             itemBuilder: (context, i) {
               if (i == 0) return header(context);
@@ -254,6 +258,7 @@ class _WorldCard extends StatelessWidget {
             : Icons.lock_outline,
         size: 32,
       ),
+      trailing: open ? const Icon(Icons.chevron_right) : null,
       title: Text(
         '${world.number}-${st.stageNumber} · ${tr(st.title)}',
         style: const TextStyle(fontSize: 18),
@@ -279,19 +284,22 @@ class _Tile extends StatelessWidget {
   final String label;
   final String value;
   @override
-  Widget build(BuildContext context) => Card(
-    child: Padding(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        children: [
-          Icon(icon, size: 32),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
-          ),
-          Text(label),
-        ],
-      ),
+  Widget build(BuildContext context) => LanternCard(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+    child: Column(
+      children: [
+        Icon(icon, size: 32, color: Lantern.glow),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
+        ),
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(color: Lantern.fog),
+        ),
+      ],
     ),
   );
 }

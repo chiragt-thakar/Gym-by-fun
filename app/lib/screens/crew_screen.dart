@@ -61,6 +61,7 @@ class _CrewState extends ConsumerState<CrewScreen> {
       ref.invalidate(homeDataProvider);
       await _load();
     } on ApiException catch (e) {
+      if (!mounted) return;
       setState(
         () => _error = switch (e.code) {
           'gym_code_unknown' =>
@@ -75,6 +76,7 @@ class _CrewState extends ConsumerState<CrewScreen> {
         },
       );
     } catch (_) {
+      if (!mounted) return;
       setState(() => _error = tr('Needs a connection.'));
     }
   }
@@ -153,12 +155,27 @@ class _CrewState extends ConsumerState<CrewScreen> {
               ),
             ),
           ),
+        if (_error != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Text(
+              _error!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ),
         const SizedBox(height: 16),
         BigButton(
           tr('Leave this gym'),
           secondary: true,
           onPressed: () async {
-            await ref.read(apiProvider).leaveGym();
+            try {
+              await ref.read(apiProvider).leaveGym();
+            } catch (_) {
+              if (!mounted) return;
+              setState(() => _error = tr('Needs a connection.'));
+              return;
+            }
+            if (!mounted) return;
             ref.invalidate(homeDataProvider);
             setState(() {
               _gym = null;

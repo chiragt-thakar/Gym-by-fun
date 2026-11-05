@@ -60,7 +60,7 @@ class StageInfoSheet extends ConsumerWidget {
       maxChildSize: 0.95,
       builder: (context, controller) => SingleChildScrollView(
         controller: controller,
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -70,7 +70,7 @@ class StageInfoSheet extends ConsumerWidget {
                 fontWeight: FontWeight.w800,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 4,
@@ -158,7 +158,7 @@ class StageInfoSheet extends ConsumerWidget {
   }
 
   Widget _heading(BuildContext context, String text) => Padding(
-    padding: const EdgeInsets.only(top: 16, bottom: 6),
+    padding: const EdgeInsets.only(top: 16, bottom: 8),
     child: Text(text, style: Theme.of(context).textTheme.titleMedium),
   );
 

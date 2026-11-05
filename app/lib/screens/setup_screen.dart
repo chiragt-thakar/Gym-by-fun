@@ -38,6 +38,10 @@ class _SetupState extends ConsumerState<SetupScreen> {
       initialCalibration: null,
     );
     final ok = await session.start(tier: DeviceTier.mid);
+    if (!mounted) {
+      await session.dispose();
+      return;
+    }
     if (!ok) {
       setState(() => _denied = true);
       return;
@@ -52,6 +56,7 @@ class _SetupState extends ConsumerState<SetupScreen> {
         _goodSince = null;
       }
       final benchDone = f.timestampMs - _startedAt! >= 3000;
+      if (!mounted) return;
       setState(() {
         _frame = f;
         _q = q;

@@ -41,7 +41,12 @@ class _RecorderState extends ConsumerState<RecorderScreen> {
       ref.read(poseSourceProvider),
       initialCalibration: s.calibration,
     );
-    if (!await session.start(tier: s.deviceTier ?? DeviceTier.mid)) return;
+    final ok = await session.start(tier: s.deviceTier ?? DeviceTier.mid);
+    if (!mounted) {
+      await session.dispose();
+      return;
+    }
+    if (!ok) return;
     _session = session;
     final rec = RecordingBuilder(
       meta: {
@@ -74,6 +79,7 @@ class _RecorderState extends ConsumerState<RecorderScreen> {
         '${_subject.text.trim()}_${DateTime.now().millisecondsSinceEpoch}.json';
     final file = File('${dir.path}/$name');
     await file.writeAsString(rec.encode());
+    if (!mounted) return;
     setState(() {
       _rec = null;
       _session = null;

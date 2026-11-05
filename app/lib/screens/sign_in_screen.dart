@@ -34,6 +34,7 @@ class _SignInState extends ConsumerState<SignInScreen> {
     try {
       await f();
     } on ApiException catch (e) {
+      if (!mounted) return;
       setState(
         () => _error = switch (e.code) {
           'otp_invalid' => tr('That code is not right. Try again.'),
@@ -45,6 +46,7 @@ class _SignInState extends ConsumerState<SignInScreen> {
         },
       );
     } catch (_) {
+      if (!mounted) return;
       setState(
         () => _error = tr(
           'No connection. You can play offline and sign in later.',
@@ -113,6 +115,7 @@ class _SignInState extends ConsumerState<SignInScreen> {
                 ? null
                 : () => _run(() async {
                     await api.startOtp(_e164);
+                    if (!mounted) return;
                     setState(() => _sent = true);
                   }),
           )

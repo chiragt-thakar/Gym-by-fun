@@ -87,6 +87,27 @@ free storage). These budgets are release gates, not aspirations.
 - Home world map: `ListView.builder` (header, one item per world, footer), so
   world cards are built lazily. Each card sits in its own `RepaintBoundary`.
 
+## Storage
+
+Install size matters on budget phones with little free space.
+
+- **Dependencies:** every package in `app/pubspec.yaml` was checked against
+  `package:<name>/` imports under `app/lib`. All of them (flutter_riverpod,
+  go_router, flame, flame_audio, http, path_provider, shared_preferences,
+  flutter_tts, motion_core, game_director, pose_bridge) are in use, so none
+  were removed.
+- **CI release build** (`.github/workflows/ci.yml`):
+  `flutter build apk --release --split-per-abi --target-platform android-arm,android-arm64 --obfuscate --split-debug-info=build/symbols --tree-shake-icons`.
+  - `--split-per-abi` + ARM-only targets: each phone downloads one ABI.
+  - `--obfuscate --split-debug-info`: Dart symbol tables leave the APK. The
+    symbols are uploaded as the `motionquest-debug-symbols` artifact. Keep the
+    file for each release, because without it crash stack traces can't be
+    read (`flutter symbolize -i <trace> -d <symbols>/app.android-arm64.symbols`).
+  - `--tree-shake-icons`: only the Material icon glyphs we use are bundled
+    (on by default for release builds; we pass it explicitly).
+  - The "Install size budget" step prints each APK's size in MB (two decimals)
+    and fails if any APK is 150 MB or larger.
+
 ## Asset sizes (bundled in the APK)
 
 | Asset | Size |

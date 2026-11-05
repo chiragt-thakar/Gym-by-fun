@@ -36,7 +36,12 @@ class _DebugState extends ConsumerState<DebugScreen> {
       initialCalibration: s.calibration,
       thresholds: s.thresholds,
     );
-    if (!await session.start(tier: s.deviceTier ?? DeviceTier.mid)) {
+    final ok = await session.start(tier: s.deviceTier ?? DeviceTier.mid);
+    if (!mounted) {
+      await session.dispose();
+      return;
+    }
+    if (!ok) {
       setState(() => _status = 'Camera permission denied');
       return;
     }

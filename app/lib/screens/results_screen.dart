@@ -11,6 +11,7 @@ import '../services/coach_service.dart';
 import '../services/session_queue.dart';
 import '../services/settings.dart';
 import '../services/voice.dart';
+import '../app/theme.dart';
 import '../widgets/common.dart';
 
 class ResultsData {
@@ -215,21 +216,32 @@ class _ResultsState extends ConsumerState<ResultsScreen> {
           style: Theme.of(context).textTheme.headlineMedium,
         ),
         const SizedBox(height: 16),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            _Stat(tr('Score'), '${r.score}'),
-            _Stat(tr('Moves done'), '${r.movesDone}'),
-            _Stat(tr('Active min'), (r.activeMs / 60000).toStringAsFixed(1)),
-            _Stat(tr('Energy'), '${r.energy}'),
-            _Stat(tr('Cleared'), '${r.cleared}'),
-            _Stat(tr('Hearts left'), '${r.hearts}'),
-          ],
+        // Equal-width grid: 3 columns when there is room, else 2, so the six
+        // stats always fill whole rows instead of leaving a ragged gap.
+        LayoutBuilder(
+          builder: (context, c) {
+            final cols = c.maxWidth >= 480 ? 3 : 2;
+            final w = (c.maxWidth - 12 * (cols - 1)) / cols;
+            return Wrap(
+              spacing: 12,
+              runSpacing: 0,
+              children: [
+                for (final (label, value) in [
+                  (tr('Score'), '${r.score}'),
+                  (tr('Moves done'), '${r.movesDone}'),
+                  (tr('Active min'), (r.activeMs / 60000).toStringAsFixed(1)),
+                  (tr('Energy'), '${r.energy}'),
+                  (tr('Cleared'), '${r.cleared}'),
+                  (tr('Hearts left'), '${r.hearts}'),
+                ])
+                  SizedBox(width: w, child: _Stat(label, value)),
+              ],
+            );
+          },
         ),
         if (r.forgiven > 0)
           Padding(
-            padding: const EdgeInsets.only(top: 8),
+            padding: const EdgeInsets.only(top: 12),
             child: Text(
               '${r.forgiven} obstacle(s) were skipped because tracking dropped — no hearts lost.',
             ),
@@ -249,12 +261,21 @@ class _ResultsState extends ConsumerState<ResultsScreen> {
                   label: Text('$i', style: const TextStyle(fontSize: 20)),
                 ),
             ],
+            style: const ButtonStyle(
+              minimumSize: WidgetStatePropertyAll(Size(48, 56)),
+            ),
             selected: {?_effort},
             emptySelectionAllowed: true,
             onSelectionChanged: (v) =>
                 setState(() => _effort = v.isEmpty ? null : v.first),
           ),
-          Text(tr('1 = very easy · 5 = very hard')),
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              tr('1 = very easy · 5 = very hard'),
+              style: const TextStyle(color: Lantern.fog),
+            ),
+          ),
         ],
         if (!d.tutorial) ...[
           const SizedBox(height: 24),
@@ -291,21 +312,24 @@ class _Stat extends StatelessWidget {
   final String label;
   final String value;
   @override
-  Widget build(BuildContext context) => SizedBox(
-    width: 150,
-    child: Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800),
-            ),
-            Text(label, style: const TextStyle(fontSize: 16)),
-          ],
+  Widget build(BuildContext context) => LanternCard(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+    child: Column(
+      children: [
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            value,
+            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800),
+          ),
         ),
-      ),
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 16, color: Lantern.fog),
+        ),
+      ],
     ),
   );
 }
