@@ -1,0 +1,425 @@
+{
+  "$schema": "../schema/level.schema.json",
+  "id": "w1-forest-escape",
+  "version": 1,
+  "schemaVersion": 1,
+  "world": 1,
+  "name": "Forest Escape",
+  "lanes": 3,
+  "durationS": 181,
+  "hearts": 3,
+  "music": {
+    "track": "forest_run",
+    "bpmByDifficulty": {
+      "beginner": 110,
+      "intermediate": 122,
+      "advanced": 132
+    }
+  },
+  "difficulty": {
+    "beginner": {
+      "warningMs": 2000,
+      "maxDemandingInRow": 3,
+      "hints": "always",
+      "lowImpactDefault": true
+    },
+    "intermediate": {
+      "warningMs": 1600,
+      "maxDemandingInRow": 5,
+      "hints": "firstTime",
+      "lowImpactDefault": true
+    },
+    "advanced": {
+      "warningMs": 1300,
+      "maxDemandingInRow": 7,
+      "hints": "off",
+      "lowImpactDefault": false
+    }
+  },
+  "scoring": {
+    "beam": 100,
+    "laneBlock": 100,
+    "orb": 50,
+    "gate": 150
+  },
+  "segments": [
+    {
+      "id": "practice",
+      "kind": "practice",
+      "startS": 0,
+      "endS": 30,
+      "hint": "Practice run \u2014 take your time."
+    },
+    {
+      "id": "learn",
+      "kind": "learn",
+      "startS": 30,
+      "endS": 90
+    },
+    {
+      "id": "breather",
+      "kind": "breather",
+      "startS": 90,
+      "endS": 105,
+      "hint": "Breathe. Grab the orbs."
+    },
+    {
+      "id": "combos",
+      "kind": "combo",
+      "startS": 105,
+      "endS": 150,
+      "hint": "Combos coming!"
+    },
+    {
+      "id": "checkpoint",
+      "kind": "checkpoint",
+      "startS": 150,
+      "endS": 151,
+      "hint": "Checkpoint! A heart comes back."
+    },
+    {
+      "id": "finale",
+      "kind": "finale",
+      "startS": 151,
+      "endS": 181,
+      "hint": "Escape the forest!"
+    }
+  ],
+  "encounters": [
+    {
+      "atS": 9,
+      "type": "beam",
+      "hint": "A low branch! Squat to duck under it."
+    },
+    {
+      "atS": 12.5,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 16,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ],
+      "hint": "A rock in the middle! Lean left or right."
+    },
+    {
+      "atS": 19.5,
+      "type": "beam",
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 23,
+      "type": "beam"
+    },
+    {
+      "atS": 28,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "Energy orb! Raise both arms to grab it."
+    },
+    {
+      "atS": 33.0,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 36.6,
+      "type": "beam"
+    },
+    {
+      "atS": 40.13,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 43.59,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 46.98,
+      "type": "beam"
+    },
+    {
+      "atS": 50.3,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 53.55,
+      "type": "orb",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 56.73,
+      "type": "beam"
+    },
+    {
+      "atS": 59.84,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 62.88,
+      "type": "beam"
+    },
+    {
+      "atS": 65.85,
+      "type": "orb",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 68.75,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 71.58,
+      "type": "beam"
+    },
+    {
+      "atS": 74.34,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 77.03,
+      "type": "beam"
+    },
+    {
+      "atS": 79.65,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 82.2,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 84.68,
+      "type": "beam"
+    },
+    {
+      "atS": 87.09,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 92,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 96,
+      "type": "orb",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 100,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 103.5,
+      "type": "orb",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 106.0,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 107.7,
+      "type": "beam"
+    },
+    {
+      "atS": 110.9,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 112.6,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 115.8,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 117.5,
+      "type": "beam"
+    },
+    {
+      "atS": 120.7,
+      "type": "beam"
+    },
+    {
+      "atS": 122.4,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 125.6,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 127.3,
+      "type": "beam"
+    },
+    {
+      "atS": 130.5,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 131.5,
+      "type": "beam",
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 132.2,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 135.4,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 137.1,
+      "type": "beam"
+    },
+    {
+      "atS": 140.3,
+      "type": "beam"
+    },
+    {
+      "atS": 142.0,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 145.2,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 146.9,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 154,
+      "type": "gate",
+      "hint": "The forest gate! Arms up to open it."
+    },
+    {
+      "atS": 158,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 161,
+      "type": "beam"
+    },
+    {
+      "atS": 164.5,
+      "type": "gate"
+    },
+    {
+      "atS": 168,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 171,
+      "type": "beam"
+    },
+    {
+      "atS": 174.5,
+      "type": "gate"
+    },
+    {
+      "atS": 178,
+      "type": "gate",
+      "hint": "Last gate \u2014 escape the forest!"
+    }
+  ]
+}

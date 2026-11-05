@@ -1,0 +1,88 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../services/api_client.dart';
+import '../services/settings.dart';
+import '../widgets/common.dart';
+
+/// Phone OTP sign-in. Optional: the game works offline and syncs later.
+class SignInScreen extends ConsumerStatefulWidget {
+  const SignInScreen({super.key});
+  @override
+  ConsumerState<SignInScreen> createState() => _SignInState();
+}
+
+class _SignInState extends ConsumerState<SignInScreen> {
+  final _phone = TextEditingController();
+  final _code = TextEditingController();
+  bool _sent = false;
+  bool _busy = false;
+  String? _error;
+
+  String get _e164 => '+91${_phone.text.replaceAll(RegExp(r'\D'), '')}';
+
+  Future<void> _run(Future<void> Function() f) async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await f();
+    } on ApiException catch (e) {
+      setState(() => _error = switch (e.code) {
+            'otp_invalid' => 'That code is not right. Try again.',
+            'otp_expired' => 'The code expired. Ask for a new one.',
+            'otp_rate_limited' => 'Too many tries. Please wait a few minutes.',
+            _ => 'Something went wrong (${e.code}).',
+          });
+    } catch (_) {
+      setState(() => _error = 'No connection. You can play offline and sign in later.');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  void _next() => context.go(ref.read(settingsProvider).setupDone ? '/home' : '/setup');
+
+  @override
+  Widget build(BuildContext context) {
+    final api = ref.read(apiProvider);
+    final s = ref.watch(settingsProvider);
+    return ScreenScaffold(title: 'Sign in', children: [
+      Text('Save your progress and join your gym crew.', style: Theme.of(context).textTheme.bodyLarge),
+      const SizedBox(height: 16),
+      TextField(
+        controller: _phone,
+        enabled: !_sent,
+        keyboardType: TextInputType.phone,
+        style: const TextStyle(fontSize: 22),
+        decoration: const InputDecoration(prefixText: '+91 ', labelText: 'Mobile number', border: OutlineInputBorder()),
+      ),
+      if (_sent) ...[
+        const SizedBox(height: 12),
+        TextField(
+          controller: _code,
+          keyboardType: TextInputType.number,
+          maxLength: 6,
+          style: const TextStyle(fontSize: 26, letterSpacing: 8),
+          decoration: const InputDecoration(labelText: '6-digit code', border: OutlineInputBorder()),
+        ),
+      ],
+      if (_error != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(_error!, style: const TextStyle(color: Colors.orangeAccent))),
+      const SizedBox(height: 12),
+      if (!_sent)
+        BigButton('Send code', onPressed: _busy ? null : () => _run(() async {
+              await api.startOtp(_e164);
+              setState(() => _sent = true);
+            }))
+      else
+        BigButton('Verify', onPressed: _busy ? null : () => _run(() async {
+              await api.verifyOtp(_e164, _code.text.trim(), ageConfirmed: s.ageConfirmed, language: s.language.name);
+              ref.read(settingsProvider.notifier).update((x) => x.copyWith(signedIn: true));
+              _next();
+            })),
+      BigButton('Play offline for now', secondary: true, onPressed: _next),
+    ]);
+  }
+}
