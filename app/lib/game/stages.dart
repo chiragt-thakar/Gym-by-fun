@@ -110,6 +110,16 @@ const stages = <Stage>[
     theme: SceneTheme.desert,
   ),
   Stage(
+    levelId: 'w2-mirage-maze',
+    world: 2,
+    worldName: 'Desert Trials',
+    stageNumber: 4,
+    title: 'Mirage Maze',
+    description:
+        'A gentle lean-heavy maze with wide gaps and a shaded breather.',
+    theme: SceneTheme.desert,
+  ),
+  Stage(
     levelId: 'w3-neon-city-rooftops',
     world: 3,
     worldName: 'Neon City',
@@ -134,6 +144,15 @@ const stages = <Stage>[
     stageNumber: 3,
     title: 'Neon Night Market',
     description: 'Lantern strings, stall carts and glow tokens.',
+    theme: SceneTheme.neon,
+  ),
+  Stage(
+    levelId: 'w3-skyline-finale',
+    world: 3,
+    worldName: 'Neon City',
+    stageNumber: 4,
+    title: 'Skyline Finale',
+    description: 'A rooftop drone-hub run ending in an arms-up gate gauntlet.',
     theme: SceneTheme.neon,
   ),
   Stage(

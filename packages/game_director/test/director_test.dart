@@ -29,6 +29,62 @@ void main() {
     expect(p.first.warningMs, 2500);
   });
 
+  test('warning multiplier defaults to 1.0 and leaves warnings unchanged', () {
+    expect(const RunSettings().warningMultiplier, 1.0);
+    final a = Director(forest(), const RunSettings()).plan();
+    final b =
+        Director(forest(), const RunSettings(warningMultiplier: 1.0)).plan();
+    expect(b.map((p) => p.warnMs), a.map((p) => p.warnMs));
+    expect(Director(forest(), const RunSettings()).warningMs, 2000);
+  });
+
+  test('warning multiplier increases warning, stacks with assist', () {
+    expect(
+        Director(forest(), const RunSettings(warningMultiplier: 1.2)).warningMs,
+        2400);
+    expect(
+        Director(forest(),
+                const RunSettings(warningMultiplier: 1.2, assist: true))
+            .warningMs,
+        3000);
+    final base = Director(forest(), const RunSettings()).plan();
+    final gentle =
+        Director(forest(), const RunSettings(warningMultiplier: 1.2)).plan();
+    // Same encounters at the same times; never cued later, mostly earlier.
+    expect(gentle.map((p) => p.arriveMs), base.map((p) => p.arriveMs));
+    var longer = 0;
+    for (var i = 0; i < base.length; i++) {
+      expect(gentle[i].warningMs, greaterThanOrEqualTo(base[i].warningMs));
+      if (gentle[i].warningMs > base[i].warningMs) longer++;
+    }
+    expect(longer, greaterThan(0));
+  });
+
+  test('extra warning never cues before the previous encounter arrives', () {
+    for (final s in const [
+      RunSettings(assist: true),
+      RunSettings(warningMultiplier: 1.5, assist: true),
+    ]) {
+      final base = Director(forest(), const RunSettings()).plan();
+      final plan = Director(forest(), s).plan();
+      for (var i = 1; i < plan.length; i++) {
+        expect(
+            plan[i].warnMs,
+            greaterThanOrEqualTo(plan[i - 1].arriveMs < base[i].warnMs
+                ? plan[i - 1].arriveMs
+                : base[i].warnMs));
+      }
+    }
+  });
+
+  test('warning multiplier is clamped to 1.0–1.5', () {
+    expect(const RunSettings(warningMultiplier: 0.5).warningMultiplier, 1.0);
+    expect(const RunSettings(warningMultiplier: 3).warningMultiplier, 1.5);
+    expect(
+        Director(forest(), const RunSettings(warningMultiplier: 3)).warningMs,
+        3000);
+  });
+
   test('harder difficulties get more encounters', () {
     int n(Difficulty d) =>
         Director(forest(), RunSettings(difficulty: d)).plan().length;

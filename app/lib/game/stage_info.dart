@@ -319,6 +319,33 @@ const stageInfos = <String, StageInfo>{
     references: [who2020, acsm11],
     tier: StageTier.premium,
   ),
+  'w2-mirage-maze': StageInfo(
+    levelId: 'w2-mirage-maze',
+    primary: [BodyRegion.hipAbductors, BodyRegion.obliques, BodyRegion.core],
+    secondary: [BodyRegion.quads, BodyRegion.glutes, BodyRegion.shoulders],
+    movements: _all,
+    intensity: Intensity.light,
+    benefits: [
+      'A steady mix of squats, leans and reaches.',
+      'Adds active minutes to your week.',
+    ],
+    references: [who2020, acsm11],
+    tier: StageTier.premium,
+  ),
+  'w3-skyline-finale': StageInfo(
+    levelId: 'w3-skyline-finale',
+    primary: [BodyRegion.shoulders, BodyRegion.quads, BodyRegion.glutes],
+    secondary: [BodyRegion.core, BodyRegion.obliques, BodyRegion.upperBack],
+    movements: _all,
+    intensity: Intensity.moderate,
+    benefits: [
+      'A steady mix of squats, leans and reaches.',
+      'Builds leg strength and muscular endurance.',
+      'Counts toward weekly activity guidelines.',
+    ],
+    references: [who2020, acsm11, garber2011],
+    tier: StageTier.premium,
+  ),
 };
 
 /// Info for a stage. Every stage in [stages] has an entry (see tests).

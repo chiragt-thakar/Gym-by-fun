@@ -145,6 +145,7 @@ class _QuestState extends ConsumerState<QuestScreen>
               difficulty: Difficulty.beginner,
               lowImpact: s.lowImpact,
               assist: true,
+              warningMultiplier: s.warningMultiplier,
             )
           : s.runSettings;
       _tier = s.deviceTier ?? DeviceTier.mid;

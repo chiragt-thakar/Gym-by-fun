@@ -61,10 +61,11 @@ class HomeScreen extends ConsumerWidget {
     Widget header(BuildContext context) => Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SizedBox(
-          height: 140,
+        ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 140),
           child: FilledButton(
             style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(28),
               ),
@@ -72,11 +73,13 @@ class HomeScreen extends ConsumerWidget {
             ),
             onPressed: () => context.push('/quest?level=${next.levelId}'),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(Icons.play_arrow_rounded, size: 56),
                 Text(
                   s.s.t('daily_quest'),
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.w900,
@@ -85,6 +88,7 @@ class HomeScreen extends ConsumerWidget {
                 Text(
                   '${tr('Warm-up')} · ${tr(next.title)} · '
                   '${tr('Cool-down')}',
+                  textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 16),
                 ),
               ],

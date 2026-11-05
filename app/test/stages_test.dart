@@ -80,9 +80,15 @@ void main() {
       isUnlocked(stageById('w3-neon-night-market')!, {'w3-neon-city-chase'}),
       isTrue,
     );
-    // World 3 now opens after the new Desert Trials finale.
+    // Each world opens after the previous world's last stage.
+    expect(stageById('w2-mirage-maze')!.stageNumber, 4);
     expect(
-      isUnlocked(stageById('w3-neon-city-rooftops')!, {'w2-oasis-caravan'}),
+      isUnlocked(stageById('w3-neon-city-rooftops')!, {'w2-mirage-maze'}),
+      isTrue,
+    );
+    expect(stageById('w3-skyline-finale')!.stageNumber, 4);
+    expect(
+      isUnlocked(stageById('w4-mountain-trail')!, {'w3-skyline-finale'}),
       isTrue,
     );
   });

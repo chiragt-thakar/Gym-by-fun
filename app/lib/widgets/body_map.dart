@@ -96,7 +96,7 @@ class _LegendItem extends StatelessWidget {
         child: CustomPaint(painter: _SwatchPainter(primary)),
       ),
       const SizedBox(width: 6),
-      Text(text, style: const TextStyle(fontSize: 15)),
+      Flexible(child: Text(text, style: const TextStyle(fontSize: 15))),
     ],
   );
 }

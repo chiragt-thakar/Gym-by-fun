@@ -175,3 +175,16 @@ Known: raising the hands to a guard passes through the barrier zone for a few fr
 The feet check compares the ankle centre with the calibrated standing hip x, because
 calibration does not yet record a standing ankle x. Tests: `test/extra_recognisers_test.dart`
 (synthetic only; a recorded clip is required before these moves are used in content).
+
+## Play-style warning multiplier
+- `RunSettings.warningMultiplier` (default 1.0, clamped 1.0–1.5). Gentle play style = 1.2;
+  Balanced and Active = 1.0. Set from `Settings.warningMultiplier`; the tutorial passes it too.
+- `Director.warningMs = round(profile.warningMs × multiplier × (assist ? 1.25 : 1))`.
+  Two-lane blocks still add `wideBlockExtraMs` (600 ms) on top.
+- Extra warning (multiplier and/or assist) never pulls a cue before the previous encounter
+  arrives: the cue is clamped to the previous arrival, but never later than the profile's base
+  warning. Without this clamp the simulator showed hits with longer warnings, because the next
+  cue invited the player to move before the last obstacle had passed. Arrival times and
+  feasibility spacing are unchanged, so more warning never makes a run harder.
+- Verified: gentle (×1.2, assist, low-impact) simulated once per level — competent bot takes
+  0 hits, slow bot finishes, all encounters feasible.

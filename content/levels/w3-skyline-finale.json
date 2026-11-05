@@ -1,0 +1,469 @@
+{
+  "$schema": "../schema/level.schema.json",
+  "id": "w3-skyline-finale",
+  "version": 1,
+  "schemaVersion": 1,
+  "world": 3,
+  "name": "Skyline Finale",
+  "lanes": 3,
+  "durationS": 210,
+  "hearts": 3,
+  "music": {
+    "track": "neon_chase",
+    "bpmByDifficulty": {
+      "beginner": 112,
+      "intermediate": 124,
+      "advanced": 134
+    }
+  },
+  "difficulty": {
+    "beginner": {
+      "warningMs": 2000,
+      "maxDemandingInRow": 3,
+      "hints": "always",
+      "lowImpactDefault": true
+    },
+    "intermediate": {
+      "warningMs": 1600,
+      "maxDemandingInRow": 5,
+      "hints": "firstTime",
+      "lowImpactDefault": true
+    },
+    "advanced": {
+      "warningMs": 1300,
+      "maxDemandingInRow": 7,
+      "hints": "off",
+      "lowImpactDefault": false
+    }
+  },
+  "scoring": {
+    "beam": 100,
+    "laneBlock": 100,
+    "orb": 50,
+    "gate": 150
+  },
+  "segments": [
+    {
+      "id": "practice",
+      "kind": "practice",
+      "startS": 0,
+      "endS": 30,
+      "hint": "Skyline finale. Warm up on the rooftop edge."
+    },
+    {
+      "id": "learn",
+      "kind": "learn",
+      "startS": 30,
+      "endS": 88.5
+    },
+    {
+      "id": "breather",
+      "kind": "breather",
+      "startS": 88.5,
+      "endS": 108.5,
+      "hint": "Rooftop garden. Breathe in... and out. Collect power cells."
+    },
+    {
+      "id": "combos",
+      "kind": "combo",
+      "startS": 108.5,
+      "endS": 160,
+      "hint": "The drone hub wakes! Signs and drones come faster."
+    },
+    {
+      "id": "checkpoint",
+      "kind": "checkpoint",
+      "startS": 160,
+      "endS": 161,
+      "hint": "Checkpoint ahead cleared! Hearts refill."
+    },
+    {
+      "id": "finale",
+      "kind": "finale",
+      "startS": 161,
+      "endS": 210,
+      "hint": "Almost there! Run the gate gauntlet to the hub."
+    }
+  ],
+  "encounters": [
+    {
+      "atS": 8,
+      "type": "beam",
+      "hint": "A low neon sign! Squat to slide under."
+    },
+    {
+      "atS": 11.5,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ],
+      "hint": "A hovering drone! Lean to dodge it."
+    },
+    {
+      "atS": 15.0,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "Power cell! Raise both arms to grab it."
+    },
+    {
+      "atS": 18.5,
+      "type": "beam"
+    },
+    {
+      "atS": 22.0,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 25.5,
+      "type": "orb",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 29.0,
+      "type": "beam"
+    },
+    {
+      "atS": 33,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 36.2,
+      "type": "beam"
+    },
+    {
+      "atS": 39.4,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 42.6,
+      "type": "gate",
+      "hint": "Skyline scan gate! Raise both arms to open it."
+    },
+    {
+      "atS": 45.8,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 49.0,
+      "type": "beam"
+    },
+    {
+      "atS": 52.2,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 55.4,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 58.6,
+      "type": "beam"
+    },
+    {
+      "atS": 61.8,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 65.0,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 68.2,
+      "type": "beam"
+    },
+    {
+      "atS": 71.4,
+      "type": "gate"
+    },
+    {
+      "atS": 74.6,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 77.8,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 81.0,
+      "type": "beam"
+    },
+    {
+      "atS": 84.2,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 88,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 93,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "Breathe in... and out. Charge up with the cells."
+    },
+    {
+      "atS": 98.5,
+      "type": "orb",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 104.0,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 108.5,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 111,
+      "type": "beam"
+    },
+    {
+      "atS": 113.6,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 116.2,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 118.8,
+      "type": "beam"
+    },
+    {
+      "atS": 121.4,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 124.0,
+      "type": "gate",
+      "hint": "Bonus hub gate! Arms up for extra power."
+    },
+    {
+      "atS": 126.6,
+      "type": "beam"
+    },
+    {
+      "atS": 129.2,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 131.8,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 134.4,
+      "type": "beam"
+    },
+    {
+      "atS": 137.0,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 139.6,
+      "type": "beam"
+    },
+    {
+      "atS": 142.2,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 144.8,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 147.4,
+      "type": "beam"
+    },
+    {
+      "atS": 150.0,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 152.6,
+      "type": "gate"
+    },
+    {
+      "atS": 155.2,
+      "type": "beam"
+    },
+    {
+      "atS": 157,
+      "type": "gate",
+      "hint": "Almost there! The hub lights flicker on."
+    },
+    {
+      "atS": 159.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 164,
+      "type": "gate",
+      "hint": "Gate gauntlet! Keep those arms high."
+    },
+    {
+      "atS": 166.5,
+      "type": "gate"
+    },
+    {
+      "atS": 169.0,
+      "type": "gate"
+    },
+    {
+      "atS": 171.5,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 174.0,
+      "type": "gate"
+    },
+    {
+      "atS": 176.5,
+      "type": "gate"
+    },
+    {
+      "atS": 179.0,
+      "type": "beam"
+    },
+    {
+      "atS": 181.5,
+      "type": "gate"
+    },
+    {
+      "atS": 184.0,
+      "type": "gate"
+    },
+    {
+      "atS": 186.5,
+      "type": "gate"
+    },
+    {
+      "atS": 189.0,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 191.5,
+      "type": "gate"
+    },
+    {
+      "atS": 194.0,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 196.5,
+      "type": "gate"
+    },
+    {
+      "atS": 199.0,
+      "type": "gate"
+    },
+    {
+      "atS": 201.5,
+      "type": "beam"
+    },
+    {
+      "atS": 204.0,
+      "type": "gate"
+    },
+    {
+      "atS": 206.5,
+      "type": "gate",
+      "hint": "Final gate. The skyline is yours!"
+    }
+  ]
+}

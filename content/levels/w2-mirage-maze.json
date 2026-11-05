@@ -1,0 +1,363 @@
+{
+  "$schema": "../schema/level.schema.json",
+  "id": "w2-mirage-maze",
+  "version": 1,
+  "schemaVersion": 1,
+  "world": 2,
+  "name": "Mirage Maze",
+  "lanes": 3,
+  "durationS": 180,
+  "hearts": 3,
+  "music": {
+    "track": "desert_run",
+    "bpmByDifficulty": {
+      "beginner": 112,
+      "intermediate": 124,
+      "advanced": 134
+    }
+  },
+  "difficulty": {
+    "beginner": {
+      "warningMs": 2000,
+      "maxDemandingInRow": 3,
+      "hints": "always",
+      "lowImpactDefault": true
+    },
+    "intermediate": {
+      "warningMs": 1600,
+      "maxDemandingInRow": 5,
+      "hints": "firstTime",
+      "lowImpactDefault": true
+    },
+    "advanced": {
+      "warningMs": 1300,
+      "maxDemandingInRow": 7,
+      "hints": "off",
+      "lowImpactDefault": false
+    }
+  },
+  "scoring": {
+    "beam": 100,
+    "laneBlock": 100,
+    "orb": 50,
+    "gate": 150
+  },
+  "segments": [
+    {
+      "id": "practice",
+      "kind": "practice",
+      "startS": 0,
+      "endS": 30,
+      "hint": "Mirage maze ahead. Warm up slowly on the cool sand."
+    },
+    {
+      "id": "learn",
+      "kind": "learn",
+      "startS": 30,
+      "endS": 80
+    },
+    {
+      "id": "breather",
+      "kind": "breather",
+      "startS": 80,
+      "endS": 102,
+      "hint": "Shaded dune. Breathe in... and out. Gather the sun seals."
+    },
+    {
+      "id": "combos",
+      "kind": "combo",
+      "startS": 102,
+      "endS": 145,
+      "hint": "The maze turns. Wide paths, steady moves."
+    },
+    {
+      "id": "checkpoint",
+      "kind": "checkpoint",
+      "startS": 145,
+      "endS": 146,
+      "hint": "Checkpoint! The seal glows and a heart returns."
+    },
+    {
+      "id": "finale",
+      "kind": "finale",
+      "startS": 146,
+      "endS": 180,
+      "hint": "Almost there! The maze exit shimmers ahead."
+    }
+  ],
+  "encounters": [
+    {
+      "atS": 8,
+      "type": "beam",
+      "hint": "A low sandstone arch! Squat to pass under."
+    },
+    {
+      "atS": 12.5,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ],
+      "hint": "A sand wall rises. Lean to step around it."
+    },
+    {
+      "atS": 17.0,
+      "type": "orb",
+      "lanes": [
+        0
+      ],
+      "hint": "Sun seal! Raise both arms to collect it."
+    },
+    {
+      "atS": 21.5,
+      "type": "beam"
+    },
+    {
+      "atS": 26.0,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 30.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 34,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 38,
+      "type": "beam"
+    },
+    {
+      "atS": 42,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 46,
+      "type": "gate",
+      "hint": "A mirage shimmers... it is a sun-seal gate! Arms up."
+    },
+    {
+      "atS": 50,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 54,
+      "type": "beam"
+    },
+    {
+      "atS": 58,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 62,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 66,
+      "type": "beam"
+    },
+    {
+      "atS": 70,
+      "type": "orb",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 74,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 78,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 84,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "Breathe in... and out. Reach for the seal."
+    },
+    {
+      "atS": 90.5,
+      "type": "orb",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 97.0,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 104,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 106.8,
+      "type": "beam"
+    },
+    {
+      "atS": 109.6,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 112.4,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 115.2,
+      "type": "beam"
+    },
+    {
+      "atS": 118.0,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 120.8,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 123.6,
+      "type": "gate"
+    },
+    {
+      "atS": 126.4,
+      "type": "beam"
+    },
+    {
+      "atS": 129.2,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 132.0,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 134.8,
+      "type": "beam"
+    },
+    {
+      "atS": 137,
+      "type": "gate",
+      "hint": "A golden mirage gate! Arms up, you are almost there."
+    },
+    {
+      "atS": 139.7,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 142.4,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 149,
+      "type": "gate",
+      "hint": "Almost there! Open the hidden maze gate."
+    },
+    {
+      "atS": 152.5,
+      "type": "beam"
+    },
+    {
+      "atS": 156.0,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 159.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 163.0,
+      "type": "gate"
+    },
+    {
+      "atS": 166.5,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 170.0,
+      "type": "beam"
+    },
+    {
+      "atS": 173.5,
+      "type": "gate"
+    },
+    {
+      "atS": 177.0,
+      "type": "gate",
+      "hint": "Last gate. You found the way out!"
+    }
+  ]
+}

@@ -89,6 +89,7 @@ class Settings {
     lowImpact: lowImpact,
     assist: assist,
     seenTypes: seenTypes,
+    warningMultiplier: warningMultiplier,
   );
 
   Settings copyWith({

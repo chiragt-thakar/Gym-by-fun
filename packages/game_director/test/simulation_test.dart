@@ -40,5 +40,16 @@ void main() {
         expect(r.result.forgiven, greaterThanOrEqualTo(0));
       });
     }
+
+    test('${level.id} · gentle (warning ×1.2, assist, low-impact) · finishes',
+        () {
+      const gentle =
+          RunSettings(lowImpact: true, assist: true, warningMultiplier: 1.2);
+      final r = simulate(level, gentle, BotProfile.slow);
+      expect(r.allFeasible, isTrue, reason: r.infeasible.join('\n'));
+      expect(r.result.completed, isTrue);
+      final c = simulate(level, gentle, BotProfile.competent);
+      expect(c.result.hit, 0, reason: c.infeasible.join('\n'));
+    });
   }
 }

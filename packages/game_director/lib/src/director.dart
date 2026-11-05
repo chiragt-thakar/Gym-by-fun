@@ -7,7 +7,9 @@ class RunSettings {
     bool? lowImpact,
     this.assist = false,
     this.seenTypes = const {},
-  }) : _lowImpact = lowImpact;
+    double warningMultiplier = 1.0,
+  })  : _lowImpact = lowImpact,
+        _warningMultiplier = warningMultiplier;
 
   final Difficulty difficulty;
   final bool? _lowImpact;
@@ -17,6 +19,14 @@ class RunSettings {
 
   /// Encounter types the player has already met (for first-time hints).
   final Set<EncounterType> seenTypes;
+
+  final double _warningMultiplier;
+
+  /// Extra warning lead (play style, e.g. Gentle = 1.2), clamped to 1.0–1.5.
+  /// It can only lengthen warnings, so it never makes a run harder.
+  double get warningMultiplier => _warningMultiplier.isNaN
+      ? 1.0
+      : _warningMultiplier.clamp(1.0, 1.5).toDouble();
 
   bool lowImpactFor(DifficultyProfile p) => _lowImpact ?? p.lowImpactDefault;
 }
@@ -91,9 +101,11 @@ class Director {
   /// Extra warning for lane blocks that cover two lanes.
   static const wideBlockExtraMs = 600;
 
-  /// Warning time after assist mode is applied.
-  int get warningMs =>
-      settings.assist ? (profile.warningMs * 1.25).round() : profile.warningMs;
+  /// Warning time after the play-style multiplier and assist mode.
+  int get warningMs => (profile.warningMs *
+          settings.warningMultiplier *
+          (settings.assist ? 1.25 : 1))
+      .round();
 
   List<PlannedEncounter> plan() {
     final out = <PlannedEncounter>[];
@@ -101,6 +113,7 @@ class Director {
     var demandingRun = 0;
     var earliestNext = 0;
     EncounterType? prevType;
+    int? prevArrive;
 
     for (final spec in level.encounters) {
       // 1. Difficulty filter.
@@ -150,19 +163,30 @@ class Director {
         type: type,
         lanes: lanes,
         arriveMs: at,
-        // A two-lane block may need two leans: cue it earlier.
-        warnMs: at -
-            warningMs -
-            (type == EncounterType.laneBlock && lanes.length > 1
-                ? wideBlockExtraMs
-                : 0),
+        warnMs: _warnAt(at, type, lanes, prevArrive),
         hint: hint,
         substituted: substituted,
       ));
       earliestNext = at + MoveTimes.recovery(type, lowImpact: lowImpact);
       prevType = type;
+      prevArrive = at;
     }
     return out;
+  }
+
+  /// Cue time. Extra warning (assist, play-style multiplier) never pulls a
+  /// cue before the previous encounter arrives, so it can't invite the
+  /// player to answer the next move while the last one is still coming;
+  /// the profile's base warning is always kept.
+  int _warnAt(int at, EncounterType type, List<int> lanes, int? prevArrive) {
+    // A two-lane block may need two leans: cue it earlier.
+    final wide = type == EncounterType.laneBlock && lanes.length > 1
+        ? wideBlockExtraMs
+        : 0;
+    final base = at - profile.warningMs - wide;
+    final extended = at - warningMs - wide;
+    if (prevArrive == null || extended >= prevArrive) return extended;
+    return base < prevArrive ? base : prevArrive;
   }
 
   static String _defaultHint(EncounterType t) => switch (t) {
