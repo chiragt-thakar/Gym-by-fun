@@ -225,3 +225,10 @@ window. Cover it with simulator tests.
 | B3 | high | B | server/privacy | Export missing crew_scores, sign-in sessions and more |
 | B4 | medium | B | game_director | restartFromCheckpoint keeps stale forgiveness and segment state |
 | B5 | medium | B | game_director | Forgiveness is a single red sample in level-clock time; unfair hits |
+
+## Bucket B fix status (server + packages)
+- ✅ Fixed B1: `processWebhookOnce` records the event and applies it in one transaction; a failed apply leaves no marker so the provider retry succeeds (trigger-based test).
+- ✅ Fixed B2: `DELETE /me` immediately deletes pain reports, sessions/moves, progress, devices, calibrations, crew scores; only anonymised billing/consent/membership linkage remains until hard delete (documented in security.md).
+- ✅ Fixed B3: export adds crew scores, sign-in session metadata (no hashes) and billing linkage; a test fails if any `user_id` table is missing from the export.
+- ✅ Fixed B4: `restartFromCheckpoint` resets light, lost times, move state, grace timers, streak, segment and pacer; allowed once per loss.
+- ✅ Fixed B5: forgiveness also covers a loss up to 300 ms before the cue and < 800 ms (1200 ms assist) of play since cue or recovery.
