@@ -74,6 +74,7 @@ dependencies {
     implementation("androidx.camera:camera-core:$camerax")
     implementation("androidx.camera:camera-camera2:$camerax")
     implementation("androidx.camera:camera-lifecycle:$camerax")
+    implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("com.google.mediapipe:tasks-vision:0.10.20")
 
@@ -88,12 +89,13 @@ val poseModelUrl =
 val poseModelFile = layout.projectDirectory.file("src/main/assets/pose_landmarker_lite.task")
 
 val downloadPoseModel by tasks.registering {
+    val url = poseModelUrl
     outputs.file(poseModelFile)
     doLast {
         val f = poseModelFile.asFile
         if (!f.exists()) {
             f.parentFile.mkdirs()
-            uri(poseModelUrl).toURL().openStream().use { input ->
+            java.net.URI(url).toURL().openStream().use { input ->
                 f.outputStream().use { input.copyTo(it) }
             }
         }

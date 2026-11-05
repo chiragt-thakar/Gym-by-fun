@@ -26,6 +26,7 @@ class _CalibrationState extends ConsumerState<CalibrationScreen> {
   PoseFrame? _frame;
   CalibrationStep _announced = CalibrationStep.done;
   bool _paused = false;
+  bool _finishing = false;
 
   static const _instructions = {
     CalibrationStep.neutral: 'Stand tall and still',
@@ -55,6 +56,7 @@ class _CalibrationState extends ConsumerState<CalibrationScreen> {
   }
 
   void _onFrame(PoseFrame f) {
+    if (_finishing) return;
     final ok = const QualityGate().check(f).ok;
     if (ok) _cal.add(_smoother.smooth(f));
     if (_cal.step != _announced) {
@@ -69,6 +71,8 @@ class _CalibrationState extends ConsumerState<CalibrationScreen> {
   }
 
   Future<void> _finish() async {
+    if (_finishing) return;
+    _finishing = true;
     await _sub?.cancel();
     _sub = null;
     final profile = _cal.build();

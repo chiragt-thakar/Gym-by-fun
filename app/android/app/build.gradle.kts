@@ -29,6 +29,11 @@ android {
         versionName = flutter.versionName
     }
 
+    // MediaPipe memory-maps the pose model; keep it uncompressed in the APK.
+    androidResources {
+        noCompress += "task"
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.

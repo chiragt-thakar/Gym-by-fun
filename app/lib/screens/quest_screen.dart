@@ -76,6 +76,7 @@ class _QuestState extends ConsumerState<QuestScreen> implements GameAudio {
   MotionSession? _session;
   ForestGame? _game;
   RunResult? _result;
+  Map<String, Map<String, int>>? _stats;
   late DateTime _startedAt;
   final _clientId = SessionQueue.newClientId();
   String? _error;
@@ -121,6 +122,8 @@ class _QuestState extends ConsumerState<QuestScreen> implements GameAudio {
 
   void _onRunFinished(RunResult r) {
     _result = r;
+    _stats = _session?.moveStats();
+    _session?.stop();
     if (widget.tutorial) {
       _complete();
     } else {
@@ -132,11 +135,12 @@ class _QuestState extends ConsumerState<QuestScreen> implements GameAudio {
     final r = _result;
     final session = _session;
     _session = null;
-    await session?.stop();
+    final stats = _stats ?? session?.moveStats();
+    await session?.dispose();
     if (r == null || !mounted) return;
     final s = ref.read(settingsProvider);
     final durationS = DateTime.now().difference(_startedAt).inSeconds.clamp(1, 3600);
-    final data = ResultsData(result: r, clientId: _clientId, startedAt: _startedAt, durationS: durationS, moveStats: session?.moveStats(), tutorial: widget.tutorial);
+    final data = ResultsData(result: r, clientId: _clientId, startedAt: _startedAt, durationS: durationS, moveStats: stats, tutorial: widget.tutorial);
     ref.read(settingsProvider.notifier).update((x) => x.copyWith(
           tutorialDone: true,
           sessionsPlayed: widget.tutorial ? s.sessionsPlayed : s.sessionsPlayed + 1,
