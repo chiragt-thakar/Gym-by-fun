@@ -166,6 +166,40 @@ void main() {
     await session.dispose();
   });
 
+  test('stop during a stall then start resumes tracking (R2-3)', () async {
+    final s = SyntheticSession(SyntheticBody(seed: 4));
+    final cal = s.calibrate();
+    final frames = s.record([const ScriptStep(Action.idle, 1000)]).frames;
+    final src = ReplayPoseSource(frames.take(20).toList());
+    final session = MotionSession(
+      src,
+      initialCalibration: cal,
+      stallAfter: const Duration(milliseconds: 60),
+    );
+    final events = <MotionEvent>[];
+    final sub = session.events.listen(events.add);
+    expect(await session.start(), isTrue);
+    src.playAll();
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    expect(session.stalled, isTrue);
+    expect(events.last, isA<TrackingPaused>());
+
+    // Pause stops the camera; Resume starts it again with a fresh engine.
+    await session.stop();
+    expect(await session.start(), isTrue);
+    await Future<void>.delayed(Duration.zero);
+    expect(events.last, isA<TrackingResumed>());
+
+    // A clean stop/start does not send a spurious resume.
+    final n = events.length;
+    await session.stop();
+    expect(await session.start(), isTrue);
+    await Future<void>.delayed(Duration.zero);
+    expect(events.length, n);
+    await sub.cancel();
+    await session.dispose();
+  });
+
   test('a native pose error pauses tracking instead of crashing', () async {
     final src = ReplayPoseSource(const []);
     final session = MotionSession(src, initialCalibration: null);

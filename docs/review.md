@@ -262,3 +262,8 @@ Read-only review of today's additions. Severity: High = crash, wrong outcome, or
 - **coach_service.dart.** History is bounded at 20, parsing is wrapped in try, and only counts are stored. Check whether `coach.history.v1` is cleared by the in-app "delete my data" / account-deletion flow (not verified).
 
 **Summary:** 2 High (Premium bypass through Daily Quest; checkpoint offer plus pause leaves the run going behind the overlay with no camera), 5 Med (stuck tracking banner after stall then pause, background start during loading, double `onDone`, results lost unless Done is tapped, "Try assist" offered when assist is already on), 5 Low. The perf rewrite and the health wording look sound.
+
+✅ Fixed: R2-2 — `_continueFromCheckpoint` no longer resumes the engine while paused; it clears the offer and leaves Resume to restart the camera and engine.
+✅ Fixed: R2-3 — `MotionSession.stop()` remembers a stall/paused engine; the next `start()` sends `TrackingResumed` (unless the engine is still paused and will send its own), so the HUD banner clears. Test: "stop during a stall then start resumes tracking (R2-3)".
+✅ Fixed: R2-4 — after the camera starts in `_beginRun`, a non-`resumed` app lifecycle state pauses the run immediately.
+✅ Fixed: R2-5 — `_ExerciseFlow` has a `_done` guard; `_beginRun` and `_complete` are re-entrancy safe (`_runBegun`, `_completed`).

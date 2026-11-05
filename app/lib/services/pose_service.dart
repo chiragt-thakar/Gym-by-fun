@@ -148,6 +148,9 @@ class MotionSession {
   bool get stalled => _stalled;
   bool _stalled = false;
   Timer? _watchdog;
+
+  /// Set by [stop] when tracking was paused, so [start] can resume the HUD.
+  bool _resumeOnStart = false;
   final Stopwatch _sinceFrame = Stopwatch();
 
   /// Tracking light for the HUD: red whenever frames have stopped.
@@ -162,6 +165,16 @@ class MotionSession {
     final c = initialCalibration;
     if (c != null) {
       _engine = MotionEngine(calibration: c, thresholds: thresholds);
+    }
+    // Tracking was paused when the camera stopped (stall or engine pause). A
+    // fresh engine will never send its own TrackingResumed, so clear the HUD
+    // banner here; a still-paused engine sends its own when tracking returns.
+    if (_resumeOnStart) {
+      _resumeOnStart = false;
+      final engine = _engine;
+      if (!_events.isClosed && (engine == null || !engine.paused)) {
+        _events.add(TrackingResumed(lastFrame?.timestampMs ?? 0));
+      }
     }
     delegate = await source.start(tier: tier);
     _sub = source.frames.listen(_onFrame, onError: _onStreamError);
@@ -245,6 +258,7 @@ class MotionSession {
     _watchdog?.cancel();
     _watchdog = null;
     _sinceFrame.stop();
+    if (_stalled || (_engine?.paused ?? false)) _resumeOnStart = true;
     _stalled = false;
     await _sub?.cancel();
     _sub = null;

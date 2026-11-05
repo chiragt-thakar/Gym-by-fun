@@ -108,6 +108,11 @@ class _QuestState extends ConsumerState<QuestScreen>
   RunResult? _checkpointOffer;
   bool _disposed = false;
 
+  // Re-entrancy guards: a Skip double tap or Skip racing the timer must not
+  // start the camera twice or finish the session twice.
+  bool _runBegun = false;
+  bool _completed = false;
+
   Voice get _voice => ref.read(voiceProvider);
 
   @override
@@ -204,10 +209,16 @@ class _QuestState extends ConsumerState<QuestScreen>
   }
 
   Future<void> _beginRun() async {
+    if (_runBegun) return;
+    _runBegun = true;
     setState(() => _phase = _Phase.loading);
     if (!await _startCamera()) return;
     _startedAt = DateTime.now();
     setState(() => _phase = _Phase.run);
+    // The app may have gone to the background while the camera was starting
+    // (pause is ignored during loading): freeze the run straight away.
+    final life = WidgetsBinding.instance.lifecycleState;
+    if (life != null && life != AppLifecycleState.resumed) _pause();
   }
 
   void _onRunFinished(RunResult r) {
@@ -244,6 +255,9 @@ class _QuestState extends ConsumerState<QuestScreen>
       return;
     }
     setState(() => _checkpointOffer = null);
+    // Paused while the offer was up: the camera is off, so leave the run
+    // frozen behind the Paused overlay; Resume restarts camera and engine.
+    if (_paused) return;
     game.resumeEngine();
   }
 
@@ -305,6 +319,8 @@ class _QuestState extends ConsumerState<QuestScreen>
   }
 
   Future<void> _complete() async {
+    if (_completed) return;
+    _completed = true;
     final r = _result;
     final session = _session;
     _session = null;
@@ -623,6 +639,7 @@ class _ExerciseFlowState extends State<_ExerciseFlow> {
   int _i = 0;
   int _left = 0;
   Timer? _timer;
+  bool _done = false;
 
   @override
   void initState() {
@@ -631,7 +648,9 @@ class _ExerciseFlowState extends State<_ExerciseFlow> {
   }
 
   void _begin(int i) {
+    if (_done) return;
     if (i >= widget.exercises.length) {
+      _done = true;
       _timer?.cancel();
       widget.onDone();
       return;
