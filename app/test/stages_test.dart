@@ -163,4 +163,12 @@ void main() {
     expect(old.difficulty, Difficulty.advanced);
     expect(s.copyWith(lowImpact: false).completedLevels, s.completedLevels);
   });
+
+  test('developer unlock-all opens every stage', () {
+    for (final st in stages) {
+      expect(isUnlocked(st, {}, unlockAll: true), isTrue);
+      expect(isUnlocked(st, {}, premiumLocked: true, unlockAll: true), isTrue);
+    }
+    expect(devUnlockAll, isFalse); // off unless built with the flag
+  });
 }

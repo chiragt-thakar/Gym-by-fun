@@ -242,11 +242,17 @@ Stage? stageById(String id) {
 /// not Premium) Premium stages are skipped in the chain: a stage opens when
 /// the closest earlier free stage is completed, so a locked Premium stage
 /// never blocks free content after it. Unchanged while payments are off.
+/// Developer switch: every stage unlocked and nothing Premium-locked.
+/// Build with `--dart-define=DEV_UNLOCK_ALL=true` (testing only).
+const devUnlockAll = bool.fromEnvironment('DEV_UNLOCK_ALL');
+
 bool isUnlocked(
   Stage stage,
   Set<String> completed, {
   bool premiumLocked = false,
+  bool unlockAll = devUnlockAll,
 }) {
+  if (unlockAll) return true;
   final i = stages.indexOf(stage);
   if (i <= 0) return true;
   if (!premiumLocked) return completed.contains(stages[i - 1].levelId);

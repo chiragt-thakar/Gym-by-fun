@@ -46,7 +46,10 @@ class PaywallPolicy {
   const PaywallPolicy({this.enabled = paymentsEnabled, this.freeSessions = 3});
 
   /// Payments ship in Phase 3. Turn on with `--dart-define=PAYMENTS=true`.
-  static const paymentsEnabled = bool.fromEnvironment('PAYMENTS');
+  /// Off when the developer unlock-all switch is on, so nothing is locked.
+  static const paymentsEnabled =
+      bool.fromEnvironment('PAYMENTS') &&
+      !bool.fromEnvironment('DEV_UNLOCK_ALL');
 
   final bool enabled;
   final int freeSessions;

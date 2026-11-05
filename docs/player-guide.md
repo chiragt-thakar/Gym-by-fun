@@ -308,3 +308,13 @@ Settings માં ગમે ત્યારે બદલો.
 **સસ્તા ફોન પર ગેમ ધીમી છે.** બીજી ઍપ બંધ કરો, ફોન ચાર્જ અને ઠંડો રાખો, સારા પ્રકાશમાં રમો. ગેમ ફક્ત સૌથી નવી કૅમેરા ફ્રેમ વાપરે છે, તેથી પાછળ રહી જતી નથી.
 
 **ફોન પડી જાય છે.** કોઈ ભારે વસ્તુના ટેકે રાખો કે સસ્તું સ્ટેન્ડ વાપરો.
+
+## For developers: unlock everything
+
+Build with `--dart-define=DEV_UNLOCK_ALL=true` to open every stage and remove every Premium lock (payments stay off):
+
+```bash
+cd app && flutter run --dart-define=DEV_UNLOCK_ALL=true
+```
+
+CI also publishes this build as the **motionquest-dev-unlock-all-apk** artifact. Never ship it to the Play Store.
