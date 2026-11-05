@@ -89,10 +89,12 @@ class QualityGate {
     // Body size: the bounding box shrinks when the player squats, so also
     // estimate standing height from the torso (≈ 1/3.3 of nose-to-ankle).
     // Otherwise a squat would read as "too far" and pause the game.
-    final hip = midpoint(frame[Lm.leftHip], frame[Lm.rightHip]);
-    final sh = midpoint(frame[Lm.leftShoulder], frame[Lm.rightShoulder]);
-    final torso =
-        math.sqrt(math.pow(hip.x - sh.x, 2) + math.pow(hip.y - sh.y, 2));
+    // Hip/shoulder centres computed inline (no midpoint objects per frame).
+    final lh = frame[Lm.leftHip], rh = frame[Lm.rightHip];
+    final ls = frame[Lm.leftShoulder], rs = frame[Lm.rightShoulder];
+    final dx = (lh.x + rh.x) / 2 - (ls.x + rs.x) / 2;
+    final dy = (lh.y + rh.y) / 2 - (ls.y + rs.y) / 2;
+    final torso = math.sqrt(dx * dx + dy * dy);
     final height =
         math.max(maxY - minY, torso * 3.3).clamp(0.0, 1.0).toDouble();
 

@@ -27,12 +27,11 @@ class BodyFeatures {
     final sh = midpoint(f[Lm.leftShoulder], f[Lm.rightShoulder]);
     final ankle = midpoint(f[Lm.leftAnkle], f[Lm.rightAnkle]);
     final torso = math.max(1e-6, _dist(hip, sh));
-    final legVis = [
-      f[Lm.leftKnee].visibility,
-      f[Lm.rightKnee].visibility,
-      f[Lm.leftHip].visibility,
-      f[Lm.rightHip].visibility,
-    ].reduce(math.min);
+    // No temporary list: this runs every frame.
+    final legVis = math.min(
+      math.min(f[Lm.leftKnee].visibility, f[Lm.rightKnee].visibility),
+      math.min(f[Lm.leftHip].visibility, f[Lm.rightHip].visibility),
+    );
     return BodyFeatures._(
       timestampMs: f.timestampMs,
       hipCenter: hip,

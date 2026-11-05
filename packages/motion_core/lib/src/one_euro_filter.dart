@@ -54,38 +54,50 @@ class OneEuroFilter {
 }
 
 /// Applies a One Euro filter to x and y of the key landmarks.
+///
+/// Runs every frame, so filters live in flat lists (no map lookups) and each
+/// frame costs exactly one fixed-length landmark list.
 class LandmarkSmoother {
   LandmarkSmoother({double minCutoff = 1.7, double beta = 0.3})
-      : _fx = {
-          for (final i in Lm.smoothed)
-            i: OneEuroFilter(minCutoff: minCutoff, beta: beta)
-        },
-        _fy = {
-          for (final i in Lm.smoothed)
-            i: OneEuroFilter(minCutoff: minCutoff, beta: beta)
-        };
+      : _fx = List.generate(
+          Lm.smoothed.length,
+          (_) => OneEuroFilter(minCutoff: minCutoff, beta: beta),
+          growable: false,
+        ),
+        _fy = List.generate(
+          Lm.smoothed.length,
+          (_) => OneEuroFilter(minCutoff: minCutoff, beta: beta),
+          growable: false,
+        );
 
-  final Map<int, OneEuroFilter> _fx;
-  final Map<int, OneEuroFilter> _fy;
+  final List<OneEuroFilter> _fx;
+  final List<OneEuroFilter> _fy;
 
   PoseFrame smooth(PoseFrame frame) {
     if (!frame.hasPerson) return frame;
-    final out = List<Landmark>.of(frame.landmarks);
-    for (final i in Lm.smoothed) {
-      final l = frame.landmarks[i];
-      out[i] = l.copyWith(
-        x: _fx[i]!.filter(l.x, frame.timestampMs),
-        y: _fy[i]!.filter(l.y, frame.timestampMs),
+    // A new list per frame: callers may keep earlier frames (recorder, debug
+    // overlay), so the landmark list itself must never be reused.
+    final out = List<Landmark>.of(frame.landmarks, growable: false);
+    final ts = frame.timestampMs;
+    const idx = Lm.smoothed;
+    for (var k = 0; k < idx.length; k++) {
+      final i = idx[k];
+      final l = out[i];
+      out[i] = Landmark(
+        _fx[k].filter(l.x, ts),
+        _fy[k].filter(l.y, ts),
+        l.z,
+        l.visibility,
       );
     }
     return frame.withLandmarks(out);
   }
 
   void reset() {
-    for (final f in _fx.values) {
+    for (final f in _fx) {
       f.reset();
     }
-    for (final f in _fy.values) {
+    for (final f in _fy) {
       f.reset();
     }
   }

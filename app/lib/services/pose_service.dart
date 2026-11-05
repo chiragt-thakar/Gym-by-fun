@@ -40,25 +40,52 @@ class NativePoseSource implements PoseSource {
 
 final poseSourceProvider = Provider<PoseSource>((_) => NativePoseSource());
 
+/// Fixed-size ring buffer of doubles: no shifting, no growth, no garbage.
+class _Ring {
+  _Ring(this.capacity) : _v = List<double>.filled(capacity, 0);
+  final int capacity;
+  final List<double> _v;
+  int _next = 0;
+  int length = 0;
+  double _sum = 0;
+
+  void add(double x) {
+    if (length == capacity) {
+      _sum -= _v[_next];
+    } else {
+      length++;
+    }
+    _v[_next] = x;
+    _sum += x;
+    _next = (_next + 1) % capacity;
+  }
+
+  /// Oldest and newest values (valid when [length] > 0).
+  double get first => _v[length == capacity ? _next : 0];
+  double get last => _v[(_next - 1 + capacity) % capacity];
+
+  double get mean => length == 0 ? 0 : _sum / length;
+}
+
 /// Rolling performance numbers for the debug screen and device tiers.
+/// Keeps the last [window] frames in fixed ring buffers (no per-frame
+/// allocation or list shifting).
 class PerfStats {
-  final _times = <int>[];
-  final _inference = <double>[];
-  final _dart = <double>[];
+  PerfStats({this.window = 60})
+    : _times = _Ring(window),
+      _inference = _Ring(window),
+      _dart = _Ring(window);
+
+  final int window;
+  final _Ring _times;
+  final _Ring _inference;
+  final _Ring _dart;
 
   void add(PoseFrame f, double dartMs) {
-    _times.add(f.timestampMs);
-    if (f.inferenceMs != null) _inference.add(f.inferenceMs!);
+    _times.add(f.timestampMs.toDouble());
+    final inf = f.inferenceMs;
+    if (inf != null) _inference.add(inf);
     _dart.add(dartMs);
-    while (_times.length > 60) {
-      _times.removeAt(0);
-    }
-    while (_inference.length > 60) {
-      _inference.removeAt(0);
-    }
-    while (_dart.length > 60) {
-      _dart.removeAt(0);
-    }
   }
 
   double get fps {
@@ -67,14 +94,11 @@ class PerfStats {
     return span <= 0 ? 0 : (_times.length - 1) * 1000 / span;
   }
 
-  double get inferenceMs => _avg(_inference);
-  double get dartMs => _avg(_dart);
+  double get inferenceMs => _inference.mean;
+  double get dartMs => _dart.mean;
 
   /// Camera capture → event in Dart (excludes display latency).
   double get pipelineMs => inferenceMs + dartMs;
-
-  static double _avg(List<double> v) =>
-      v.isEmpty ? 0 : v.reduce((a, b) => a + b) / v.length;
 
   DeviceTier get tier {
     if (fps >= 27 && inferenceMs <= 25) return DeviceTier.upperMid;
@@ -129,17 +153,26 @@ class MotionSession {
     return true;
   }
 
+  // Reused for every frame instead of allocating a Stopwatch each time.
+  final Stopwatch _sw = Stopwatch();
+
   void _onFrame(PoseFrame f) {
-    final sw = Stopwatch()..start();
+    _sw
+      ..reset()
+      ..start();
     lastFrame = f;
     final out = _engine?.process(f) ?? const <MotionEvent>[];
-    perf.add(f, sw.elapsedMicroseconds / 1000);
+    perf.add(f, _sw.elapsedMicroseconds / 1000);
     _frames.add(f);
+    // Counter maps are created once per session; per-frame work only
+    // updates existing entries (and only when an event happened).
     for (final e in out) {
-      if (e is MoveStarted) started[e.move] = started[e.move]! + 1;
-      if (e is MoveRejected) {
+      if (e is MoveStarted) {
+        started[e.move] = started[e.move]! + 1;
+      } else if (e is MoveRejected) {
         rejected[e.move] = rejected[e.move]! + 1;
-        rejectedBy[e.move]![e.reason] = rejectedBy[e.move]![e.reason]! + 1;
+        final byReason = rejectedBy[e.move]!;
+        byReason[e.reason] = byReason[e.reason]! + 1;
       }
       _events.add(e);
     }

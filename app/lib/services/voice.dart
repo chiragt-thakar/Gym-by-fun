@@ -10,9 +10,16 @@ class Voice {
   Voice();
   final FlutterTts _tts = FlutterTts();
   AppLanguage _lang = AppLanguage.en;
-  bool _ready = false;
+
+  /// Cue sounds and TTS fail independently: a phone without a TTS engine
+  /// still plays cues, and a missing sound never silences the coach.
+  bool _audioReady = false;
+  bool _ttsReady = false;
+  Future<void>? _cueLoad;
   DateTime _lastSpoke = DateTime.fromMillisecondsSinceEpoch(0);
 
+  /// The only sounds the game ships (all small). Loaded into the audio cache
+  /// once per app run, however often [init] is called (language changes).
   static const cues = [
     'cue_beam.wav',
     'cue_laneBlock.wav',
@@ -26,19 +33,29 @@ class Voice {
 
   Future<void> init(AppLanguage lang) async {
     _lang = lang;
+    _cueLoad ??= _loadCues();
+    await _cueLoad;
     try {
-      await FlameAudio.audioCache.loadAll(cues);
       await _tts.setLanguage(lang.ttsLocale);
       await _tts.setSpeechRate(0.5);
       await _tts.awaitSpeakCompletion(false);
-      _ready = true;
+      _ttsReady = true;
     } catch (_) {
-      _ready = false;
+      _ttsReady = false;
+    }
+  }
+
+  Future<void> _loadCues() async {
+    try {
+      await FlameAudio.audioCache.loadAll(cues);
+      _audioReady = true;
+    } catch (_) {
+      _audioReady = false;
     }
   }
 
   Future<void> cue(String name) async {
-    if (!_ready) return;
+    if (!_audioReady) return;
     try {
       await FlameAudio.play('$name.wav', volume: 0.9);
     } catch (_) {}
@@ -46,21 +63,27 @@ class Voice {
 
   /// Speaks a line, skipping it if another started under 1.2 s ago.
   Future<void> say(String text, {bool force = false}) async {
-    if (!_ready) return;
+    if (!_ttsReady) return;
     final now = DateTime.now();
     if (!force &&
         now.difference(_lastSpoke) < const Duration(milliseconds: 1200)) {
       return;
     }
     _lastSpoke = now;
-    await _tts.stop();
-    await _tts.speak(text);
+    try {
+      await _tts.stop();
+      await _tts.speak(text);
+    } catch (_) {}
   }
 
   Future<void> sayKey(String key, {bool force = false}) =>
       say(S(_lang).t(key), force: force);
 
-  Future<void> stop() => _tts.stop();
+  Future<void> stop() async {
+    try {
+      await _tts.stop();
+    } catch (_) {}
+  }
 }
 
 final voiceProvider = Provider<Voice>((_) => Voice());

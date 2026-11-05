@@ -76,8 +76,19 @@ class MotionEngine {
       ? TrackingLight.red
       : (_lastQuality.ok ? TrackingLight.green : TrackingLight.amber);
 
+  /// Scratch buffer the recognisers append to; cleared every frame so the
+  /// common "nothing happened" frame allocates no event list.
+  final List<MotionEvent> _out = <MotionEvent>[];
+
+  /// Returns this frame's events. Frames without events return a shared
+  /// empty, unmodifiable list; otherwise a fresh list the caller may keep.
   List<MotionEvent> process(PoseFrame raw) {
-    final out = <MotionEvent>[];
+    final out = _out..clear();
+    _process(raw, out);
+    return out.isEmpty ? const <MotionEvent>[] : List.of(out);
+  }
+
+  void _process(PoseFrame raw, List<MotionEvent> out) {
     final ts = raw.timestampMs;
     _lastTs = ts;
     final q = gate.check(raw);
@@ -94,14 +105,14 @@ class MotionEngine {
         _smoother.reset();
         out.add(TrackingPaused(ts, q.issue!));
       }
-      return out;
+      return;
     }
 
     _badSince = null;
     final frame = smooth ? _smoother.smooth(raw) : raw;
     if (_paused) {
       _goodSince ??= ts;
-      if (ts - _goodSince! < resumeAfterMs) return out;
+      if (ts - _goodSince! < resumeAfterMs) return;
       _paused = false;
       out.add(TrackingResumed(ts));
     }
@@ -110,7 +121,6 @@ class MotionEngine {
     _squat.update(b, out);
     _lean.update(b, out);
     _arms.update(b, out);
-    return out;
   }
 
   EngineSnapshot get snapshot => EngineSnapshot(
