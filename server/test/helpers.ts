@@ -22,6 +22,8 @@ export const TEST_ENV = {
   CONTENT_DIR: '../content/levels',
 };
 
+export const paymentLinkRequests: unknown[] = [];
+
 export interface TestApp {
   app: FastifyInstance;
   ctx: AppContext;
@@ -52,6 +54,12 @@ export async function setup(): Promise<TestApp> {
       sms: { sendOtp: async (phone, code) => void sms.push({ phone, code }) },
       whatsapp: { sendText: async (phone, body) => void whatsapp.push({ phone, body }) },
       google: { verify: async (t) => (t.startsWith('google:') ? { sub: t.slice(7), name: 'Asha Patel' } : null) },
+      paymentLinks: {
+        create: async (r) => {
+          paymentLinkRequests.push(r);
+          return { id: 'plink_test', shortUrl: 'https://rzp.io/i/test' };
+        },
+      },
     },
   });
   return {

@@ -19,6 +19,9 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@fastify/cors": "^11.4.0",
+    "@fastify/helmet": "^13.2.0",
+    "@fastify/rate-limit": "^11.2.2",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
     "bullmq": "^6.7.0",

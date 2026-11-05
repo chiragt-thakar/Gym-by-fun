@@ -5,9 +5,10 @@ import { z } from 'zod';
 import type { AppContext } from '../../context.js';
 import { requireAdmin, requireUser } from '../../lib/auth.js';
 import { gymCode, keyedHash, randomToken, safeEqual } from '../../lib/crypto.js';
-import { forbidden, notFound } from '../../lib/errors.js';
+import { badRequest, forbidden, notFound } from '../../lib/errors.js';
 import { addDays, isoWeek } from '../../lib/time.js';
 import { parse } from '../../lib/validate.js';
+import { gymPriceInPaise } from '../billing/service.js';
 import { buildWeeklyReport, formatReport } from '../reports/service.js';
 import { activeMembership, crewBoard, joinGym, leaveGym } from './service.js';
 
@@ -111,9 +112,26 @@ export async function gymRoutes(app: FastifyInstance, ctx: AppContext) {
     const gym = await ctx.db.selectFrom('gyms').select(['name', 'colours']).where('id', '=', id).executeTakeFirst();
     const c = await ctx.db.selectFrom('gym_codes').select('code').where('code', '=', code).where('gym_id', '=', id).executeTakeFirst();
     if (!gym || !c) throw notFound();
-    const link = `https://motionquest.app/join?code=${encodeURIComponent(c.code)}`;
+    const link = `${ctx.config.PUBLIC_BASE_URL}/join?code=${encodeURIComponent(c.code)}`;
     const qr = await QRCode.toString(link, { type: 'svg', margin: 0, width: 360 });
     return reply.type('image/svg+xml').send(posterSvg(gym.name, gym.colours.primary, c.code, qr));
+  });
+
+  /** Payment link for a gym licence (paid outside the app via Razorpay). */
+  app.post('/admin/gyms/:id/payment-links', { preHandler: admin }, async (req, reply) => {
+    const { id } = parse(z.object({ id: z.string().uuid() }), req.params);
+    const body = parse(z.object({ plan: z.enum(['founding', 'starter', 'growth']), period: z.enum(['monthly', 'yearly']) }), req.body);
+    const price = gymPriceInPaise(body.plan, body.period);
+    if (!price) throw badRequest('plan_period_unavailable');
+    const gym = await ctx.db.selectFrom('gyms').select(['name', 'owner_name', 'owner_phone_enc']).where('id', '=', id).executeTakeFirst();
+    if (!gym) throw notFound('gym_not_found');
+    const link = await ctx.providers.paymentLinks.create({
+      amountPaise: price.total,
+      description: `MotionQuest ${body.plan} licence (${body.period}) for ${gym.name}, incl. 18% GST`,
+      customer: { name: gym.owner_name ?? undefined, contact: gym.owner_phone_enc ? ctx.pii.decrypt(gym.owner_phone_enc) : undefined },
+      notes: { gym_id: id, plan: body.plan, period: body.period },
+    });
+    return reply.code(201).send({ ...link, amountPaise: price.total, basePaise: price.base, gstPaise: price.gst });
   });
 
   app.post('/admin/gyms/:id/quests', { preHandler: admin }, async (req, reply) => {

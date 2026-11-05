@@ -26,6 +26,20 @@ const schema = z.object({
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().default(60),
   DELETION_GRACE_DAYS: z.coerce.number().int().default(30),
   CONTENT_DIR: z.string().default('../content/levels'),
+  /** Run migrations and seed content on boot (turn off when a deploy step runs them). */
+  MIGRATE_ON_BOOT: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((v) => v === 'true'),
+  /** Comma-separated browser origins allowed to call the API (the app itself needs none). */
+  CORS_ORIGINS: z.string().default(''),
+  /** Requests per minute per IP across the API. */
+  RATE_LIMIT_PER_MIN: z.coerce.number().int().default(300),
+  PUBLIC_BASE_URL: z.string().url().default('https://motionquest.app'),
+  PLAY_STORE_URL: z.string().url().default('https://play.google.com/store/apps/details?id=app.motionquest'),
+  GRIEVANCE_EMAIL: z.string().email().default('grievance@motionquest.app'),
+  RAZORPAY_KEY_ID: z.string().default(''),
+  RAZORPAY_KEY_SECRET: z.string().default(''),
 });
 
 export type Config = z.infer<typeof schema>;

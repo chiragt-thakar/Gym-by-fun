@@ -123,3 +123,19 @@ export async function applyGymPayment(ctx: AppContext, notes: GymPaymentNotes): 
   });
   return 'applied';
 }
+
+/** Gym licence prices in rupees, excluding GST (plan: Pricing → Gyms). */
+export const GYM_PRICES: Record<string, { monthly?: number; yearly: number }> = {
+  founding: { yearly: 7999 },
+  starter: { monthly: 999, yearly: 9999 },
+  growth: { monthly: 2499, yearly: 24999 },
+};
+export const GST_RATE = 0.18;
+
+export function gymPriceInPaise(plan: string, period: 'monthly' | 'yearly'): { base: number; gst: number; total: number } | null {
+  const p = GYM_PRICES[plan]?.[period];
+  if (!p) return null;
+  const base = p * 100;
+  const gst = Math.round(base * GST_RATE);
+  return { base, gst, total: base + gst };
+}
