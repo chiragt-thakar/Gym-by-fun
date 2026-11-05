@@ -24,7 +24,14 @@ Hard rules that apply to every stage below (from `AGENTS.md`):
   in the festival events.
 - No medical, fitness-outcome or weight-loss claims in hints, titles or descriptions.
   Do not write "burn calories" or "tone"; "Nice rhythm!" is fine.
-- No payment nudges. Events are free and never link outside Google Play.
+- No payment nudges and no links outside Google Play. Access (Free / Premium) is checked
+  only at stage select, never mid-run (§7).
+- Every stage has an info sheet entry (§8, §9): body targets, intensity wording and
+  approved benefit copy, plus the standard disclaimer.
+
+**Map of this document:** §1 status · §2 stages by world · §3 new moves · §4 checklist ·
+§5 boss rules · §6 player journey and age bands · §7 Free vs Premium · §8 body targets,
+benefits and sources · §9 stage info sheet · §10 fun and anti-boredom rules.
 
 ---
 
@@ -45,6 +52,10 @@ worlds 5 to 9 in order. **Stadium Nights is world 5**, so the plan's "5 Ancient 
 | 7 | `w3-neon-city-chase` | 3 Neon City | 3-2 Neon City Chase | 3:30 (210 s, 68) | Drone chase, gate dash | Implemented |
 | 8 | `w4-mountain-trail` | 4 Mountain Expedition | 4-1 Mountain Trail | 3:00 (180 s, 49) | Gentle trail, low density | Implemented |
 | 9 | `w4-summit-storm` | 4 Mountain Expedition | 4-2 Summit Storm | 3:30 (210 s, 62) | Wind gusts, rockfall | Implemented |
+
+Access: World 1 stages are **Free**; World 2–4 stages become **Premium** when billing
+ships (§7). Stages 4, 8 and 12 in play order (`w2-desert-dunes`, `w3-neon-city-rooftops`,
+`w4-mountain-trail`) are the deload stages for their worlds (§6).
 
 Existing `SceneTheme`s (in `app/lib/game/forest_game.dart`): `forest`, `desert`, `neon`,
 `mountain`. Existing `SceneProps`: `trees`, `cacti`, plus whatever the neon and mountain
@@ -280,7 +291,8 @@ Arms up to charge."
 
 ### Limited-time events (world 0)
 
-Events are optional and free. They never gate progress or unlock paid items. The server
+Events are optional and never gate progress. **Garba Quest is free** (the one free
+festival event); the other events are Premium (§7). Event cosmetics are earned, never sold. The server
 delivers event levels through the content API (`server/` content module) with a
 date window in IST. The app hides them outside the window. They never ship in the APK.
 Imagery is celebratory and secular: lights, colour, music and dance. Do not use deities,
@@ -545,6 +557,20 @@ the move is used in content.
 8. Optional encounter `phase` (string, e.g. `"telegraph"`, `"weakPoint"`), used only by
    the boss painter for visuals. It never changes the outcome logic.
 
+9. Age bands are **not** level content. `game_director` gets a deterministic
+   `BandModifiers` (warning multiplier and floor, demanding-per-minute cap, demanding-in-row
+   cap, hold scale, breather floor) applied after difficulty, from the §6 table. The
+   simulator runs every level × difficulty × band × low-impact on/off.
+10. Optional top-level `access` (`"free"` | `"premium"`), `deload` (boolean) and `info`:
+    `{ "patterns": [string], "bodyTargets": { "primary": [key], "secondary": [key] },
+    "intensity": "light" | "lightModerate" | "moderate", "benefitKeys": [string],
+    "sourceKeys": [string], "bands": ["gentle" | "balanced" | "active"] }`. Body-region and
+    source keys are enums (§8). Benefit text lives in l10n as approved copy, never free text
+    in JSON. `access` is a UI hint; the server entitlement decides.
+11. Optional segment `rhythm` (boolean) and encounter `tag` (`"surprise"`) for the
+    §10.2 content lint (variety cap, surprise spacing, wave length). Add the lint to
+    `server` `content:validate` or to the game_director tests.
+
 **`packages/motion_core`:**
 - `Move` enum (`events.dart`): add the moves in §3 summary.
 - `MotionThresholds`: add fields per move, plus `.lowImpact()` values and `allowJumps`
@@ -618,7 +644,13 @@ the move is used in content.
 7. Update the stage table in `docs/game-design.md` and add an entry to
    `docs/progress.md`. Mark the stage Implemented in §1 of this file.
 8. Play-test on a device with the debug overlay: each new encounter is answerable on
-   beginner with low-impact on.
+   beginner with low-impact on, in the Gentle band.
+9. Fill `access`, `deload` and `info` (§3.11 item 10) from §7 and §8.2. Benefit copy must
+   come from the approved-copy table; no new claims without review.
+10. Pass the §10.2 anti-boredom lint: variety cap, waves 20–30 s, a surprise every
+    35–55 s, an "almost there" cue at 75 %, an end-of-stage reward.
+11. Deload stages (§6 rule 2): demanding density ≤ 80 % of the previous stage and a
+    breather ≥ 20 s.
 
 ### Per new move (once, before its first stage)
 
@@ -685,8 +717,14 @@ The boss is a normal level JSON. Its "behaviour" is only encounter placement plu
   Balance and hold durations are scaled × 0.75.
 - **Sound and shape:** each attack has the same sound and shape as its normal encounter
   type, so players can read bosses by ear.
-- **Simulation:** the slow bot must finish every boss on beginner, low-impact on, without
-  assist.
+- **Simulation:** the slow bot must finish every boss on beginner, low-impact on, Gentle
+  band, without assist.
+- **Age bands:** Gentle adds one breather cycle before phase 3 and uses hold scale × 0.75;
+  band caps on demanding encounters per minute apply to bosses too.
+- **Access:** Guardian Grove (World 1) is the only free boss. All later bosses are
+  Premium, checked at stage select only.
+- **Fun:** every boss has a named telegraph (§10.1), a visible phase bar with an "almost
+  there" glow before the calm, and a unique cosmetic for the first calm.
 
 **Template phase table for a B4 boss finale (151–240 s):**
 
@@ -696,3 +734,300 @@ The boss is a normal level JSON. Its "behaviour" is only encounter placement plu
 | 175–205 | 2: Pressure | 2 cycles adding the world's new move (slideWall, pushWall, hurdle, balanceBeam, strike) |
 | 205–230 | 3: Open core | 2 cycles with the full loop (+ punch or wicket where available) |
 | 230–240 | Calm | Gate sequence (3 gates, 3 s apart), then results |
+
+---
+
+## 6. Player journey and age bands
+
+MotionQuest is for adults (18+) only. Age band is an **optional preset the player picks**
+in onboarding or Settings ("How do you like to play?"). We never ask for a date of birth
+and never infer age from the camera. Only the band key is stored (on device, and synced
+with progress if signed in). **No pick = Gentle.** The player can change band at any
+time; the change applies from the next run, never mid-run.
+
+Bands compose with difficulty (beginner / intermediate / advanced): the band sets
+*ceilings and floors*, difficulty picks a value inside them. The director applies them
+deterministically (see §3.11 item 9).
+
+| | Gentle (50+, and the default) | Balanced (31–50) | Active (18–30) |
+|---|---|---|---|
+| Warning time | difficulty value × 1.3, floor 2.0 s | × 1.15, floor 1.6 s | × 1.0, floor 1.3 s |
+| Demanding encounters (beam, two-lane block, strike, pushWall) per minute, max | 8 | 11 | 14 |
+| Demanding in a row, max | 2 | 3 | difficulty value |
+| Low-impact | On, locked on unless the player confirms twice | On by default | On by default, easy to turn off |
+| Jumps | Toggle hidden; calf raise always | Off by default | Off by default (opt-in) |
+| Hold scale (pushWall, balanceBeam, guard window) | × 0.75 | × 0.9 | × 1.0 |
+| Balance stance | Toe-tap by default, wall-or-chair support hint shown | Toe-tap until 3 clean holds | Full lift |
+| Punch / swing reach thresholds | Low-impact values | Low-impact values until calibrated twice | Standard |
+| Breather between waves | ≥ 15 s every 60 s | ≥ 12 s every 75 s | ≥ 10 s every 90 s |
+| Suggested session (Daily Quest) | 6–8 min (2 stages + warm-up/cool-down) | 8–12 min | 10–15 min |
+| Max stages before "take a break" card | 3 | 4 | 5 |
+| Boss stages | Allowed, but phase 3 gets +1 breather cycle | Standard | Standard (advanced may add the 4-pad flurry) |
+
+**Warm-up and cool-down.** Every Daily Quest and every first run of the day opens with a
+45 s warm-up (march, arm circles, gentle lean) and closes with a 45 s cool-down (slow
+reach, breathing beat). They score no points and never fail. ACSM guidance recommends a
+warm-up and cool-down around each session [ACSM-GETP].
+
+### Which stages suit which band
+
+| Band | Recommended path | Treat with care |
+|---|---|---|
+| Gentle | Worlds 1, 2, 4 first (squat, lean, side step, calf raise, march). Firefly Trail as a replay. Temple Steps and Stone Bridge (toe-tap balance) are a good fit: WHO 2020 advises balance work for older adults [WHO20]. | Shadow Arena pads at standard reach; Stadium swing at full rotation. Both stay available, with low-impact thresholds. |
+| Balanced | Play order as built. Hall of Echoes and Crystal Field are good "focus" stages. | Back-to-back bosses: suggest a non-boss stage between. |
+| Active | Play order; advanced difficulty; Echo Duel flurries; Trial of Worlds. | Never offer a "no breaks" mode. Rapid-move caps (§5) apply to everyone. |
+
+### Safe progression rules (all bands)
+
+1. **One step per week of play.** A "step" is exactly one of: difficulty up one level,
+   +10 % demanding density, −0.1 s warning, +0.5 s hold. A "week of play" is 3 completed
+   runs on 3 different IST days within 7 days. The app may *suggest* a step; the player
+   accepts it. Steps down are always immediate and free.
+2. **Deload every 4th stage.** In play order, stages 4, 8, 12, … (the first stage of each
+   world from World 2 on, see §7) are deload stages: demanding density ≤ 80 % of the
+   previous stage, one breather ≥ 20 s, no new *damaging* encounter type. A new move may
+   be introduced there only as non-damaging (orb-like) or with hints and doubled warning.
+3. **New move = slow first.** The first stage that uses a new move uses it at most 20 %
+   of the mix, with hints, and never in the first 10 s.
+4. **Struggle rule.** Two runs in a row with 2+ hearts lost → offer one step down (never
+   automatic, never a nag). Tracking-loss forgiveness does not count as struggling.
+5. **Comeback rule.** After 14+ days without play, the next run starts one step down and
+   restores the step after one completed run.
+6. **No pain prompts, no diagnosis.** If the player taps "This doesn't feel right", end the
+   run gently, keep progress, show the standard disclaimer (§9) and suggest a lighter stage.
+
+---
+
+## 7. Free vs Premium access
+
+**Free:** Daily Quest, World 1 (including its mini-boss and Firefly Trail), and one
+festival event (Garba Quest). **Premium** (₹129/month, ₹699/year, Google Play Billing
+only): Worlds 2–9, all boss battles from World 2 on, and the other events.
+**Gym members get Premium free** through the server entitlement (gyms module).
+
+Rules:
+- Access is checked **only at stage select**. A run that has started always finishes and
+  saves, even if the subscription lapses mid-run. Never paywall mid-run, never on the
+  results screen after a fail.
+- The server entitlement is authoritative. The `access` field in level JSON (§3.11 item 10)
+  is a hint for the map UI only.
+- Locked stages show the stage info sheet (§9) and a single lock label. No countdowns, no
+  pop-ups, no links outside Google Play (AGENTS.md rule 11).
+- Worlds 2–4 are free in current builds. When billing ships they become Premium; players
+  keep all records, stars and cosmetics already earned, and finish any in-progress stage
+  for free.
+- Daily Quest for free players draws only from World 1 moves (squat, lean, raise arms)
+  plus warm-up march; for Premium it draws from every move the player has calibrated.
+
+### Full stage list: order, access, deload, band fit
+
+`D` = deload stage. Band fit: G = Gentle, B = Balanced, A = Active (all bands may play
+everything; this is the recommendation shown on the info sheet).
+
+| Order | Id | Title | Access | Why | D | Band fit |
+|---|---|---|---|---|---|---|
+| — | `daily-quest` | Daily Quest | Free | Daily habit loop for everyone | | G B A |
+| 1 | `w1-forest-escape` | Forest Escape | Free | Tutorial | | G B A |
+| 2 | `w1-river-crossing` | River Crossing | Free | Core combos | | G B A |
+| 3 | `w1-guardian-grove` | Guardian Grove | Free | The one free taste of a boss | | G B A |
+| opt | `w1-firefly-trail` | Firefly Trail | Free | Gentle replay, beginners | | G B |
+| 4 | `w2-desert-dunes` | Desert Dunes | Premium | Later world | D | G B A |
+| 5 | `w2-sandstorm-temple` | Sandstorm Temple | Premium | Later world | | G B A |
+| 6 | `w2-shifting-sands` | Shifting Sands | Premium | New move | | G B A |
+| 7 | `w2-scorpion-king` | Scorpion Guardian | Premium | Boss | | B A (G with care) |
+| 8 | `w3-neon-city-rooftops` | Neon City Rooftops | Premium | Later world | D | G B A |
+| 9 | `w3-neon-city-chase` | Neon City Chase | Premium | Later world | | B A |
+| 10 | `w3-hologram-wall` | Hologram Walls | Premium | New move | | G B A |
+| 11 | `w3-drone-core` | Drone Core | Premium | Boss | | B A |
+| 12 | `w4-mountain-trail` | Mountain Trail | Premium | Later world | D | G B A |
+| 13 | `w4-summit-storm` | Summit Storm | Premium | Later world | | B A |
+| 14 | `w4-glacier-run` | Glacier Run | Premium | New moves | | G B A |
+| 15 | `w4-yeti-pass` | Snow Guardian | Premium | Boss | | B A |
+| 16 | `w5-nets-practice` | Nets Practice | Premium | New move (non-damaging) | D | G B A |
+| 17 | `w5-floodlight-run` | Floodlight Run | Premium | | | B A |
+| 18 | `w5-super-over` | Super Over | Premium | | | B A |
+| 19 | `w5-stadium-final` | Stadium Final | Premium | Boss | | B A |
+| 20 | `w6-temple-steps` | Temple Steps | Premium | Recap | D | G B A |
+| 21 | `w6-stone-bridge` | Stone Bridge | Premium | New move | | G B A |
+| 22 | `w6-hall-of-echoes` | Hall of Echoes | Premium | Focus stage | | G B A |
+| 23 | `w6-temple-guardian` | Temple Guardian | Premium | Boss | | B A |
+| 24 | `w7-shadow-dojo` | Shadow Dojo | Premium | New moves (pads non-damaging) | D | B A (G with care) |
+| 25 | `w7-lantern-alley` | Lantern Alley | Premium | | | B A |
+| 26 | `w7-echo-duel` | Echo Duel | Premium | | | A B |
+| 27 | `w7-shadow-master` | Shadow Master | Premium | Boss | | A B |
+| 28 | `w8-orbit-launch` | Orbit Launch | Premium | Recap | D | G B A |
+| 29 | `w8-crystal-field` | Crystal Field | Premium | | | G B A |
+| 30 | `w8-meteor-storm` | Meteor Storm | Premium | | | B A |
+| 31 | `w8-nebula-gate` | Nebula Gate | Premium | Boss | | B A |
+| 32 | `w9-citadel-approach` | Citadel Approach | Premium | Calm before the end | D | G B A |
+| 33 | `w9-trial-of-worlds` | Trial of Worlds | Premium | Long stage | | A B |
+| 34 | `w9-final-guardian` | The Final Guardian | Premium | Final boss | | A B (G with care) |
+| ev | `w0-garba-quest` | Garba Quest | **Free** | The free festival event; India-first launch moment | | G B A |
+| ev | `w0-garba-quest-night2` | Raas Night | Premium | Extra event night | | B A |
+| ev | `w0-diwali-lights-run` | Diwali Lights Run | Premium | Event | | G B A |
+| ev | `w0-holi-colour-dash` | Holi Colour Dash | Premium | Event | | G B A |
+
+---
+
+## 8. Body targets, intensity and benefits per stage
+
+This is **general fitness information** for the stage info sheet, not a measurement and
+not advice. Intensity uses WHO wording: *light* (below moderate), *moderate* (noticeably
+raises breathing and heart rate) [WHO20]. MET-style ranges are design targets from
+comparable activities in the Compendium [MET11] and active-video-game studies [EXG1,
+EXG2]; they are checked in play-tests and **never shown as a measured value**. Copy must
+never claim calorie burn, weight loss, toning or any health outcome for the player.
+
+Body-region keys (use these exact keys in `info.bodyTargets`): `quads`, `glutes`,
+`hamstrings`, `calves`, `hipAbductors`, `hipFlexors`, `core`, `obliques`, `shoulders`,
+`upperBack`, `chest`, `arms`, `ankles` (stability).
+
+### 8.1 Per move
+
+| Move | Pattern | Primary | Secondary | Intensity alone | Plain-language benefits (approved copy) | Sources |
+|---|---|---|---|---|---|---|
+| Squat (partial) | Squat / knee-hip hinge | quads, glutes | hamstrings, core | light–moderate | Works the big leg muscles used for sitting and standing. Practises a controlled down-and-up. | WHO20 (muscle-strengthening), ACSM-PS11, ACSM-GETP |
+| Lean | Lateral flexion | obliques, core | hipAbductors | light | Moves the sides of the trunk. Practises balance while shifting weight. | ACSM-PS11 (flexibility, neuromotor) |
+| Raise arms | Overhead reach | shoulders, upperBack | core | light | Reaches through the shoulders. Breaks up long sitting with a full stretch. | WHO20 (reduce sedentary time), ACSM-PS11 |
+| Side step | Lateral step | hipAbductors, glutes | quads, calves | light–moderate | Sideways movement most daily walking skips. Gets the whole body moving. | ACSM-PS11 (neuromotor), WHO20 |
+| Barrier hold | Isometric push / anti-extension | shoulders, chest, core | arms | light | A steady hold that asks the shoulders and trunk to stay still. | ACSM-RT09 (isometric), ACSM-GETP |
+| Jog / march in place | Locomotion, knee lift | hipFlexors, quads, calves | core | moderate (jog), light–moderate (march) | Raises breathing and heart rate. Counts toward weekly active minutes. | WHO20 (aerobic), MET11 (marching/jogging in place) |
+| Calf raise | Ankle plantar flexion | calves | ankles | light | Works the lower legs used in walking and stairs. A low-impact stand-in for jumping. | ACSM-PS11, ACSM-OA09 |
+| Punch (controlled) | Push / trunk rotation | shoulders, arms | obliques, core | light–moderate (moderate in flurries) | Quick, controlled arm reach with trunk turn. Practises timing and coordination. | ACSM-PS11 (neuromotor), EXG1 |
+| Guard hold | Isometric arm hold | shoulders, upperBack | core | light | A short brace that asks the shoulders to hold position. | ACSM-RT09 |
+| Batting swing | Rotation | obliques, core, shoulders | glutes, hipAbductors | light–moderate | Turns the trunk through a full swing. Practises timing to a moving cue. | ACSM-PS11, EXG2 |
+| Bowling action | Overhead arc + rotation | shoulders, upperBack | obliques, core | light–moderate | A big, smooth overhead arc. Mobility for the shoulders. | ACSM-PS11 |
+| Balance (one-foot / toe-tap) | Single-leg stance | ankles, glutes, hipAbductors | core, calves | light | Practises standing steady on one foot. | WHO20 (balance for older adults), ACSM-OA09, ACSM-PS11 |
+| Jump *(opt-in)* | Plyometric | calves, quads, glutes | core | moderate–vigorous | Short bursts of effort for players who choose them. | ACSM-PS11 |
+
+### 8.2 Per stage
+
+Intensity: L = light, L–M = light to moderate, M = moderate (design target, §8 note).
+
+| Id | Patterns | Primary | Secondary | Int. | Benefits (2–3, approved copy) |
+|---|---|---|---|---|---|
+| `daily-quest` | warm-up march, mixed, cool-down reach | quads, glutes, shoulders | core, obliques | L–M | A short daily session. Builds a regular movement habit. Includes warm-up and cool-down. |
+| `w1-forest-escape` | squat, lateral flexion, overhead reach | quads, glutes | obliques, shoulders | L | Learn the three core moves. Gentle full-body movement. |
+| `w1-river-crossing` | lean→squat combos | quads, obliques | glutes, core | L–M | Links side-bends with squats. Practises quick, controlled changes. |
+| `w1-guardian-grove` | squat, lean, reach (boss rhythm) | quads, glutes, obliques | shoulders, core | L–M | Longer effort with planned rest beats. Reaction timing. |
+| `w1-firefly-trail` | reach-heavy, squat, lean | shoulders, upperBack | quads, obliques | L | A calm replay. Lots of reaching to open the shoulders. |
+| `w2-desert-dunes` (D) | squat, lean, reach | quads, glutes | obliques, shoulders | L | Easy re-start in a new world. Steady leg work. |
+| `w2-sandstorm-temple` | squat, two-lane leans | quads, obliques | glutes, core | L–M | Bigger side-to-side moves. Sustained leg work. |
+| `w2-shifting-sands` | lateral step, squat | hipAbductors, glutes | quads, obliques | L–M | Sideways stepping. Whole-body movement. |
+| `w2-scorpion-king` | step, squat, lean | hipAbductors, quads, glutes | obliques, core | M | Longer effort in waves. Reacting to cues on both sides. |
+| `w3-neon-city-rooftops` (D) | squat, lean, reach | quads, obliques | shoulders | L | Gentle new-world start. Steady rhythm. |
+| `w3-neon-city-chase` | squat, lean, gate reach | quads, glutes, obliques | shoulders, core | L–M | Faster combos with rest beats. Coordination. |
+| `w3-hologram-wall` | isometric push, squat, lean | shoulders, chest, core | quads | L–M | Steady holds for the upper body. Mixes holds with moves. |
+| `w3-drone-core` | duck, push hold, reach | quads, shoulders, core | chest, obliques | M | Upper- and lower-body mix. Boss rhythm with rests. |
+| `w4-mountain-trail` (D) | squat, lean, reach | quads, glutes | obliques | L | Low-density recovery stage. Easy pacing. |
+| `w4-summit-storm` | squat, lean (gusts) | quads, obliques | glutes, core | L–M | Sustained leg work. Changes of direction. |
+| `w4-glacier-run` | march/jog, calf raise, squat | hipFlexors, calves, quads | glutes, core | M | Raises breathing and heart rate. Lower-leg work. |
+| `w4-yeti-pass` | march, calf raise, push hold, squat | quads, calves, shoulders | core, glutes | M | Full-body boss in waves. Holds plus steps. |
+| `w5-nets-practice` (D) | rotation (swing), squat | obliques, core, shoulders | glutes | L | Learn to turn through the trunk. Timing practice. |
+| `w5-floodlight-run` | swing, overhead arc, squat | obliques, shoulders, upperBack | quads, core | L–M | Big upper-body arcs. Trunk rotation both ways (handedness swap in replays). |
+| `w5-super-over` | swing, bowl, lean | obliques, shoulders | quads, core | L–M | Rhythmic rotation. Coordination under a fun count. |
+| `w5-stadium-final` | swing, bowl, step, squat | obliques, shoulders, hipAbductors | quads, core | M | Whole-body boss. Rotation plus side steps. |
+| `w6-temple-steps` (D) | mixed recap, calf raise | quads, hipAbductors, calves | obliques | L | Easy recap of every move so far. |
+| `w6-stone-bridge` | single-leg / toe-tap stance, push hold | ankles, glutes, hipAbductors | core, shoulders | L | Practises steadiness on one foot. Calm focus. |
+| `w6-hall-of-echoes` | mixed, cue-by-ear | quads, obliques, hipAbductors | shoulders, core | L–M | Listening and reacting. Varied whole-body movement. |
+| `w6-temple-guardian` | squat, step, push, balance, reach | quads, glutes, shoulders, ankles | core | M | Strength-style holds plus balance in one boss. |
+| `w7-shadow-dojo` (D) | controlled punch, guard hold | shoulders, arms | obliques, core | L–M | Learn controlled punches. Shoulder and arm work. |
+| `w7-lantern-alley` | punch, guard, step | shoulders, arms, hipAbductors | obliques, core | M | Upper body with footwork. Coordination. |
+| `w7-echo-duel` | punch combos, guard | shoulders, arms, obliques | core | M | Combo timing. Raises breathing in short bursts. |
+| `w7-shadow-master` | punch, guard, duck, reach | shoulders, arms, quads | obliques, core | M | Full boss loop. Upper- and lower-body mix. |
+| `w8-orbit-launch` (D) | march, calf raise, squat | hipFlexors, calves, quads | core | L–M | Easy recap with a march launch. |
+| `w8-crystal-field` | balance, push, step | ankles, hipAbductors, shoulders | core, glutes | L–M | Slow, controlled moves. Steadiness and holds. |
+| `w8-meteor-storm` | guard, punch, calf raise, squat | shoulders, arms, calves | quads, core | M | Fast reactions with planned rests. Whole-body mix. |
+| `w8-nebula-gate` | all except swing/bowl | full body | core | M | Long whole-body boss in waves. |
+| `w9-citadel-approach` (D) | all except swing/bowl, gentle | full body | core | L–M | A calm tour of every move. |
+| `w9-trial-of-worlds` | all, four trials | full body | core | M | The longest effort, broken into trials with rest. |
+| `w9-final-guardian` | all, boss | full body | core | M | Finale with three phases and a checkpoint. |
+| `w0-garba-quest` | lateral step, overhead reach, calf raise to a beat | hipAbductors, shoulders, calves | glutes, core | L–M | Dance-style moves to music. Rhythm and coordination. |
+| `w0-garba-quest-night2` | step, low punch "clap", reach | hipAbductors, shoulders, arms | core | L–M | More dance rhythm with arm work. |
+| `w0-diwali-lights-run` | reach, squat, lean, march | shoulders, quads | obliques, hipFlexors | L–M | Lots of reaching. A festive whole-body run. |
+| `w0-holi-colour-dash` | step, squat, lean, reach | hipAbductors, quads | obliques, shoulders | L–M | Side-to-side play. Whole-body movement. |
+
+### 8.3 Sources (cite by key; titles exactly as below)
+
+| Key | Source | Used for |
+|---|---|---|
+| WHO20 | World Health Organization. *WHO guidelines on physical activity and sedentary behaviour.* Geneva: WHO, 2020. Summary: Bull FC et al., "World Health Organization 2020 guidelines on physical activity and sedentary behaviour", *Br J Sports Med* 2020;54:1451–1462. | Weekly activity amounts, light/moderate wording, muscle-strengthening and balance for adults/older adults, "every move counts", reducing sedentary time |
+| ACSM-GETP | American College of Sports Medicine. *ACSM's Guidelines for Exercise Testing and Prescription*, 11th ed. Wolters Kluwer, 2021. | Warm-up/cool-down, gradual progression, intensity terms |
+| ACSM-PS11 | Garber CE et al. "Quantity and quality of exercise for developing and maintaining cardiorespiratory, musculoskeletal, and neuromotor fitness in apparently healthy adults: guidance for prescribing exercise." ACSM position stand, *Med Sci Sports Exerc* 2011;43(7):1334–1359. | Neuromotor (balance, coordination, agility) training, flexibility, progression |
+| ACSM-RT09 | American College of Sports Medicine. "Progression models in resistance training for healthy adults." Position stand, *Med Sci Sports Exerc* 2009;41(3):687–708. | Holds and gradual load progression |
+| ACSM-OA09 | Chodzko-Zajko WJ et al. "Exercise and physical activity for older adults." ACSM position stand, *Med Sci Sports Exerc* 2009;41(7):1510–1530. | Gentle band: balance, lower-leg work, conservative progression |
+| HHS18 | U.S. Department of Health and Human Services. *Physical Activity Guidelines for Americans*, 2nd ed., 2018. | Secondary reference for the same activity messages |
+| MET11 | Ainsworth BE et al. "2011 Compendium of Physical Activities: a second update of codes and MET values." *Med Sci Sports Exerc* 2011;43(8):1575–1581. | Design-target intensity ranges only (never displayed as measured) |
+| EXG1 | Peng W, Lin J-H, Crouse J. "Is playing exergames really exercising? A meta-analysis of energy expenditure in active video games." *Cyberpsychology, Behavior, and Social Networking* 2011;14(11):681–688. | Active video games can reach light-to-moderate intensity, depending on game design |
+| EXG2 | Biddiss E, Irwin J. "Active video games to promote physical activity in children and youth: a systematic review." *Arch Pediatr Adolesc Med* 2010;164(7):664–672. | Background only (youth sample): whole-body, lower-body-heavy games produce more activity than upper-body-only games; novelty wears off, so variety matters. **Do not show in app** (our players are adults). |
+
+Rules for sources: cite only these unless a reviewer adds one after reading it. Phrase as
+"Public guidelines such as the WHO 2020 guidelines describe…", never "studies prove this
+app…". Before launch, a qualified reviewer checks every sentence of approved copy against
+the cited source.
+
+---
+
+## 9. How the app should show this (stage info sheet)
+
+Opened from the "i" on a stage card (map) and from the pause menu. Also shown on locked
+Premium stages, without any price pop-up.
+
+| Element | Content | Rules |
+|---|---|---|
+| Header | Title, world, length, intensity chip (Light / Light–moderate / Moderate), Free or Premium tag, "Recommended for: Gentle/Balanced/Active" | Intensity chip is "designed to be", never "you burned" |
+| Body map | Front and back outline; primary regions filled, secondary hatched (shape + label, not colour alone) | Labels in plain words: "front of thighs (quadriceps)" |
+| Moves | Icons of moves used, with the low-impact alternative named | Shows "Jumps off" when relevant |
+| Benefits | 2–3 lines from §8.2, from the approved-copy table only (l10n keys) | No outcome promises, no numbers about the body |
+| Why it helps | One sentence per move + source names, e.g. "Public guidelines (WHO 2020; ACSM) describe muscle-strengthening and balance activities as part of general fitness." | Source names only; a "Sources" link expands to the full titles in §8.3 (in-app text, no external link required) |
+| Disclaimer | Fixed text below | Always visible on the sheet, and on first launch |
+
+**Standard disclaimer (en; translate for hi, gu):**
+> MotionQuest is a game for general fitness and fun. It is not a medical product and does
+> not diagnose, treat or prevent any condition. The information here is general fitness
+> information. Move within your comfort, stop if something hurts or feels wrong, and talk
+> to a doctor before starting if you have a health condition, an injury or are pregnant.
+
+---
+
+## 10. Fun and focus
+
+### 10.1 Per-world fun hooks
+
+| World | Story beat | Collectible | Surprise mechanic | Rhythm / music | Combo | Rest-beat breather | Boss telegraph | Cosmetic reward |
+|---|---|---|---|---|---|---|---|---|
+| 1 Forest | The forest wakes as you run; the Grove guardian is soothed | Firefly jars (orbs) | A deer crosses: a bonus orb trail appears | Wooden percussion, 96 BPM | Squat-lean "river hop" | Firefly glade: slow breathing cue, orbs only | Branch glow + 3-pulse rise | Leaf trail |
+| 2 Desert | Find the buried temple's three seals | Sun seals | Mirage: an encounter turns out to be an orb (announced by shimmer, never a trick hit) | Clay drum, hand claps | Step-squat "dune slide" | Oasis shade | Tail glow, clay drum | Sand-dune cape |
+| 3 Neon | Reboot the drone hub | Power cells | Blackout: lights dim, sounds lead for 5 s (warning +0.5 s) | Synth, beat-synced signs | Push-hold → duck "firewall" | Rooftop garden | Scanner sweep line | Neon visor |
+| 4 Mountain | Reach the summit flag-line | Cairn stones | Snow guardian waves from a ridge, drops a boost orb | Footstep loop at BPM | March → calf raise "ice ledge" | Tea-stop hut (march slows to stillness) | Ridge rumble | Woollen scarf |
+| 5 Stadium | Win over the night crowd | Match balls | "Free hit": next ball scores double | Crowd claps on beat | Swing-swing-gate "over" | Drinks break | Floodlight flash | Floodlight trail |
+| 6 Temple | Relight the water lamps | Lamp flames | Echo: a sound plays alone, move by ear | Flute and bells | Balance → push "bridge" | Still pool (balance-free) | Gem glow | Stone-pattern sash |
+| 7 Arena | Earn the shadow master's respect | Lantern tokens | Mirror echo copies your last combo as pads | Taiko-style pulse | 1-2-guard | Lantern meditation | Double drum + whoosh | Ink-wash gloves |
+| 8 Cosmic | Guide the star-whale home | Star shards | Low-gravity lane drift (visual only) | Chimes, slow pads | Guard-punch "meteor break" | Floating calm | Nebula swirl | Comet tail |
+| 9 Finale | Calm the Guardian with every world's light | World sigils | One previous world's prop style returns | Leitmotif returns | Cross-world combos | Memory room (replays past worlds' music) | Same 3-pulse rise every time | Guardian crown (calm-coloured) |
+| Events | Festival story card | Festival tokens | Beat drop: one bonus round | Event BPM | Event dance combos | Short "sip water" beat | — | Festival outfit (event-only, never paid) |
+
+### 10.2 Anti-boredom rule set (applies to every stage; checkable by a content lint)
+
+1. **Variety cap.** No encounter type more than 3 times in a row, except inside a segment
+   tagged `rhythm: true` (Garba rounds, pad flurries, the "6 balls" finale).
+2. **Pacing waves.** Intensity alternates every 20–30 s: build (denser) → peak → ease.
+   No wave longer than 30 s at peak density; at least one ease section per minute.
+3. **Surprise every ~45 s** (window 35–55 s). A surprise is a visual or scoring moment from
+   §10.1 (bonus orb trail, golden gate, companion cameo, free hit). Surprises are **never
+   damaging and never untelegraphed**. Tag them `tag: "surprise"`.
+4. **New thing per stage.** Every stage introduces at least one of: a new move, a new
+   encounter combo, a new surprise, or a new music layer.
+5. **"Almost there" moments.** At 75 % of the run the progress bar glows and Coach Kavi
+   says one line ("Last stretch!"); in the final 20 s the music adds a layer. Before the
+   boss checkpoint: "Checkpoint ahead — hearts refill."
+6. **Streak feedback.** Combo streak of 5/10/20 gets sound + visual swells (crowd, fireflies,
+   lights). Breaking a streak is silent; never a negative sound beyond the normal miss cue.
+7. **End-of-stage reward.** Every completed stage gives stars (1–3), one collectible and
+   progress toward the world's cosmetic. Cosmetics are earned only, never sold.
+8. **Rest beats are content.** Breathers have their own scenery moment and a breathing cue
+   ("breathe in… and out") so they feel designed, not empty.
+9. **Replay variety.** Replays may mirror lanes and swap handedness (deterministic seed from
+   stage id + replay count), never change difficulty.
+
+---
