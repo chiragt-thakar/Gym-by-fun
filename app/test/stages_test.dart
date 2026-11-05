@@ -4,7 +4,10 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:game_director/game_director.dart';
 import 'package:motionquest/game/forest_game.dart';
+import 'package:flutter/painting.dart';
+import 'package:motionquest/game/stage_info.dart';
 import 'package:motionquest/game/stages.dart';
+import 'package:motionquest/screens/home_screen.dart';
 import 'package:motionquest/services/settings.dart';
 
 void main() {
@@ -95,6 +98,49 @@ void main() {
       nextStage({for (final st in stages) st.levelId}).levelId,
       forestEscapeId,
     );
+  });
+
+  test('daily quest skips Premium stages while they are locked', () {
+    final world1 = {
+      for (final st in stages)
+        if (st.world == 1) st.levelId,
+    };
+    expect(nextStage(world1).levelId, 'w2-desert-dunes');
+    final locked = nextStage(world1, premiumLocked: true);
+    expect(infoFor(locked).premium, isFalse);
+    expect(locked.levelId, forestEscapeId);
+    expect(
+      nextStage({forestEscapeId}, premiumLocked: true).levelId,
+      'w1-river-crossing',
+    );
+  });
+
+  test('worlds are built once', () {
+    expect(identical(worlds, worlds), isTrue);
+  });
+
+  test('gym colour parses #RRGGBB and falls back to null', () {
+    expect(
+      parseGymColour({
+        'colours': {'primary': '#12AbEf'},
+      }),
+      const Color(0xFF12ABEF),
+    );
+    expect(parseGymColour(null), isNull);
+    expect(parseGymColour({}), isNull);
+    expect(
+      parseGymColour({
+        'colours': {'primary': '#FFF'},
+      }),
+      isNull,
+    );
+    expect(
+      parseGymColour({
+        'colours': {'primary': 'zzzzzzz'},
+      }),
+      isNull,
+    );
+    expect(parseGymColour({'colours': 'red'}), isNull);
   });
 
   test('completedLevels survives a JSON round-trip', () {

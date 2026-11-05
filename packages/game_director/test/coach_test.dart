@@ -13,6 +13,8 @@ SessionSummary run({
   int? effort = 2,
   Difficulty difficulty = Difficulty.beginner,
   bool lowImpact = true,
+  bool assist = false,
+  String levelId = 'w1-forest',
   Map<Move, int> reps = const {
     Move.squat: 10,
     Move.leanLeft: 8,
@@ -23,7 +25,7 @@ SessionSummary run({
 }) =>
     SessionSummary(
       date: day0.add(Duration(days: day)),
-      levelId: 'w1-forest',
+      levelId: levelId,
       completed: completed,
       score: score,
       hearts: hearts,
@@ -33,6 +35,7 @@ SessionSummary run({
       reps: reps,
       difficulty: difficulty,
       lowImpact: lowImpact,
+      assist: assist,
       effort: effort,
       moveStats: stats,
     );
@@ -286,5 +289,52 @@ void main() {
     expect(s.heartsLost, 1);
     expect(s.difficulty, Difficulty.intermediate);
     expect(s.effort, 3);
+  });
+
+  test('no "Try assist" when assist was already on', () {
+    final a = coach.advise([run(completed: false, hearts: 0, assist: true)]);
+    expect(a.difficulty.reason, CoachReason.runNotFinished);
+    expect(a.difficulty.suggestAssist, isFalse);
+  });
+
+  test('bests and score goals compare the same stage only', () {
+    final a = coach.advise([
+      run(levelId: 'long', score: 5000),
+      run(levelId: 'short', score: 900),
+      run(levelId: 'short', score: 1000),
+    ]);
+    expect(a.recap!.key, 'coach_recap_best');
+    expect(a.nextGoal, const CoachMessage('coach_goal_score', {'score': 1100}));
+    final b = coach.advise([
+      run(levelId: 'short', score: 900),
+      run(levelId: 'long', score: 800),
+    ]);
+    expect(b.recap!.key, isNot('coach_recap_best'));
+  });
+
+  test('assist and clientId survive JSON', () {
+    final s = SessionSummary.fromResult(
+      const RunResult(
+        levelId: 'w1-forest',
+        completed: true,
+        score: 10,
+        hearts: 3,
+        cleared: 1,
+        hit: 0,
+        forgiven: 0,
+        energy: 0,
+        reps: {},
+        gameMs: 0,
+        activeMs: 0,
+        difficulty: Difficulty.beginner,
+        lowImpact: true,
+      ),
+      date: day0,
+      assist: true,
+      clientId: 'abc12345',
+    );
+    final back = SessionSummary.fromJson(s.toJson());
+    expect(back.assist, isTrue);
+    expect(back.clientId, 'abc12345');
   });
 }

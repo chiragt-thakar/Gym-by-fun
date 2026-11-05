@@ -292,6 +292,33 @@ const stageInfos = <String, StageInfo>{
     references: [who2020, acsm11, garber2011],
     tier: StageTier.premium,
   ),
+  'w4-glacier-pass': StageInfo(
+    levelId: 'w4-glacier-pass',
+    primary: [BodyRegion.quads, BodyRegion.glutes, BodyRegion.obliques],
+    secondary: [BodyRegion.shoulders, BodyRegion.core, BodyRegion.calves],
+    movements: _all,
+    intensity: Intensity.moderate,
+    benefits: [
+      'A steady mix of squats, leans and reaches.',
+      'Builds leg strength and muscular endurance.',
+      'Counts toward weekly activity guidelines.',
+    ],
+    references: [who2020, acsm11, garber2011],
+    tier: StageTier.premium,
+  ),
+  'w4-sunrise-summit': StageInfo(
+    levelId: 'w4-sunrise-summit',
+    primary: [BodyRegion.quads, BodyRegion.shoulders],
+    secondary: [BodyRegion.glutes, BodyRegion.obliques, BodyRegion.calves],
+    movements: _all,
+    intensity: Intensity.light,
+    benefits: [
+      'A steady mix of squats, leans and reaches.',
+      'Adds active minutes to your week.',
+    ],
+    references: [who2020, acsm11],
+    tier: StageTier.premium,
+  ),
 };
 
 /// Info for a stage. Every stage in [stages] has an entry (see tests).

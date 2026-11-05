@@ -26,8 +26,18 @@ class CoachHistoryNotifier extends Notifier<List<SessionSummary>> {
     }
   }
 
+  /// Adds [s], or replaces the entry with the same clientId (so saving a
+  /// run again, e.g. with its effort rating, never duplicates it).
   void record(SessionSummary s) {
-    final next = [...state, s];
+    final i = s.clientId == null
+        ? -1
+        : state.indexWhere((h) => h.clientId == s.clientId);
+    final next = [...state];
+    if (i >= 0) {
+      next[i] = s;
+    } else {
+      next.add(s);
+    }
     state = List.unmodifiable(
       next.length > maxHistory ? next.sublist(next.length - maxHistory) : next,
     );

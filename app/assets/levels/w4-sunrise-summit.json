@@ -1,0 +1,296 @@
+{
+  "$schema": "../schema/level.schema.json",
+  "id": "w4-sunrise-summit",
+  "version": 1,
+  "schemaVersion": 1,
+  "world": 4,
+  "name": "Sunrise Summit",
+  "lanes": 3,
+  "durationS": 180,
+  "hearts": 3,
+  "music": {
+    "track": "sunrise_summit",
+    "bpmByDifficulty": {
+      "beginner": 96,
+      "intermediate": 104,
+      "advanced": 112
+    }
+  },
+  "difficulty": {
+    "beginner": {
+      "warningMs": 2000,
+      "maxDemandingInRow": 3,
+      "hints": "always",
+      "lowImpactDefault": true
+    },
+    "intermediate": {
+      "warningMs": 1600,
+      "maxDemandingInRow": 5,
+      "hints": "firstTime",
+      "lowImpactDefault": true
+    },
+    "advanced": {
+      "warningMs": 1300,
+      "maxDemandingInRow": 7,
+      "hints": "off",
+      "lowImpactDefault": false
+    }
+  },
+  "scoring": {
+    "beam": 100,
+    "laneBlock": 100,
+    "orb": 50,
+    "gate": 150
+  },
+  "segments": [
+    {
+      "id": "practice",
+      "kind": "practice",
+      "startS": 0,
+      "endS": 30,
+      "hint": "A calm climb at dawn. Easy pace."
+    },
+    {
+      "id": "learn",
+      "kind": "learn",
+      "startS": 30,
+      "endS": 88,
+      "hint": "Gentle trail to the top. Take your time."
+    },
+    {
+      "id": "breather",
+      "kind": "breather",
+      "startS": 88,
+      "endS": 110,
+      "hint": "Tea-stop hut. Slow breaths, soft reaches."
+    },
+    {
+      "id": "combos",
+      "kind": "combo",
+      "startS": 110,
+      "endS": 150,
+      "hint": "The sun is rising. Keep it smooth."
+    },
+    {
+      "id": "checkpoint",
+      "kind": "checkpoint",
+      "startS": 150,
+      "endS": 151,
+      "hint": "Checkpoint below the summit. A heart returns."
+    },
+    {
+      "id": "finale",
+      "kind": "finale",
+      "startS": 151,
+      "endS": 180,
+      "hint": "Almost there! The summit flag-line is just ahead."
+    }
+  ],
+  "encounters": [
+    {
+      "atS": 10,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "Morning light! Raise both arms to greet the sun."
+    },
+    {
+      "atS": 15,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ],
+      "hint": "A snow drift. Lean or step to the side."
+    },
+    {
+      "atS": 20,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 25,
+      "type": "beam",
+      "hint": "A low cairn arch. Easy squat to pass under."
+    },
+    {
+      "atS": 33,
+      "type": "orb",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 38,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 43,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 48,
+      "type": "orb",
+      "lanes": [
+        0
+      ],
+      "hint": "A snow guardian waves hello! Catch its boost orb."
+    },
+    {
+      "atS": 53,
+      "type": "beam"
+    },
+    {
+      "atS": 58,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 63,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 68,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 73,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 78,
+      "type": "beam"
+    },
+    {
+      "atS": 83,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 92,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "Tea-stop hut. Breathe in... and out. Gentle reaches."
+    },
+    {
+      "atS": 99,
+      "type": "orb",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 106,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 114,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 119,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 124,
+      "type": "beam"
+    },
+    {
+      "atS": 129,
+      "type": "orb",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 134,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 139,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "Golden sunrise orb! Almost at the top."
+    },
+    {
+      "atS": 144,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 155,
+      "type": "gate",
+      "hint": "A summit gate! Arms up to open it."
+    },
+    {
+      "atS": 160,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 165,
+      "type": "gate"
+    },
+    {
+      "atS": 170,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 175,
+      "type": "gate",
+      "hint": "The flag-line is here. Last gate!"
+    },
+    {
+      "atS": 179,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "You reached the summit at sunrise. Well done!"
+    }
+  ]
+}

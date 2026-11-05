@@ -30,6 +30,17 @@ final homeDataProvider = FutureProvider.autoDispose<Map<String, dynamic>?>((
   }
 });
 
+final _hexColour = RegExp(r'^#[0-9a-fA-F]{6}$');
+
+/// The gym's primary colour, or null if it is missing or not `#RRGGBB`.
+Color? parseGymColour(Map<String, dynamic>? gym) {
+  final colours = gym?['colours'];
+  if (colours is! Map) return null;
+  final hex = colours['primary'];
+  if (hex is! String || !_hexColour.hasMatch(hex)) return null;
+  return Color(0xFF000000 | int.parse(hex.substring(1), radix: 16));
+}
+
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -41,12 +52,12 @@ class HomeScreen extends ConsumerWidget {
     final progress = data?['progress'] as Map<String, dynamic>?;
     final quests = (data?['quests'] as List<dynamic>?) ?? const [];
     final premium = ref.watch(premiumProvider).value ?? const PremiumState();
-    final next = nextStage(s.completedLevels);
-    Color? gymColour;
-    if (gym != null) {
-      final hex = (gym['colours'] as Map)['primary'] as String;
-      gymColour = Color(int.parse('FF${hex.substring(1)}', radix: 16));
-    }
+    final next = nextStage(
+      s.completedLevels,
+      premiumLocked: PaywallPolicy.paymentsEnabled && !premium.premium,
+    );
+    final gymColour = parseGymColour(gym);
+    final worldList = worlds;
     Widget header(BuildContext context) => Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -172,13 +183,13 @@ class HomeScreen extends ConsumerWidget {
           // layer so scrolling never repaints its stage tiles.
           child: ListView.builder(
             padding: const EdgeInsets.all(20),
-            itemCount: worlds.length + 2,
+            itemCount: worldList.length + 2,
             itemBuilder: (context, i) {
               if (i == 0) return header(context);
-              if (i == worlds.length + 1) return footer;
+              if (i == worldList.length + 1) return footer;
               return RepaintBoundary(
                 child: _WorldCard(
-                  world: worlds[i - 1],
+                  world: worldList[i - 1],
                   completed: s.completedLevels,
                 ),
               );

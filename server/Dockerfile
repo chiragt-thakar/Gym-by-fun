@@ -15,4 +15,10 @@ COPY server/package.json ./
 COPY content/ /repo/content/
 USER node
 EXPOSE 8080
+# Liveness probe without curl (alpine image has none): node's built-in fetch.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||8080)+'/livez').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"
+# Migrations (run once per deploy, before starting api/worker):
+#   docker run --rm --env-file .env <image> node dist/db/migrate.js
+# Worker: docker run ... <image> node dist/worker.js
 CMD ["node", "dist/server.js"]

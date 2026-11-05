@@ -1,0 +1,391 @@
+{
+  "$schema": "../schema/level.schema.json",
+  "id": "w4-glacier-pass",
+  "version": 1,
+  "schemaVersion": 1,
+  "world": 4,
+  "name": "Glacier Pass",
+  "lanes": 3,
+  "durationS": 180,
+  "hearts": 3,
+  "music": {
+    "track": "glacier_pass",
+    "bpmByDifficulty": {
+      "beginner": 106,
+      "intermediate": 116,
+      "advanced": 126
+    }
+  },
+  "difficulty": {
+    "beginner": {
+      "warningMs": 2000,
+      "maxDemandingInRow": 3,
+      "hints": "always",
+      "lowImpactDefault": true
+    },
+    "intermediate": {
+      "warningMs": 1600,
+      "maxDemandingInRow": 5,
+      "hints": "firstTime",
+      "lowImpactDefault": true
+    },
+    "advanced": {
+      "warningMs": 1300,
+      "maxDemandingInRow": 7,
+      "hints": "off",
+      "lowImpactDefault": false
+    }
+  },
+  "scoring": {
+    "beam": 100,
+    "laneBlock": 100,
+    "orb": 50,
+    "gate": 150
+  },
+  "segments": [
+    {
+      "id": "practice",
+      "kind": "practice",
+      "startS": 0,
+      "endS": 30,
+      "hint": "Cold air, steady steps. Find your rhythm on the ice."
+    },
+    {
+      "id": "learn",
+      "kind": "learn",
+      "startS": 30,
+      "endS": 90,
+      "hint": "Arches, crevasses and crystals. Read the ice ahead."
+    },
+    {
+      "id": "breather",
+      "kind": "breather",
+      "startS": 90,
+      "endS": 105,
+      "hint": "Crystal cave. Breathe in... and out. Reach for the glow."
+    },
+    {
+      "id": "combos",
+      "kind": "combo",
+      "startS": 105,
+      "endS": 150,
+      "hint": "The glacier narrows. Mix your moves."
+    },
+    {
+      "id": "checkpoint",
+      "kind": "checkpoint",
+      "startS": 150,
+      "endS": 151,
+      "hint": "Checkpoint at the ice hut. A heart returns."
+    },
+    {
+      "id": "finale",
+      "kind": "finale",
+      "startS": 151,
+      "endS": 180,
+      "hint": "Almost there! The ice gates lead off the glacier."
+    }
+  ],
+  "encounters": [
+    {
+      "atS": 9,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ],
+      "hint": "A crevasse ahead! Lean left or right to step around it."
+    },
+    {
+      "atS": 13,
+      "type": "beam",
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 16,
+      "type": "beam",
+      "hint": "A low ice arch! Squat to slide under."
+    },
+    {
+      "atS": 20,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 23,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "Snow crystals! Raise both arms to catch them."
+    },
+    {
+      "atS": 26,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 32,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 35.8,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 39.6,
+      "type": "beam"
+    },
+    {
+      "atS": 43.6,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 47.2,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "A snow guardian waves from the ridge! Grab its boost crystal."
+    },
+    {
+      "atS": 50.8,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 54.4,
+      "type": "beam"
+    },
+    {
+      "atS": 58.4,
+      "type": "orb",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 61.9,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 65.4,
+      "type": "orb",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 68.9,
+      "type": "beam"
+    },
+    {
+      "atS": 72.9,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 76.3,
+      "type": "orb",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 79.7,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 83.1,
+      "type": "beam"
+    },
+    {
+      "atS": 87.1,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 93,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "Crystal trail! Breathe in, reach up, breathe out."
+    },
+    {
+      "atS": 97.5,
+      "type": "orb",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 102,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 106,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 108.0,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 111.0,
+      "type": "beam"
+    },
+    {
+      "atS": 114.5,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 116.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 119.5,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 121.5,
+      "type": "beam"
+    },
+    {
+      "atS": 125.0,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 128.0,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 130.0,
+      "type": "orb",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 133.0,
+      "type": "beam"
+    },
+    {
+      "atS": 136.5,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 138.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "Golden crystal! Almost through the pass. Reach for it."
+    },
+    {
+      "atS": 141.5,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 143.5,
+      "type": "beam"
+    },
+    {
+      "atS": 154,
+      "type": "gate",
+      "hint": "An ice gate! Arms up to push it open."
+    },
+    {
+      "atS": 158,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 162,
+      "type": "gate"
+    },
+    {
+      "atS": 166,
+      "type": "beam"
+    },
+    {
+      "atS": 170,
+      "type": "gate",
+      "hint": "Last stretch! The far side of the glacier is in sight."
+    },
+    {
+      "atS": 174,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 178,
+      "type": "gate",
+      "hint": "Final gate. You crossed the glacier!"
+    }
+  ]
+}

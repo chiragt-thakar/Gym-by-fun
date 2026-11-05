@@ -72,3 +72,45 @@ class TrackingResumed extends MotionEvent {
   @override
   String toString() => 'TrackingResumed(@$timestampMs)';
 }
+
+/// Roadmap moves (docs/stages-roadmap.md §3) kept apart from [Move] so code
+/// that switches exhaustively over [Move] keeps compiling. Opt-in only:
+/// [MotionEngine] emits these only when its flags turn them on.
+enum ExtraMove { barrierHold, stepLeft, stepRight }
+
+class ExtraMoveStarted extends MotionEvent {
+  const ExtraMoveStarted(this.move, super.timestampMs);
+  final ExtraMove move;
+  @override
+  String toString() => 'ExtraMoveStarted($move @$timestampMs)';
+}
+
+class ExtraMoveHeld extends MotionEvent {
+  const ExtraMoveHeld(this.move, super.timestampMs, this.heldMs);
+  final ExtraMove move;
+  final int heldMs;
+  @override
+  String toString() => 'ExtraMoveHeld($move ${heldMs}ms @$timestampMs)';
+}
+
+class ExtraMoveEnded extends MotionEvent {
+  const ExtraMoveEnded(this.move, super.timestampMs, this.heldMs,
+      {this.completed = true});
+  final ExtraMove move;
+
+  /// Total time the move was held (start to the last frame it was true).
+  final int heldMs;
+
+  /// False when the move was cut short by a tracking pause.
+  final bool completed;
+  @override
+  String toString() => 'ExtraMoveEnded($move ${heldMs}ms @$timestampMs)';
+}
+
+class ExtraMoveRejected extends MotionEvent {
+  const ExtraMoveRejected(this.move, super.timestampMs, this.reason);
+  final ExtraMove move;
+  final RejectReason reason;
+  @override
+  String toString() => 'ExtraMoveRejected($move $reason @$timestampMs)';
+}

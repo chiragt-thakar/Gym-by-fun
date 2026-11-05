@@ -20,6 +20,11 @@ class BodyFeatures {
     required this.leanOffset,
     required this.minLegVisibility,
     required this.hipVisibility,
+    required this.leftShoulder,
+    required this.rightShoulder,
+    required this.leftElbow,
+    required this.rightElbow,
+    required this.ankleCenter,
   });
 
   factory BodyFeatures.from(PoseFrame f) {
@@ -44,6 +49,11 @@ class BodyFeatures {
       leanOffset: sh.x - hip.x,
       minLegVisibility: legVis,
       hipVisibility: hip.visibility,
+      leftShoulder: f[Lm.leftShoulder],
+      rightShoulder: f[Lm.rightShoulder],
+      leftElbow: f[Lm.leftElbow],
+      rightElbow: f[Lm.rightElbow],
+      ankleCenter: ankle,
     );
   }
 
@@ -68,6 +78,14 @@ class BodyFeatures {
   /// Lowest visibility of hips and knees (the squat guard).
   final double minLegVisibility;
   final double hipVisibility;
+
+  final Landmark leftShoulder;
+  final Landmark rightShoulder;
+  final Landmark leftElbow;
+  final Landmark rightElbow;
+
+  /// Midpoint of the ankles (visibility = the lower of the two).
+  final Landmark ankleCenter;
 
   /// How deep the squat is, as a fraction of the player's calibrated
   /// comfortable depth (0 = standing, 1 = calibrated bottom).
@@ -94,6 +112,9 @@ class BodyFeatures {
   bool get leftWristBelowShoulders => leftWrist.y > shoulderCenter.y;
   bool get rightWristBelowShoulders => rightWrist.y > shoulderCenter.y;
 }
+
+/// Straight-line distance between two landmarks in image units.
+double landmarkDistance(Landmark a, Landmark b) => _dist(a, b);
 
 double _dist(Landmark a, Landmark b) {
   final dx = a.x - b.x, dy = a.y - b.y;

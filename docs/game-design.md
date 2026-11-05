@@ -138,3 +138,40 @@ claims to measure fatigue, heart rate or health.
 - **Week balance**: three runs in a row rated ≥4 → suggest a lighter run;
   otherwise, with ≥20 reps in the 7 days up to the latest run, one move above
   60 % of reps → suggest another stage for variety.
+
+## Opt-in roadmap moves: barrier hold and side step (motion_core)
+
+Implemented in `packages/motion_core/lib/src/extra_recognisers.dart`, off by default
+(`MotionEngine(enableBarrierHold: true, enableSideStep: true)`). They emit
+`ExtraMoveStarted/Held/Ended/Rejected` with `ExtraMove { barrierHold, stepLeft, stepRight }`,
+a separate enum so exhaustive `switch`es over `Move` elsewhere are unaffected. Thresholds
+live in `ExtraMoveThresholds` (`MotionThresholds` and its JSON are unchanged).
+
+| Barrier hold (§3.2) | Default | Low-impact |
+|---|---|---|
+| Wrist band below shoulder line | 0–0.6 torso | same |
+| Wrist x inside shoulder span ± | 10 % of span | same |
+| Forward: wrist–shoulder distance ≤ | 0.55 × arm length (arm = 1.05 × standing torso until calibrated) | same |
+| Elbow y | between wrist and hip | same |
+| Guard exclusion: wrist–nose distance ≥ | 0.4 torso | same |
+| Hands | both | one (`barrierOneHand`) |
+| Start | conditions true for `confirmFrames` (2) | same |
+| End | conditions false for 200 ms; `ExtraMoveEnded.heldMs` = start → last true frame | same |
+| Held events | every `heldIntervalMs` (100 ms) | same |
+| Visibility | wrist, elbow, shoulder ≥ 0.5 else `notVisible` once per attempt | same |
+
+Known: raising the hands to a guard passes through the barrier zone for a few frames
+(< 300 ms of hold in tests); the `pushWall` rule (held ≥ 70 % of `holdMs`) absorbs it.
+
+| Side step (§3.1) | Default | Low-impact |
+|---|---|---|
+| Start: \|sideStepFraction\| ≥ | 0.60 for 2 frames | 0.45 |
+| Lean guard: \|leanFraction\| < | 0.40 (otherwise silently ignored) | same |
+| Feet moved: ankle-centre shift ≥ | 50 % of hip shift, same side, else `tooShallow` | same |
+| End / re-arm: \|fraction\| < | 0.25 | 0.20 |
+| Cooldown between starts | 400 ms (`tooEarly`) | same |
+| Visibility | hips and ankles ≥ 0.5 else `notVisible` | same |
+
+The feet check compares the ankle centre with the calibrated standing hip x, because
+calibration does not yet record a standing ankle x. Tests: `test/extra_recognisers_test.dart`
+(synthetic only; a recorded clip is required before these moves are used in content).

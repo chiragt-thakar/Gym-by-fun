@@ -47,6 +47,10 @@ class SyntheticBody {
   /// [oneArm] raise only the right arm.
   /// [bend] 0..1 forward bend at the hips (hips stay up).
   /// [step] horizontal hip translation in H units (side step / walking).
+  /// [barrier] 0..1 towards both forearms raised in front of the chest,
+  /// palms pushed at the camera (barrier hold).
+  /// [guard] 0..1 towards both wrists up by the face (boxing guard).
+  /// [hipSway] hip/torso shift in H units with the feet planted.
   List<Landmark> pose({
     double squat = 0,
     double lean = 0,
@@ -54,9 +58,13 @@ class SyntheticBody {
     bool oneArm = false,
     double bend = 0,
     double step = 0,
+    double barrier = 0,
+    double guard = 0,
+    double hipSway = 0,
   }) {
     final h = height;
-    final cx = centerX + step * h;
+    final feetX = centerX + step * h;
+    final cx = feetX + hipSway * h;
     final ankleY = footY - 0.04 * h;
     final kneeY = ankleY - 0.26 * h + 0.03 * h * squat;
     final hipY = ankleY - 0.51 * h + 0.20 * h * squat;
@@ -90,12 +98,30 @@ class SyntheticBody {
     }
     set(Lm.leftShoulder, shX - 0.11 * h, shY);
     set(Lm.rightShoulder, shX + 0.11 * h, shY);
-    final lw = wrist(-1, oneArm ? 0 : arms);
-    final rw = wrist(1, arms);
+    var lw = wrist(-1, oneArm ? 0 : arms);
+    var rw = wrist(1, arms);
+    var le = Landmark((shX - 0.11 * h + lw.x) / 2, (shY + lw.y) / 2, 0, 0.97);
+    var re = Landmark((shX + 0.11 * h + rw.x) / 2, (shY + rw.y) / 2, 0, 0.97);
+    Landmark lerp(Landmark a, double x, double y, double k) =>
+        Landmark(a.x + (x - a.x) * k, a.y + (y - a.y) * k, 0, a.visibility);
+    if (barrier > 0) {
+      // Forearms up in front of the chest: wrists near the midline at chest
+      // height, elbows below the wrists (2-D view of arms pushed forward).
+      lw = lerp(lw, shX - 0.06 * h, shY + 0.10 * h, barrier);
+      rw = lerp(rw, shX + 0.06 * h, shY + 0.10 * h, barrier);
+      le = lerp(le, shX - 0.12 * h, shY + 0.17 * h, barrier);
+      re = lerp(re, shX + 0.12 * h, shY + 0.17 * h, barrier);
+    }
+    if (guard > 0) {
+      lw = lerp(lw, shX - 0.04 * h, noseY + 0.03 * h, guard);
+      rw = lerp(rw, shX + 0.04 * h, noseY + 0.03 * h, guard);
+      le = lerp(le, shX - 0.10 * h, shY + 0.08 * h, guard);
+      re = lerp(re, shX + 0.10 * h, shY + 0.08 * h, guard);
+    }
     lm[Lm.leftWrist] = lw;
     lm[Lm.rightWrist] = rw;
-    set(Lm.leftElbow, (shX - 0.11 * h + lw.x) / 2, (shY + lw.y) / 2);
-    set(Lm.rightElbow, (shX + 0.11 * h + rw.x) / 2, (shY + rw.y) / 2);
+    lm[Lm.leftElbow] = le;
+    lm[Lm.rightElbow] = re;
     for (final (i, w) in [
       (17, lw),
       (19, lw),
@@ -110,13 +136,13 @@ class SyntheticBody {
     set(Lm.rightHip, cx + 0.07 * h, hipY, legVis);
     set(Lm.leftKnee, cx - kneeSpread, kneeY, legVis);
     set(Lm.rightKnee, cx + kneeSpread, kneeY, legVis);
-    set(Lm.leftAnkle, cx - 0.07 * h, ankleY);
-    set(Lm.rightAnkle, cx + 0.07 * h, ankleY);
+    set(Lm.leftAnkle, feetX - 0.07 * h, ankleY);
+    set(Lm.rightAnkle, feetX + 0.07 * h, ankleY);
     for (final i in [29, 31]) {
-      set(i, cx - 0.08 * h, ankleY + 0.02 * h);
+      set(i, feetX - 0.08 * h, ankleY + 0.02 * h);
     }
     for (final i in [30, 32]) {
-      set(i, cx + 0.08 * h, ankleY + 0.02 * h);
+      set(i, feetX + 0.08 * h, ankleY + 0.02 * h);
     }
 
     if (noise == 0) return lm;
@@ -143,6 +169,16 @@ enum Action {
   armsToChest,
   sideShuffle,
   idle,
+
+  // Opt-in roadmap moves (ExtraMove; never labelled as a Move).
+  barrierHold,
+  oneHandBarrier,
+  stepLeft,
+  stepRight,
+
+  // Decoys for the roadmap moves.
+  guardUp,
+  hipSway,
 }
 
 class ScriptStep {
@@ -292,5 +328,21 @@ class SyntheticSession {
         Action.armsToChest => body.pose(arms: 0.45 * env),
         Action.sideShuffle => body.pose(step: 0.25 * env, lean: breath),
         Action.idle => body.pose(lean: breath),
+        Action.barrierHold => body.pose(barrier: env, lean: breath),
+        Action.oneHandBarrier => _oneHandBarrier(env, breath),
+        Action.stepLeft => body.pose(step: -0.20 * env, lean: breath),
+        Action.stepRight => body.pose(step: 0.20 * env, lean: breath),
+        Action.guardUp => body.pose(guard: env, lean: breath),
+        Action.hipSway => body.pose(hipSway: 0.20 * env, lean: breath),
       };
+
+  /// Right hand pushed forward, left arm by the side.
+  List<Landmark> _oneHandBarrier(double env, double breath) {
+    final pushed = body.pose(barrier: env, lean: breath);
+    final rest = body.pose(lean: breath);
+    return [
+      for (var i = 0; i < pushed.length; i++)
+        i == Lm.leftWrist || i == Lm.leftElbow ? rest[i] : pushed[i]
+    ];
+  }
 }

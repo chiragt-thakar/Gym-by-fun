@@ -67,6 +67,8 @@ class SessionSummary {
     required this.reps,
     required this.difficulty,
     required this.lowImpact,
+    this.assist = false,
+    this.clientId,
     this.activeMs = 0,
     this.effort,
     this.moveStats = const {},
@@ -76,6 +78,8 @@ class SessionSummary {
     RunResult r, {
     required DateTime date,
     int maxHearts = 3,
+    bool assist = false,
+    String? clientId,
     int? effort,
     Map<Move, MoveStats> moveStats = const {},
   }) =>
@@ -91,6 +95,8 @@ class SessionSummary {
         reps: Map.of(r.reps),
         difficulty: r.difficulty,
         lowImpact: r.lowImpact,
+        assist: assist,
+        clientId: clientId,
         activeMs: r.activeMs,
         effort: effort,
         moveStats: moveStats,
@@ -107,6 +113,12 @@ class SessionSummary {
   final Map<Move, int> reps;
   final Difficulty difficulty;
   final bool lowImpact;
+
+  /// Assist mode was on for this run.
+  final bool assist;
+
+  /// The run's upload id; the coach history keeps one entry per id.
+  final String? clientId;
   final int activeMs;
 
   /// The player's own 1–5 "how hard did that feel" answer, if given.
@@ -131,6 +143,8 @@ class SessionSummary {
         'reps': {for (final e in reps.entries) e.key.name: e.value},
         'difficulty': difficulty.name,
         'lowImpact': lowImpact,
+        'assist': assist,
+        if (clientId != null) 'clientId': clientId,
         'activeMs': activeMs,
         'effort': effort,
         'moveStats': {
@@ -165,6 +179,8 @@ class SessionSummary {
       difficulty:
           Difficulty.values.asNameMap()[j['difficulty']] ?? Difficulty.beginner,
       lowImpact: j['lowImpact'] as bool? ?? true,
+      assist: j['assist'] as bool? ?? false,
+      clientId: j['clientId'] as String?,
       activeMs: (j['activeMs'] as num?)?.toInt() ?? 0,
       effort: (j['effort'] as num?)?.toInt(),
       moveStats: stats,
@@ -328,7 +344,7 @@ class Coach {
       return DifficultyAdvice(
         current: cur,
         recommended: easier,
-        suggestAssist: true,
+        suggestAssist: !last.assist,
         suggestLowImpact: !last.lowImpact,
         reason: down,
       );
@@ -398,7 +414,10 @@ class Coach {
       'cleared': last.cleared,
       if (top != null) 'move': top.name,
     };
-    final earlier = history.sublist(0, history.length - 1);
+    // Bests only compare runs of the same stage.
+    final earlier = history
+        .sublist(0, history.length - 1)
+        .where((s) => s.levelId == last.levelId);
     final prevBest = earlier.isEmpty
         ? null
         : earlier.map((s) => s.score).reduce((a, b) => a > b ? a : b);
@@ -418,7 +437,10 @@ class Coach {
     if (last.heartsLost > 0) {
       return CoachMessage('coach_goal_all_hearts', {'hearts': last.maxHearts});
     }
-    final best = history.map((s) => s.score).reduce((a, b) => a > b ? a : b);
+    final best = history
+        .where((s) => s.levelId == last.levelId)
+        .map((s) => s.score)
+        .reduce((a, b) => a > b ? a : b);
     // Next round 100 above the best score.
     return CoachMessage('coach_goal_score', {'score': (best ~/ 100 + 1) * 100});
   }

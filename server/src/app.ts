@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
@@ -17,6 +19,8 @@ import { identityRoutes } from './modules/identity/routes.js';
 import { progressRoutes } from './modules/progress/routes.js';
 import { webRoutes } from './modules/web/routes.js';
 
+const REQUEST_ID_RE = /^[A-Za-z0-9._:-]{1,64}$/;
+
 export interface BuildOptions {
   config: Config;
   db?: DB;
@@ -32,6 +36,17 @@ export async function buildApp(opts: BuildOptions): Promise<{ app: FastifyInstan
     logger: opts.logger === false ? false : { level: opts.config.NODE_ENV === 'production' ? 'info' : 'debug', redact: ['req.headers.authorization', 'req.headers["x-admin-key"]'] },
     trustProxy: true,
     bodyLimit: 512 * 1024,
+    // Request id: reuse a sane incoming x-request-id (from the proxy), else mint one.
+    requestIdLogLabel: 'reqId',
+    genReqId: (req) => {
+      const h = req.headers['x-request-id'];
+      return typeof h === 'string' && REQUEST_ID_RE.test(h) ? h : randomUUID();
+    },
+  });
+
+  // Echo the request id so clients and the proxy can correlate logs.
+  app.addHook('onRequest', async (req, reply) => {
+    reply.header('x-request-id', req.id);
   });
 
   // Keep the raw body: webhook signatures are computed over exact bytes.

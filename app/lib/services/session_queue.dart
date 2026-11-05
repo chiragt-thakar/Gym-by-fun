@@ -74,8 +74,12 @@ class SessionQueue {
     }
   }
 
+  /// Queues a session. A session with the same clientId replaces the queued
+  /// one (e.g. the results screen saves first, then again with the effort
+  /// rating), so the latest version is what gets uploaded.
   Future<void> add(Map<String, Object?> session) async {
     final all = await pending()
+      ..removeWhere((s) => s['clientId'] == session['clientId'])
       ..add(session);
     await _write(all);
   }

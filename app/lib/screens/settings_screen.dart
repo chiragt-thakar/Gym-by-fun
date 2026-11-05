@@ -9,6 +9,8 @@ import 'package:go_router/go_router.dart';
 import '../l10n/strings.dart';
 import '../l10n/tr.dart';
 import '../services/api_client.dart';
+import '../services/coach_service.dart';
+import '../services/local_data.dart';
 import '../services/settings.dart';
 import '../app/theme.dart';
 import '../widgets/common.dart';
@@ -57,6 +59,24 @@ class SettingsScreen extends ConsumerWidget {
           selected: {s.difficulty},
           onSelectionChanged: (v) =>
               n.update((x) => x.copyWith(difficulty: v.first)),
+        ),
+        ListTile(
+          title: Text(tr('Play style'), style: const TextStyle(fontSize: 18)),
+          subtitle: Text(tr('You choose; we never ask your age.')),
+        ),
+        SegmentedButton<AgeBand>(
+          key: const ValueKey('age-band'),
+          segments: [
+            ButtonSegment(value: AgeBand.gentle, label: Text(tr('Gentle'))),
+            ButtonSegment(value: AgeBand.balanced, label: Text(tr('Balanced'))),
+            ButtonSegment(value: AgeBand.active, label: Text(tr('Active'))),
+          ],
+          selected: {s.ageBand},
+          onSelectionChanged: (v) => n.update((x) => x.withAgeBand(v.first)),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Text(tr(_bandBlurb[s.ageBand]!)),
         ),
         SwitchListTile(
           title: const Text('Low-impact mode', style: TextStyle(fontSize: 18)),
@@ -186,9 +206,30 @@ class SettingsScreen extends ConsumerWidget {
               if (ok != true) return;
               try {
                 await api.deleteAccount();
+                await wipeLocalData(ref.read(sharedPrefsProvider));
+                ref.invalidate(coachHistoryProvider);
                 n.reset();
                 if (context.mounted) context.go('/welcome');
               } catch (_) {}
+            },
+          ),
+          BigButton(
+            tr('Sign out'),
+            key: const ValueKey('sign-out'),
+            icon: Icons.logout,
+            secondary: true,
+            onPressed: () async {
+              await ref.read(tokenStoreProvider).clear();
+              n.update((x) => x.copyWith(signedIn: false));
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      tr('Signed out. Your progress stays on this phone.'),
+                    ),
+                  ),
+                );
+              }
             },
           ),
         ] else
@@ -220,6 +261,12 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 }
+
+const _bandBlurb = {
+  AgeBand.gentle: 'Gentle: more warning time, low-impact and assist on.',
+  AgeBand.balanced: 'Balanced: standard pacing for most players.',
+  AgeBand.active: 'Active: brisker pacing; assist can be off.',
+};
 
 class _H extends StatelessWidget {
   const _H(this.text);

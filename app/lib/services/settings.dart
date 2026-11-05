@@ -13,6 +13,9 @@ enum DeviceTier { upperMid, mid, budget }
 /// How the body diagram is drawn. Chosen by the player; never inferred.
 enum BodyStyle { neutral, female, male }
 
+/// Play style (age band). The player picks it; we never ask or infer age.
+enum AgeBand { gentle, balanced, active }
+
 /// Everything the player chooses, kept on the device.
 class Settings {
   const Settings({
@@ -31,6 +34,7 @@ class Settings {
     this.sessionsPlayed = 0,
     this.completedLevels = const {},
     this.bodyStyle = BodyStyle.neutral,
+    this.ageBand = AgeBand.gentle,
   });
 
   final AppLanguage language;
@@ -56,6 +60,24 @@ class Settings {
 
   /// Body diagram style on stage info. The player picks it in Settings.
   final BodyStyle bodyStyle;
+
+  /// Play style. Gentle by default; the player can change it in Settings.
+  final AgeBand ageBand;
+
+  /// Extra warning time for the band (for future director use).
+  double get warningMultiplier => ageBand == AgeBand.gentle ? 1.2 : 1.0;
+
+  /// Picks a play style and applies its safe defaults: Gentle turns on
+  /// low-impact and assist; Active turns assist off; Balanced keeps both.
+  Settings withAgeBand(AgeBand band) => copyWith(
+    ageBand: band,
+    lowImpact: band == AgeBand.gentle ? true : null,
+    assist: switch (band) {
+      AgeBand.gentle => true,
+      AgeBand.active => false,
+      AgeBand.balanced => null,
+    },
+  );
 
   S get s => S(language);
 
@@ -86,6 +108,7 @@ class Settings {
     int? sessionsPlayed,
     Set<String>? completedLevels,
     BodyStyle? bodyStyle,
+    AgeBand? ageBand,
   }) => Settings(
     language: language ?? this.language,
     difficulty: difficulty ?? this.difficulty,
@@ -102,6 +125,7 @@ class Settings {
     sessionsPlayed: sessionsPlayed ?? this.sessionsPlayed,
     completedLevels: completedLevels ?? this.completedLevels,
     bodyStyle: bodyStyle ?? this.bodyStyle,
+    ageBand: ageBand ?? this.ageBand,
   );
 
   Map<String, Object?> toJson() => {
@@ -120,6 +144,7 @@ class Settings {
     'sessionsPlayed': sessionsPlayed,
     'completedLevels': [...completedLevels],
     'bodyStyle': bodyStyle.name,
+    'ageBand': ageBand.name,
   };
 
   factory Settings.fromJson(Map<String, dynamic> j) => Settings(
@@ -150,6 +175,7 @@ class Settings {
     },
     bodyStyle:
         BodyStyle.values.asNameMap()[j['bodyStyle']] ?? BodyStyle.neutral,
+    ageBand: AgeBand.values.asNameMap()[j['ageBand']] ?? AgeBand.gentle,
   );
 }
 

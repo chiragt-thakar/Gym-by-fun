@@ -65,6 +65,24 @@ void main() {
     ]);
   });
 
+  test('saving the same run again replaces it (dedupe by clientId)', () async {
+    final c = await container();
+    SessionSummary run({int? effort}) => SessionSummary.fromResult(
+      result(),
+      date: DateTime.utc(2026, 11, 1),
+      clientId: 'client-0001',
+      effort: effort,
+    );
+    c.read(coachHistoryProvider.notifier)
+      ..record(summary(0))
+      ..record(run())
+      ..record(run(effort: 4));
+    final h = c.read(coachHistoryProvider);
+    expect(h, hasLength(2));
+    expect(h.last.clientId, 'client-0001');
+    expect(h.last.effort, 4);
+  });
+
   test('stored history holds counts only, no frames or landmarks', () async {
     final c = await container();
     c.read(coachHistoryProvider.notifier).record(summary(0));

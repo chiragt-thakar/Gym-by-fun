@@ -39,8 +39,18 @@ class ResultsScreen extends ConsumerStatefulWidget {
 
 class _ResultsState extends ConsumerState<ResultsScreen> {
   int? _effort;
-  bool _saved = false;
+  bool _done = false;
   bool _coachApplied = false;
+
+  /// Assist as it was for the run, before any coach change on this screen.
+  late final bool _assist = ref.read(settingsProvider).assist;
+
+  /// The coach history before this run, captured on first show so the card
+  /// keeps showing advice "including this run" after it has been saved.
+  late final List<SessionSummary> _before = ref
+      .read(coachHistoryProvider)
+      .where((h) => h.clientId != widget.data?.clientId)
+      .toList();
 
   SessionSummary? _summary() {
     final d = widget.data;
@@ -48,23 +58,30 @@ class _ResultsState extends ConsumerState<ResultsScreen> {
     return SessionSummary.fromResult(
       d.result,
       date: d.startedAt,
+      assist: _assist,
+      clientId: d.clientId,
       effort: _effort,
       moveStats: moveStatsFrom(d.moveStats),
     );
   }
 
-  /// Kavi's advice including this run (not yet stored until Done).
+  /// Kavi's advice including this run.
   CoachAdvice? _advice() {
     final s = _summary();
     if (s == null) return null;
-    return const Coach().advise([...ref.read(coachHistoryProvider), s]);
+    return const Coach().advise([..._before, s]);
   }
 
   @override
   void initState() {
     super.initState();
+    _assist;
+    _before;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      // Save as soon as the results appear, so leaving by system back or
+      // the app being killed never loses the run.
+      _persist(flush: false);
       final recap = _advice()?.recap;
       if (recap == null) return;
       final lang = ref.read(settingsProvider).language;
@@ -72,32 +89,36 @@ class _ResultsState extends ConsumerState<ResultsScreen> {
     });
   }
 
-  void _record() {
-    final s = _summary();
-    if (s != null) ref.read(coachHistoryProvider.notifier).record(s);
-  }
-
-  Future<void> _save() async {
+  /// Records the run in Kavi's history (replaced by clientId, so repeat
+  /// calls are harmless) and queues it for upload (idempotent by clientId
+  /// on the server).
+  Future<void> _persist({required bool flush}) async {
     final d = widget.data;
-    if (d == null || _saved || d.tutorial) return;
-    _saved = true;
-    _record();
+    final s = _summary();
+    if (d == null || s == null) return;
+    ref.read(coachHistoryProvider.notifier).record(s);
     final q = ref.read(sessionQueueProvider);
-    await q.add(
-      SessionQueue.fromResult(
-        d.result,
-        clientId: d.clientId,
-        startedAt: d.startedAt,
-        durationS: d.durationS,
-        effortRating: _effort,
-        moveStats: d.moveStats,
-      ),
-    );
     try {
-      await q.flush();
+      await q.add(
+        SessionQueue.fromResult(
+          d.result,
+          clientId: d.clientId,
+          startedAt: d.startedAt,
+          durationS: d.durationS,
+          effortRating: _effort,
+          moveStats: d.moveStats,
+        ),
+      );
+      if (flush) await q.flush();
     } catch (_) {
       // Offline: it stays queued and syncs next time.
     }
+  }
+
+  Future<void> _save() async {
+    if (_done) return;
+    _done = true;
+    await _persist(flush: true);
   }
 
   Future<void> _painReport() async {

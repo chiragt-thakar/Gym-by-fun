@@ -15,6 +15,7 @@ export 'src/calibration.dart';
 export 'src/features.dart';
 export 'src/events.dart';
 export 'src/recognisers.dart';
+export 'src/extra_recognisers.dart';
 export 'src/motion_engine.dart';
 export 'src/recording.dart';
 export 'src/accuracy.dart';

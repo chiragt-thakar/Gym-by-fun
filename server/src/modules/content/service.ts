@@ -38,11 +38,16 @@ export async function seedContent(ctx: AppContext, dir = ctx.config.CONTENT_DIR)
   }
 }
 
+export type LevelAccess = 'free' | 'premium';
+
+/** World 1 is free; every later world needs Premium. */
+export const accessForWorld = (world: number): LevelAccess => (world <= 1 ? 'free' : 'premium');
+
 /** Latest version of each level. */
 export async function manifest(ctx: AppContext) {
   const rows = await ctx.db
     .selectFrom('content_versions as c')
-    .select(['c.level_id', 'c.version', 'c.schema_version', 'c.sha256', 'c.published_at'])
+    .select(['c.level_id', 'c.version', 'c.schema_version', 'c.sha256', 'c.published_at', sql<number | null>`(c.json->>'world')::int`.as('world')])
     .where('c.version', '=', (eb) =>
       eb.selectFrom('content_versions as c2').select(sql<number>`max(c2.version)`.as('v')).whereRef('c2.level_id', '=', 'c.level_id'),
     )
@@ -55,5 +60,7 @@ export async function manifest(ctx: AppContext) {
     sha256: r.sha256,
     url: `/v1/content/levels/${r.level_id}?version=${r.version}`,
     publishedAt: r.published_at,
+    world: r.world ?? 1,
+    access: accessForWorld(r.world ?? 1),
   }));
 }

@@ -13,6 +13,7 @@
     "start": "node dist/server.js",
     "worker": "node dist/worker.js",
     "migrate": "tsx src/db/migrate.ts",
+    "migrate:prod": "node dist/db/migrate.js",
     "content:validate": "tsx src/modules/content/validate-cli.ts ../content/levels",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",

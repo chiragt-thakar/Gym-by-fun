@@ -1,5 +1,6 @@
 import 'calibration.dart';
 import 'events.dart';
+import 'extra_recognisers.dart';
 import 'features.dart';
 import 'landmarks.dart';
 import 'one_euro_filter.dart';
@@ -40,11 +41,20 @@ class MotionEngine {
     this.smooth = true,
     this.pauseAfterMs = 250,
     this.resumeAfterMs = 300,
+    this.enableBarrierHold = false,
+    this.enableSideStep = false,
+    this.extraThresholds = const ExtraMoveThresholds(),
   })  : gate = gate ?? const QualityGate(),
         _smoother = LandmarkSmoother() {
     _squat = SquatRecogniser(calibration, thresholds);
     _lean = LeanRecogniser(calibration, thresholds);
     _arms = RaiseArmsRecogniser(thresholds);
+    _barrier = enableBarrierHold
+        ? BarrierHoldRecogniser(calibration, thresholds, extraThresholds)
+        : null;
+    _step = enableSideStep
+        ? SideStepRecogniser(calibration, thresholds, extraThresholds)
+        : null;
   }
 
   final CalibrationProfile calibration;
@@ -58,10 +68,19 @@ class MotionEngine {
   /// Good frames needed before play resumes after a pause.
   final int resumeAfterMs;
 
+  /// Opt-in roadmap moves (default off, so World 1–3 gameplay is unchanged).
+  /// They emit [ExtraMoveStarted] / [ExtraMoveHeld] / [ExtraMoveEnded] /
+  /// [ExtraMoveRejected], never the [Move] events.
+  final bool enableBarrierHold;
+  final bool enableSideStep;
+  final ExtraMoveThresholds extraThresholds;
+
   final LandmarkSmoother _smoother;
   late final SquatRecogniser _squat;
   late final LeanRecogniser _lean;
   late final RaiseArmsRecogniser _arms;
+  late final BarrierHoldRecogniser? _barrier;
+  late final SideStepRecogniser? _step;
 
   bool _paused = false;
   int? _badSince;
@@ -102,6 +121,8 @@ class MotionEngine {
         _squat.interrupt(ts, out);
         _lean.interrupt(ts, out);
         _arms.interrupt(ts, out);
+        _barrier?.interrupt(ts, out);
+        _step?.interrupt(ts, out);
         _smoother.reset();
         out.add(TrackingPaused(ts, q.issue!));
       }
@@ -121,6 +142,8 @@ class MotionEngine {
     _squat.update(b, out);
     _lean.update(b, out);
     _arms.update(b, out);
+    _barrier?.update(b, out);
+    _step?.update(b, out);
   }
 
   EngineSnapshot get snapshot => EngineSnapshot(
@@ -131,11 +154,15 @@ class MotionEngine {
           'squat': _squat.state,
           'lean': _lean.state,
           'raiseArms': _arms.state,
+          if (_barrier case final r?) 'barrierHold': r.state,
+          if (_step case final r?) 'sideStep': r.state,
         },
         measures: {
           'squat': _squat.measure,
           'lean': _lean.measure,
           'raiseArms': _arms.measure,
+          if (_barrier case final r?) 'barrierHold': r.measure,
+          if (_step case final r?) 'sideStep': r.measure,
         },
       );
 }

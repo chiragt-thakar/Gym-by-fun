@@ -1,4 +1,5 @@
 import 'forest_game.dart';
+import 'stage_info.dart';
 
 /// One playable stage: a level config bundled in assets/levels/.
 class Stage {
@@ -153,6 +154,25 @@ const stages = <Stage>[
     description: 'Wind gusts and rockfall on the way to the summit.',
     theme: SceneTheme.mountain,
   ),
+  Stage(
+    levelId: 'w4-glacier-pass',
+    world: 4,
+    worldName: 'Mountain Expedition',
+    stageNumber: 3,
+    title: 'Glacier Pass',
+    description: 'Ice arches, crevasses and snow crystals on a frozen glacier.',
+    theme: SceneTheme.mountain,
+  ),
+  Stage(
+    levelId: 'w4-sunrise-summit',
+    world: 4,
+    worldName: 'Mountain Expedition',
+    stageNumber: 4,
+    title: 'Sunrise Summit',
+    description:
+        'A calm dawn climb to the summit, with a long tea-stop breather.',
+    theme: SceneTheme.mountain,
+  ),
 ];
 
 const _laterWorlds = [
@@ -164,7 +184,10 @@ const _laterWorlds = [
 ];
 
 /// Worlds in map order: the playable ones, then the ones still to come.
-List<World> get worlds {
+/// Built once.
+final List<World> worlds = List.unmodifiable(_buildWorlds());
+
+List<World> _buildWorlds() {
   final out = <World>[];
   for (final st in stages) {
     if (out.isEmpty || out.last.number != st.world) {
@@ -194,9 +217,12 @@ bool isUnlocked(Stage stage, Set<String> completed) {
 }
 
 /// What the Daily Quest plays: the first unlocked stage not yet completed,
-/// or Forest Escape once everything is done.
-Stage nextStage(Set<String> completed) {
+/// or Forest Escape once everything is done. With [premiumLocked] (payments
+/// on and the player not Premium) Premium stages are skipped, so the Daily
+/// Quest only ever routes to a free stage.
+Stage nextStage(Set<String> completed, {bool premiumLocked = false}) {
   for (final st in stages) {
+    if (premiumLocked && infoFor(st).premium) continue;
     if (!completed.contains(st.levelId) && isUnlocked(st, completed)) {
       return st;
     }
