@@ -208,6 +208,20 @@ const stageInfos = <String, StageInfo>{
     references: [who2020, garber2011],
     tier: StageTier.premium,
   ),
+  'w2-oasis-caravan': StageInfo(
+    levelId: 'w2-oasis-caravan',
+    primary: [BodyRegion.obliques, BodyRegion.hipAbductors, BodyRegion.quads],
+    secondary: [BodyRegion.glutes, BodyRegion.core, BodyRegion.shoulders],
+    movements: _all,
+    intensity: Intensity.light,
+    benefits: [
+      'Side leans work the waist and outer hips.',
+      'Squats keep the legs working between walls.',
+      'Adds active minutes to your week.',
+    ],
+    references: [who2020, acsm11],
+    tier: StageTier.premium,
+  ),
   'w3-neon-city-rooftops': StageInfo(
     levelId: 'w3-neon-city-rooftops',
     primary: [BodyRegion.shoulders, BodyRegion.arms],
@@ -234,6 +248,20 @@ const stageInfos = <String, StageInfo>{
       'Builds muscular endurance in legs and shoulders.',
     ],
     references: [who2020, acsm11, garber2011],
+    tier: StageTier.premium,
+  ),
+  'w3-neon-night-market': StageInfo(
+    levelId: 'w3-neon-night-market',
+    primary: [BodyRegion.shoulders, BodyRegion.arms, BodyRegion.quads],
+    secondary: [BodyRegion.upperBack, BodyRegion.obliques, BodyRegion.core],
+    movements: _all,
+    intensity: Intensity.light,
+    benefits: [
+      'Overhead reaches move the shoulders and arms.',
+      'Squats and leans keep the whole body involved.',
+      'Breaks up long periods of sitting.',
+    ],
+    references: [who2020, acsm11],
     tier: StageTier.premium,
   ),
   'w4-mountain-trail': StageInfo(

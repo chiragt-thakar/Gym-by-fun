@@ -100,6 +100,15 @@ const stages = <Stage>[
     theme: SceneTheme.desert,
   ),
   Stage(
+    levelId: 'w2-oasis-caravan',
+    world: 2,
+    worldName: 'Desert Trials',
+    stageNumber: 3,
+    title: 'Oasis Caravan',
+    description: 'Ride with the caravan: crates, tent ropes and water jars.',
+    theme: SceneTheme.desert,
+  ),
+  Stage(
     levelId: 'w3-neon-city-rooftops',
     world: 3,
     worldName: 'Neon City',
@@ -115,6 +124,15 @@ const stages = <Stage>[
     stageNumber: 2,
     title: 'Neon City Chase',
     description: 'Outrun the drones, then dash through the gates.',
+    theme: SceneTheme.neon,
+  ),
+  Stage(
+    levelId: 'w3-neon-night-market',
+    world: 3,
+    worldName: 'Neon City',
+    stageNumber: 3,
+    title: 'Neon Night Market',
+    description: 'Lantern strings, stall carts and glow tokens.',
     theme: SceneTheme.neon,
   ),
   Stage(

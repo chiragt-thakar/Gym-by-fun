@@ -50,8 +50,10 @@ worlds 5 to 9 in order. **Stadium Nights is world 5**, so the plan's "5 Ancient 
 | 3b | `w1-garba-quest-event` | 1 Forest Awakening (event slot) | 1-5 Garba Quest | 3:00 (180 s, 74) | Navratri rhythm event (interim): orbs, arches and circling lean patterns on a 4-beat taali (2.5 s → 2.2 s → 2.0 s), checkpoint 125 s; `SceneTheme.neon`. Ships in World 1 because the schema allows world 1–8 only; becomes `w0-garba-quest` once world 0 + event windows exist | Implemented |
 | 4 | `w2-desert-dunes` | 2 Desert Trials | 2-1 Desert Dunes | 3:00 (180 s, 68) | Desert theme, mirage orbs | Implemented |
 | 5 | `w2-sandstorm-temple` | 2 Desert Trials | 2-2 Sandstorm Temple | 3:30 (210 s, 82) | Two-lane walls, harder combos | Implemented |
+| 5a | `w2-oasis-caravan` | 2 Desert Trials | 2-3 Oasis Caravan | 3:00 (180 s, 66) | Existing types only (beam, laneBlock ≤ 2 lanes, orb, gate): caravan bell gate surprise (~46 s), palm-shade breather 90–106 (orbs only), golden palm gate + "almost there" (~134 s), checkpoint 150 s. Premium | Implemented |
 | 6 | `w3-neon-city-rooftops` | 3 Neon City | 3-1 Neon City Rooftops | 3:00 (180 s, 53) | Neon signs (beams), drones (blocks), power cells (orbs) | Implemented |
 | 7 | `w3-neon-city-chase` | 3 Neon City | 3-2 Neon City Chase | 3:30 (210 s, 68) | Drone chase, gate dash | Implemented |
+| 7a | `w3-neon-night-market` | 3 Neon City | 3-3 Neon Night Market | 3:00 (180 s, 66) | Existing types only: market scan-gate surprise (~46 s), quiet-alley breather 90–106 (orbs only), lantern gate + "almost there" (~134 s), checkpoint 150 s. Premium | Implemented |
 | 8 | `w4-mountain-trail` | 4 Mountain Expedition | 4-1 Mountain Trail | 3:00 (180 s, 49) | Gentle trail, low density | Implemented |
 | 9 | `w4-summit-storm` | 4 Mountain Expedition | 4-2 Summit Storm | 3:30 (210 s, 62) | Wind gusts, rockfall | Implemented |
 
@@ -117,6 +119,7 @@ The encounter `type` enum has only four values.
 |---|---|---|---|---|---|
 | `w2-desert-dunes` | Desert Dunes | 3:00 | S3 | existing | Implemented |
 | `w2-sandstorm-temple` | Sandstorm Temple | 3:30 | S3.5 | existing | Implemented |
+| `w2-oasis-caravan` | Oasis Caravan | 3:00 | S3 | beam / laneBlock / orb / gate | Implemented as 2-3 (bridge stage before side step ships) |
 | `w2-shifting-sands` | Shifting Sands | 3:00 | S3; practice introduces `slideWall` at 10 s and 20 s, both with hints | slideWall 20 %, laneBlock 25 %, beam 25 %, orb 30 % | First stage with side step. Beginner gets at most one slideWall per 8 s, and never a slideWall directly before a two-lane block. |
 | `w2-scorpion-king` | Scorpion Guardian | 4:00 | B4 | slideWall 20 %, beam 30 %, laneBlock 25 %, orb/gate 25 % | Mini-boss: a stone scorpion (original design, not a creature from any game). Its tail sweep is a telegraphed `beam` (1 s extra cue). Its claw swipe is a `slideWall` from the side it raises. Gates calm it. Three phases of 25 s, each one encounter denser. |
 
@@ -139,6 +142,7 @@ when it glows."
 |---|---|---|---|---|---|
 | `w3-neon-city-rooftops` | Neon City Rooftops | 3:00 | S3 | existing | Implemented |
 | `w3-neon-city-chase` | Neon City Chase | 3:30 | S3.5 | existing | Implemented |
+| `w3-neon-night-market` | Neon Night Market | 3:00 | S3 | beam / laneBlock / orb / gate | Implemented as 3-3 (bridge stage before barrier hold ships) |
 | `w3-hologram-wall` | Hologram Walls | 3:00 | S3; first `pushWall` at 12 s (hold 1.5 s) | pushWall 15 %, beam 25 %, laneBlock 30 %, orb 30 % | Holds: 1.5 s beginner, 2.0 s intermediate, 2.5 s advanced, set by `holdMs` plus a difficulty scale. Leave ≥ 2.5 s after each pushWall before anything demanding. pushWall counts as demanding. |
 | `w3-drone-core` | Drone Core | 4:00 | B4 | pushWall 15 %, beam 25 %, laneBlock 25 %, slideWall 10 %, orb/gate 25 % | Boss: the drone hub. Phase 1 sweeps scanner beams (duck). Phase 2 fires a pulse (pushWall). In phase 3 the core opens (raise-arms charge on a gate). §5 pattern without the punch, since punch is not taught until world 7. |
 

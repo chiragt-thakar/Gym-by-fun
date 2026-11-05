@@ -67,6 +67,21 @@ void main() {
     );
     expect(stageById('w1-firefly-trail')!.stageNumber, 4);
     expect(stageById('w1-garba-quest-event')!.stageNumber, 5);
+    expect(stageById('w2-oasis-caravan')!.stageNumber, 3);
+    expect(
+      isUnlocked(stageById('w2-oasis-caravan')!, {'w2-sandstorm-temple'}),
+      isTrue,
+    );
+    expect(stageById('w3-neon-night-market')!.stageNumber, 3);
+    expect(
+      isUnlocked(stageById('w3-neon-night-market')!, {'w3-neon-city-chase'}),
+      isTrue,
+    );
+    // World 3 now opens after the new Desert Trials finale.
+    expect(
+      isUnlocked(stageById('w3-neon-city-rooftops')!, {'w2-oasis-caravan'}),
+      isTrue,
+    );
   });
 
   test('daily quest plays the next uncompleted stage', () {
