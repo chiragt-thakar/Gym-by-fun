@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { sql } from 'kysely';
 import { z } from 'zod';
 
 import type { AppContext } from '../../context.js';
@@ -106,10 +107,27 @@ export async function identityRoutes(app: FastifyInstance, ctx: AppContext) {
       .limit(1)
       .executeTakeFirst();
     if (!ch || new Date(ch.expires_at) <= ctx.now()) throw unauthorized('otp_expired');
-    if (ch.attempts >= OTP_MAX_ATTEMPTS) throw tooMany('otp_attempts_exceeded');
-    await ctx.db.updateTable('otp_challenges').set({ attempts: ch.attempts + 1 }).where('id', '=', ch.id).execute();
+    // Atomic attempt count: parallel guesses can't slip past the cap.
+    const counted = await ctx.db
+      .updateTable('otp_challenges')
+      .set({ attempts: sql<number>`attempts + 1` })
+      .where('id', '=', ch.id)
+      .where('attempts', '<', OTP_MAX_ATTEMPTS)
+      .where('consumed_at', 'is', null)
+      .returning('attempts')
+      .executeTakeFirst();
+    if (!counted) throw tooMany('otp_attempts_exceeded');
+    if (!(await allow(ctx.redis, `otp:verify:ip:${req.ip}`, 30, 3600))) throw tooMany('otp_rate_limited');
     if (!safeEqual(ch.code_hash, keyedHash(pepper, `${ph}:${body.code}`))) throw unauthorized('otp_invalid');
-    await ctx.db.updateTable('otp_challenges').set({ consumed_at: ctx.now() }).where('id', '=', ch.id).execute();
+    // Consume once: a second parallel correct guess can't reuse the code.
+    const consumed = await ctx.db
+      .updateTable('otp_challenges')
+      .set({ consumed_at: ctx.now() })
+      .where('id', '=', ch.id)
+      .where('consumed_at', 'is', null)
+      .returning('id')
+      .executeTakeFirst();
+    if (!consumed) throw unauthorized('otp_expired');
 
     let user = await ctx.db.selectFrom('users').select(['id', 'deleted_at']).where('phone_hash', '=', ph).executeTakeFirst();
     const isNew = !user;

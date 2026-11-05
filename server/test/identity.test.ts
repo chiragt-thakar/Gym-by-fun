@@ -49,6 +49,24 @@ describe('phone OTP sign-in', () => {
     expect(r.statusCode).toBe(429);
   });
 
+  it('parallel wrong guesses cannot exceed the attempt cap', async () => {
+    const phone = nextPhone();
+    await t.ctx.redis.del('rl:otp:verify:ip:127.0.0.1');
+    await t.app.inject({ method: 'POST', url: '/v1/auth/otp/start', payload: { phone } });
+    const good = t.sms.at(-1)!.code;
+    const bad = good === '000000' ? '111111' : '000000';
+    const results = await Promise.all(
+      Array.from({ length: 12 }, () =>
+        t.app.inject({ method: 'POST', url: '/v1/auth/otp/verify', payload: { phone, code: bad, ageConfirmed: true } }),
+      ),
+    );
+    expect(results.filter((r) => r.statusCode === 401).length).toBeLessThanOrEqual(5);
+    const row = await t.ctx.db.selectFrom('otp_challenges').select('attempts').orderBy('created_at', 'desc').executeTakeFirstOrThrow();
+    expect(row.attempts).toBeLessThanOrEqual(5);
+    const r = await t.app.inject({ method: 'POST', url: '/v1/auth/otp/verify', payload: { phone, code: good, ageConfirmed: true } });
+    expect(r.statusCode).toBe(429);
+  });
+
   it('expires codes after 5 minutes', async () => {
     const phone = nextPhone();
     await t.app.inject({ method: 'POST', url: '/v1/auth/otp/start', payload: { phone } });
