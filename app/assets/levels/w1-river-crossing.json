@@ -1,0 +1,510 @@
+{
+  "$schema": "../schema/level.schema.json",
+  "id": "w1-river-crossing",
+  "version": 1,
+  "schemaVersion": 1,
+  "world": 1,
+  "name": "River Crossing",
+  "lanes": 3,
+  "durationS": 180,
+  "hearts": 3,
+  "music": {
+    "track": "river_run",
+    "bpmByDifficulty": {
+      "beginner": 112,
+      "intermediate": 124,
+      "advanced": 134
+    }
+  },
+  "difficulty": {
+    "beginner": {
+      "warningMs": 2000,
+      "maxDemandingInRow": 3,
+      "hints": "always",
+      "lowImpactDefault": true
+    },
+    "intermediate": {
+      "warningMs": 1600,
+      "maxDemandingInRow": 5,
+      "hints": "firstTime",
+      "lowImpactDefault": true
+    },
+    "advanced": {
+      "warningMs": 1300,
+      "maxDemandingInRow": 7,
+      "hints": "off",
+      "lowImpactDefault": false
+    }
+  },
+  "scoring": {
+    "beam": 100,
+    "laneBlock": 100,
+    "orb": 50,
+    "gate": 150
+  },
+  "segments": [
+    {
+      "id": "practice",
+      "kind": "practice",
+      "startS": 0,
+      "endS": 30,
+      "hint": "Practice run. Find your footing by the river."
+    },
+    {
+      "id": "learn",
+      "kind": "learn",
+      "startS": 30,
+      "endS": 90
+    },
+    {
+      "id": "breather",
+      "kind": "breather",
+      "startS": 90,
+      "endS": 105,
+      "hint": "Slow down. Catch the fireflies."
+    },
+    {
+      "id": "combos",
+      "kind": "combo",
+      "startS": 105,
+      "endS": 150,
+      "hint": "Lean, then squat! Combos ahead."
+    },
+    {
+      "id": "checkpoint",
+      "kind": "checkpoint",
+      "startS": 150,
+      "endS": 151,
+      "hint": "Checkpoint! A heart comes back."
+    },
+    {
+      "id": "finale",
+      "kind": "finale",
+      "startS": 151,
+      "endS": 180,
+      "hint": "Cross the river!"
+    }
+  ],
+  "encounters": [
+    {
+      "atS": 8,
+      "type": "beam",
+      "hint": "A log over the river! Squat to slip under it."
+    },
+    {
+      "atS": 12,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ],
+      "hint": "A rock in the stream! Lean to another lane."
+    },
+    {
+      "atS": 14,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 16,
+      "type": "beam"
+    },
+    {
+      "atS": 20,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 22,
+      "type": "beam",
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 24,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "Fireflies! Raise both arms to catch them."
+    },
+    {
+      "atS": 33,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 34.65,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 36.3,
+      "type": "beam"
+    },
+    {
+      "atS": 39.6,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 42.9,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 46.2,
+      "type": "beam"
+    },
+    {
+      "atS": 49.5,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 51.15,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 52.8,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 56.1,
+      "type": "beam"
+    },
+    {
+      "atS": 59.4,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 62.7,
+      "type": "beam"
+    },
+    {
+      "atS": 66.0,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 67.65,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 69.3,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 72.6,
+      "type": "beam"
+    },
+    {
+      "atS": 75.9,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 79.2,
+      "type": "orb",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 82.5,
+      "type": "beam"
+    },
+    {
+      "atS": 85.8,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 92,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 96,
+      "type": "orb",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 100,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 103.5,
+      "type": "orb",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 106,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 107.7,
+      "type": "beam"
+    },
+    {
+      "atS": 109.2,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 109.9,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 110.9,
+      "type": "beam"
+    },
+    {
+      "atS": 112.4,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 114.1,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 115.6,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 117.3,
+      "type": "beam"
+    },
+    {
+      "atS": 118.8,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 120.5,
+      "type": "beam"
+    },
+    {
+      "atS": 122.0,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 123.7,
+      "type": "beam"
+    },
+    {
+      "atS": 125.2,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 125.9,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 126.9,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 128.4,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 130.1,
+      "type": "beam"
+    },
+    {
+      "atS": 131.6,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 133.3,
+      "type": "beam"
+    },
+    {
+      "atS": 134.8,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 136.5,
+      "type": "beam"
+    },
+    {
+      "atS": 138.0,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 139.7,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 141.2,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 142.9,
+      "type": "beam"
+    },
+    {
+      "atS": 144.4,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 146.1,
+      "type": "beam"
+    },
+    {
+      "atS": 154,
+      "type": "gate",
+      "hint": "The river gate! Arms up to open it."
+    },
+    {
+      "atS": 156,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 158,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 161,
+      "type": "beam"
+    },
+    {
+      "atS": 164.5,
+      "type": "gate"
+    },
+    {
+      "atS": 168,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 171,
+      "type": "beam"
+    },
+    {
+      "atS": 174.5,
+      "type": "gate"
+    },
+    {
+      "atS": 178,
+      "type": "gate",
+      "hint": "Last gate. Across the river!"
+    }
+  ]
+}

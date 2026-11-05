@@ -11,6 +11,7 @@ import '../l10n/tr.dart';
 import 'package:motion_core/motion_core.dart';
 
 import '../game/forest_game.dart';
+import '../game/stages.dart';
 import '../l10n/strings.dart';
 import '../services/pose_service.dart';
 import '../services/session_queue.dart';
@@ -77,8 +78,11 @@ const cooldown = [
 enum _Phase { loading, warmup, run, cooldown }
 
 class QuestScreen extends ConsumerStatefulWidget {
-  const QuestScreen({super.key, this.tutorial = false});
+  const QuestScreen({super.key, this.tutorial = false, this.levelId});
   final bool tutorial;
+
+  /// Stage to play (see game/stages.dart). Null plays Forest Escape.
+  final String? levelId;
   @override
   ConsumerState<QuestScreen> createState() => _QuestState();
 }
@@ -87,6 +91,7 @@ class _QuestState extends ConsumerState<QuestScreen> implements GameAudio {
   _Phase _phase = _Phase.loading;
   MotionSession? _session;
   ForestGame? _game;
+  Stage _stage = stages.first;
   RunResult? _result;
   Map<String, Map<String, int>>? _stats;
   late DateTime _startedAt;
@@ -110,8 +115,12 @@ class _QuestState extends ConsumerState<QuestScreen> implements GameAudio {
     }
     final bundle = DefaultAssetBundle.of(context);
     await _voice.init(s.language);
-    final forest = await loadForest(bundle);
-    final level = widget.tutorial ? tutorialFrom(forest) : forest;
+    _stage = widget.tutorial
+        ? stages.first
+        : (stageById(widget.levelId ?? forestEscapeId) ?? stages.first);
+    final level = widget.tutorial
+        ? tutorialFrom(await loadForest(bundle))
+        : LevelConfig.decode(await bundle.loadString(_stage.asset));
     final runSettings = widget.tutorial
         ? RunSettings(
             difficulty: Difficulty.beginner,
@@ -134,6 +143,7 @@ class _QuestState extends ConsumerState<QuestScreen> implements GameAudio {
       engine: RunEngine(level, runSettings),
       motionEvents: session.events,
       audio: this,
+      theme: _stage.theme,
       lightOf: () => session.engine?.light ?? TrackingLight.red,
       onFinished: (r) => WidgetsBinding.instance.addPostFrameCallback(
         (_) => _onRunFinished(r),
@@ -182,6 +192,9 @@ class _QuestState extends ConsumerState<QuestScreen> implements GameAudio {
                 ? s.sessionsPlayed
                 : s.sessionsPlayed + 1,
             seenTypes: {...s.seenTypes, ...EncounterType.values},
+            completedLevels: !widget.tutorial && r.completed
+                ? {...s.completedLevels, _stage.levelId}
+                : null,
           ),
         );
     context.go('/results', extra: data);

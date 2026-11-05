@@ -1,0 +1,601 @@
+{
+  "$schema": "../schema/level.schema.json",
+  "id": "w2-sandstorm-temple",
+  "version": 1,
+  "schemaVersion": 1,
+  "world": 2,
+  "name": "Sandstorm Temple",
+  "lanes": 3,
+  "durationS": 210,
+  "hearts": 3,
+  "music": {
+    "track": "temple_storm",
+    "bpmByDifficulty": {
+      "beginner": 114,
+      "intermediate": 126,
+      "advanced": 136
+    }
+  },
+  "difficulty": {
+    "beginner": {
+      "warningMs": 2000,
+      "maxDemandingInRow": 3,
+      "hints": "always",
+      "lowImpactDefault": true
+    },
+    "intermediate": {
+      "warningMs": 1600,
+      "maxDemandingInRow": 5,
+      "hints": "firstTime",
+      "lowImpactDefault": true
+    },
+    "advanced": {
+      "warningMs": 1300,
+      "maxDemandingInRow": 7,
+      "hints": "off",
+      "lowImpactDefault": false
+    }
+  },
+  "scoring": {
+    "beam": 100,
+    "laneBlock": 100,
+    "orb": 50,
+    "gate": 150
+  },
+  "segments": [
+    {
+      "id": "practice",
+      "kind": "practice",
+      "startS": 0,
+      "endS": 30,
+      "hint": "Practice run. The storm is building."
+    },
+    {
+      "id": "learn",
+      "kind": "learn",
+      "startS": 30,
+      "endS": 95
+    },
+    {
+      "id": "breather",
+      "kind": "breather",
+      "startS": 95,
+      "endS": 115,
+      "hint": "The wind drops. Breathe and catch the light."
+    },
+    {
+      "id": "combos",
+      "kind": "combo",
+      "startS": 115,
+      "endS": 170,
+      "hint": "Sandstorm combos! Stay sharp."
+    },
+    {
+      "id": "checkpoint",
+      "kind": "checkpoint",
+      "startS": 170,
+      "endS": 171,
+      "hint": "Checkpoint! A heart comes back."
+    },
+    {
+      "id": "finale",
+      "kind": "finale",
+      "startS": 171,
+      "endS": 210,
+      "hint": "Open the temple gates!"
+    }
+  ],
+  "encounters": [
+    {
+      "atS": 8,
+      "type": "beam",
+      "hint": "A fallen pillar! Squat to duck under it."
+    },
+    {
+      "atS": 12,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ],
+      "hint": "A wide sand wall! Lean to the open lane."
+    },
+    {
+      "atS": 14,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 16,
+      "type": "beam"
+    },
+    {
+      "atS": 20,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 22.5,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 25,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "Temple light! Raise both arms to catch it."
+    },
+    {
+      "atS": 33,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 36.1,
+      "type": "beam"
+    },
+    {
+      "atS": 39.2,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 42.3,
+      "type": "beam"
+    },
+    {
+      "atS": 45.4,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 46.95,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 48.5,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 51.6,
+      "type": "beam"
+    },
+    {
+      "atS": 54.7,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 57.8,
+      "type": "beam"
+    },
+    {
+      "atS": 60.9,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 62.45,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 64.0,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 67.1,
+      "type": "beam"
+    },
+    {
+      "atS": 70.2,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 73.3,
+      "type": "beam"
+    },
+    {
+      "atS": 76.4,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 77.95,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 79.5,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 82.6,
+      "type": "beam"
+    },
+    {
+      "atS": 85.7,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 88.8,
+      "type": "beam"
+    },
+    {
+      "atS": 98,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 102,
+      "type": "orb",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 106,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 110,
+      "type": "orb",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 113.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 116,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 117.7,
+      "type": "beam"
+    },
+    {
+      "atS": 119.2,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 119.9,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 120.9,
+      "type": "beam"
+    },
+    {
+      "atS": 122.4,
+      "type": "beam"
+    },
+    {
+      "atS": 124.1,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 125.6,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 127.3,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 128.8,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 130.5,
+      "type": "beam"
+    },
+    {
+      "atS": 132.0,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 133.7,
+      "type": "beam"
+    },
+    {
+      "atS": 135.2,
+      "type": "beam"
+    },
+    {
+      "atS": 135.9,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 136.9,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 138.4,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 140.1,
+      "type": "beam"
+    },
+    {
+      "atS": 141.6,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 143.3,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 144.8,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 146.5,
+      "type": "beam"
+    },
+    {
+      "atS": 148.0,
+      "type": "beam"
+    },
+    {
+      "atS": 149.7,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 151.2,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 152.9,
+      "type": "beam"
+    },
+    {
+      "atS": 154.4,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 156.1,
+      "type": "beam"
+    },
+    {
+      "atS": 157.6,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 159.3,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 160.8,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 162.5,
+      "type": "beam"
+    },
+    {
+      "atS": 164.0,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 165.7,
+      "type": "beam"
+    },
+    {
+      "atS": 167.2,
+      "type": "beam"
+    },
+    {
+      "atS": 168.9,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 173,
+      "type": "gate",
+      "hint": "The temple gate! Arms up to open it."
+    },
+    {
+      "atS": 176.5,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 180,
+      "type": "beam"
+    },
+    {
+      "atS": 183.5,
+      "type": "gate"
+    },
+    {
+      "atS": 185.25,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 187,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 190.5,
+      "type": "beam"
+    },
+    {
+      "atS": 194,
+      "type": "gate"
+    },
+    {
+      "atS": 197.5,
+      "type": "beam"
+    },
+    {
+      "atS": 199.25,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 201,
+      "type": "gate"
+    },
+    {
+      "atS": 205,
+      "type": "gate",
+      "hint": "The inner gate. Push through the storm!"
+    }
+  ]
+}

@@ -44,6 +44,28 @@ hips moved more than one torso sideways.
 3 hearts. Hitting a beam, lane block or gate costs one; a missed orb costs
 nothing; tracking loss between cue and arrival forgives the encounter.
 
+## Stages
+
+Stages play in catalogue order (`app/lib/game/stages.dart`); stage N+1 unlocks
+when stage N is completed (completed level ids live in on-device Settings).
+The Daily Quest plays the first unlocked, uncompleted stage. Every stage uses
+the same segment pattern as Forest Escape (practice, learn, breather of orbs
+only, combos, checkpoint, finale) and the same four encounter types; only the
+theme colours and side props change, never obstacle shapes.
+
+| Stage | Level id | Length | Flavour |
+|---|---|---|---|
+| 1-1 Forest Escape | `w1-forest-escape` | 3:01 | Branches, rocks, forest gates |
+| 1-2 River Crossing | `w1-river-crossing` | 3:00 | Log beams, river rocks, firefly orbs; lean-then-squat combos |
+| 1-3 Guardian Grove | `w1-guardian-grove` | 3:30 | Mini-boss: sweeping branches, root walls; gate sequence calms the guardian |
+| 2-1 Desert Dunes | `w2-desert-dunes` | 3:00 | Sand walls, low cactus arches, mirage orbs (desert theme) |
+| 2-2 Sandstorm Temple | `w2-sandstorm-temple` | 3:30 | Two-lane sand walls, harder combos, temple gates finale |
+
+Intermediate and advanced add extra encounters via `minDifficulty` (mostly
+centre-lane orbs placed mid-gap). Every stage is proven finishable by the
+simulation test at every difficulty with the competent and slow bots.
+Worlds 3–9 show as "coming soon".
+
 ## Difficulty
 
 | | Warning | Demanding in a row | Hints | Low-impact default |
@@ -82,3 +104,30 @@ broken streak restarts at 1 and never removes other progress.
 Each obstacle has its own generated sound (`tools/gen_cues.py`): beam = falling
 whoosh, lane block = two knocks, orb = rising sparkle, gate = three-note bell.
 Shapes also differ (chevrons, rocks, star, arch with up-arrow), never colour alone.
+
+## AI coach: Coach Kavi
+
+Coach Kavi (an original fox-orange runner's guide) is MotionQuest's on-device
+coach. It is rule-based, deterministic and offline: `Coach` in
+`packages/game_director/lib/src/coach.dart`, no cloud model. It reads the last
+20 run summaries (counts only, stored locally) and returns message keys plus
+parameters; English, Hindi and Gujarati text lives in
+`app/lib/l10n/coach_strings.dart`. Kavi makes game suggestions only and never
+claims to measure fatigue, heart rate or health.
+
+- **Difficulty**: last run unfinished, ≥2 hearts lost, or effort rating ≥4 →
+  suggest one level easier plus assist mode (and low-impact if it was off).
+  Two most recent runs at the current level both finished with ≤1 hit and
+  effort ≤3 (or unrated) → suggest one level harder. Never more than one level
+  at a time; never suggests turning low-impact off. The player confirms with a
+  "Try <level>" button.
+- **Form tips** (max 2, most frequent first): a rejection reason needs ≥3
+  occurrences in the run. tooShallow → sink deeper / lean further / lift
+  higher ("only as far as comfortable"); tooEarly → stand fully / return to
+  centre / lower arms; notVisible (all moves) → lighting and framing tip.
+- **Recap**: new personal best > flawless (0 hits) > finished > good effort,
+  with score, obstacles cleared and most-used move. **Next goal**: finish →
+  keep all hearts → next round 100 above the best score.
+- **Week balance**: three runs in a row rated ≥4 → suggest a lighter run;
+  otherwise, with ≥20 reps in the 7 days up to the latest run, one move above
+  60 % of reps → suggest another stage for variety.

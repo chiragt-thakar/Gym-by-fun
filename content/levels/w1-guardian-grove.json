@@ -1,0 +1,587 @@
+{
+  "$schema": "../schema/level.schema.json",
+  "id": "w1-guardian-grove",
+  "version": 1,
+  "schemaVersion": 1,
+  "world": 1,
+  "name": "Guardian Grove",
+  "lanes": 3,
+  "durationS": 210,
+  "hearts": 3,
+  "music": {
+    "track": "grove_guardian",
+    "bpmByDifficulty": {
+      "beginner": 110,
+      "intermediate": 122,
+      "advanced": 132
+    }
+  },
+  "difficulty": {
+    "beginner": {
+      "warningMs": 2000,
+      "maxDemandingInRow": 3,
+      "hints": "always",
+      "lowImpactDefault": true
+    },
+    "intermediate": {
+      "warningMs": 1600,
+      "maxDemandingInRow": 5,
+      "hints": "firstTime",
+      "lowImpactDefault": true
+    },
+    "advanced": {
+      "warningMs": 1300,
+      "maxDemandingInRow": 7,
+      "hints": "off",
+      "lowImpactDefault": false
+    }
+  },
+  "scoring": {
+    "beam": 100,
+    "laneBlock": 100,
+    "orb": 50,
+    "gate": 150
+  },
+  "segments": [
+    {
+      "id": "practice",
+      "kind": "practice",
+      "startS": 0,
+      "endS": 30,
+      "hint": "Practice run. The grove is waking up."
+    },
+    {
+      "id": "learn",
+      "kind": "learn",
+      "startS": 30,
+      "endS": 95
+    },
+    {
+      "id": "breather",
+      "kind": "breather",
+      "startS": 95,
+      "endS": 115,
+      "hint": "The guardian pauses. Breathe and gather spirits."
+    },
+    {
+      "id": "combos",
+      "kind": "combo",
+      "startS": 115,
+      "endS": 170,
+      "hint": "The guardian stirs! Branches and roots together."
+    },
+    {
+      "id": "checkpoint",
+      "kind": "checkpoint",
+      "startS": 170,
+      "endS": 171,
+      "hint": "Checkpoint! A heart comes back."
+    },
+    {
+      "id": "finale",
+      "kind": "finale",
+      "startS": 171,
+      "endS": 210,
+      "hint": "Open the gates to calm the guardian!"
+    }
+  ],
+  "encounters": [
+    {
+      "atS": 8,
+      "type": "beam",
+      "hint": "A sweeping branch! Squat to let it pass."
+    },
+    {
+      "atS": 12,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ],
+      "hint": "A root wall rises! Lean to a free lane."
+    },
+    {
+      "atS": 14,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 16,
+      "type": "beam"
+    },
+    {
+      "atS": 20,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 22.5,
+      "type": "beam",
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 25,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "Grove spirit! Raise both arms to gather it."
+    },
+    {
+      "atS": 33,
+      "type": "beam"
+    },
+    {
+      "atS": 36.2,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 39.4,
+      "type": "beam"
+    },
+    {
+      "atS": 42.6,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 42.6,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 45.8,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 49.0,
+      "type": "beam"
+    },
+    {
+      "atS": 52.2,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 55.4,
+      "type": "beam"
+    },
+    {
+      "atS": 58.6,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 58.6,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 61.8,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 65.0,
+      "type": "beam"
+    },
+    {
+      "atS": 68.2,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 71.4,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 74.6,
+      "type": "beam"
+    },
+    {
+      "atS": 74.6,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 77.8,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 81.0,
+      "type": "beam"
+    },
+    {
+      "atS": 84.2,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 87.4,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 90.6,
+      "type": "beam"
+    },
+    {
+      "atS": 98,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 102,
+      "type": "orb",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 106,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 110,
+      "type": "orb",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 113.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 116,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 117.7,
+      "type": "beam"
+    },
+    {
+      "atS": 119.2,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 119.9,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 120.9,
+      "type": "beam"
+    },
+    {
+      "atS": 122.4,
+      "type": "beam"
+    },
+    {
+      "atS": 124.1,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 125.6,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 127.3,
+      "type": "beam"
+    },
+    {
+      "atS": 128.8,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 130.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 132.0,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 133.7,
+      "type": "beam"
+    },
+    {
+      "atS": 135.2,
+      "type": "beam"
+    },
+    {
+      "atS": 136.9,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 138.4,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 138.9,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 140.1,
+      "type": "beam"
+    },
+    {
+      "atS": 141.6,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 143.3,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 144.8,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 146.5,
+      "type": "beam"
+    },
+    {
+      "atS": 148.0,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 149.7,
+      "type": "beam"
+    },
+    {
+      "atS": 151.2,
+      "type": "beam"
+    },
+    {
+      "atS": 152.9,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 154.4,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 156.1,
+      "type": "beam"
+    },
+    {
+      "atS": 157.6,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 159.3,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 160.8,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 162.5,
+      "type": "beam"
+    },
+    {
+      "atS": 164.0,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 165.7,
+      "type": "beam"
+    },
+    {
+      "atS": 167.2,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 168.9,
+      "type": "beam"
+    },
+    {
+      "atS": 173,
+      "type": "gate",
+      "hint": "Calm the guardian! Arms up to open its gate."
+    },
+    {
+      "atS": 176.5,
+      "type": "beam"
+    },
+    {
+      "atS": 180,
+      "type": "gate"
+    },
+    {
+      "atS": 183.5,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 185.25,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 187,
+      "type": "gate"
+    },
+    {
+      "atS": 190.5,
+      "type": "beam"
+    },
+    {
+      "atS": 194,
+      "type": "gate"
+    },
+    {
+      "atS": 197.5,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 199.25,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 201,
+      "type": "gate"
+    },
+    {
+      "atS": 205,
+      "type": "gate",
+      "hint": "One last gate. The guardian rests."
+    }
+  ]
+}

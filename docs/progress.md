@@ -33,6 +33,20 @@
   Hindi and Gujarati. 14 app tests.
 - **Launch checklist**: [launch-checklist.md](launch-checklist.md).
 
+- Stages: four new original levels (River Crossing, Guardian Grove, Desert
+  Dunes, Sandstorm Temple) in `content/levels/`; stage catalogue with
+  unlocking (`app/lib/game/stages.dart`, `Settings.completedLevels`); home
+  world map lists worlds and stages; `/quest?level=<id>`; desert theme for
+  the procedural painter.
+- Coach Kavi, the on-device AI coach: rule-based, deterministic `Coach` in
+  `packages/game_director/lib/src/coach.dart` (difficulty/assist suggestion
+  with reason, up to 2 form tips from rejection reasons, recap, next goal,
+  weekly balance note; 26 tests). App keeps the last 20 run summaries (counts
+  only) in SharedPreferences (`app/lib/services/coach_service.dart`), shows a
+  Kavi card on results with a "Try <level>" button, speaks the recap; text in
+  en/hi/gu in `app/lib/l10n/coach_strings.dart`. Pose service now counts
+  rejections by reason. Rules in `docs/game-design.md`.
+
 ### Not verified yet (needs real phones / people)
 - Synthetic landmark corpus only: record 5+ consenting people (heights,
   kurta/saree/track pants, tube and evening light) with the recorder and add

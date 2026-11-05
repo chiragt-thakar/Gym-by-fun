@@ -106,6 +106,11 @@ class MotionSession {
   final Map<Move, int> started = {for (final m in Move.values) m: 0};
   final Map<Move, int> rejected = {for (final m in Move.values) m: 0};
 
+  /// Rejections by reason, for Coach Kavi's form tips. Counts only.
+  final Map<Move, Map<RejectReason, int>> rejectedBy = {
+    for (final m in Move.values) m: {for (final r in RejectReason.values) r: 0},
+  };
+
   Stream<MotionEvent> get events => _events.stream;
   Stream<PoseFrame> get frames => _frames.stream;
   MotionEngine? get engine => _engine;
@@ -132,7 +137,10 @@ class MotionSession {
     _frames.add(f);
     for (final e in out) {
       if (e is MoveStarted) started[e.move] = started[e.move]! + 1;
-      if (e is MoveRejected) rejected[e.move] = rejected[e.move]! + 1;
+      if (e is MoveRejected) {
+        rejected[e.move] = rejected[e.move]! + 1;
+        rejectedBy[e.move]![e.reason] = rejectedBy[e.move]![e.reason]! + 1;
+      }
       _events.add(e);
     }
   }
@@ -143,6 +151,8 @@ class MotionSession {
         'attempts': started[m]! + rejected[m]!,
         'falseTriggers': 0,
         'avgLatencyMs': perf.pipelineMs.round(),
+        'recognised': started[m]!,
+        for (final r in RejectReason.values) r.name: rejectedBy[m]![r]!,
       },
   };
 

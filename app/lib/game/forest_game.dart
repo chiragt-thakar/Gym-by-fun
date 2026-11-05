@@ -73,6 +73,7 @@ class ForestGame extends FlameGame {
     required this.audio,
     this.lightOf,
     this.onFinished,
+    this.theme = SceneTheme.forest,
   }) : hud = ValueNotifier(
          HudState(hearts: engine.hearts, maxHearts: engine.level.hearts),
        );
@@ -80,6 +81,9 @@ class ForestGame extends FlameGame {
   final RunEngine engine;
   final Stream<MotionEvent> motionEvents;
   final GameAudio audio;
+
+  /// Colours and side scenery for the current stage.
+  final SceneTheme theme;
 
   /// Live tracking light from the motion engine (amber slows the world).
   final TrackingLight Function()? lightOf;
@@ -92,7 +96,7 @@ class ForestGame extends FlameGame {
   int _hintUntilMs = 0;
 
   @override
-  Color backgroundColor() => const Color(0xFF0E2A1B);
+  Color backgroundColor() => theme.background;
 
   @override
   Future<void> onLoad() async {
@@ -184,8 +188,79 @@ class ForestGame extends FlameGame {
       armsUp: engine.armsUp,
       lanes: engine.level.lanes,
       warningMs: engine.director.warningMs,
+      theme: theme,
     ).paint(canvas);
   }
+}
+
+/// What the side of the road is lined with.
+enum SceneProps { trees, cacti }
+
+/// A stage's look: colours and side props only. Obstacle shapes stay the
+/// same in every stage so each encounter type is always readable.
+class SceneTheme {
+  const SceneTheme({
+    required this.background,
+    required this.skyTop,
+    required this.skyBottom,
+    required this.sun,
+    required this.hillFar,
+    required this.hillNear,
+    required this.ground,
+    required this.road,
+    required this.propTrunk,
+    required this.propCrown,
+    required this.beam,
+    required this.block,
+    this.props = SceneProps.trees,
+  });
+
+  final Color background;
+  final Color skyTop;
+  final Color skyBottom;
+  final Color sun;
+  final Color hillFar;
+  final Color hillNear;
+  final Color ground;
+  final Color road;
+  final Color propTrunk;
+  final Color propCrown;
+
+  /// Obstacle tints (shapes never change).
+  final Color beam;
+  final Color block;
+  final SceneProps props;
+
+  static const forest = SceneTheme(
+    background: Color(0xFF0E2A1B),
+    skyTop: Color(0xFFFFC27A),
+    skyBottom: Color(0xFF7FC8A9),
+    sun: Color(0xFFFFF1C1),
+    hillFar: Color(0xFF214A33),
+    hillNear: Color(0xFF1A3D29),
+    ground: Color(0xFF2E6B3F),
+    road: Color(0xFF8C6A45),
+    propTrunk: Color(0xFF4A2F1B),
+    propCrown: Color(0xFF173F25),
+    beam: Color(0xFF6B3E1F),
+    block: Color(0xFF7A7A7A),
+  );
+
+  static const desert = SceneTheme(
+    background: Color(0xFF3A2410),
+    skyTop: Color(0xFFFF9E5E),
+    skyBottom: Color(0xFFFFE0A3),
+    sun: Color(0xFFFFFBE6),
+    hillFar: Color(0xFFD9A55B),
+    hillNear: Color(0xFFC78C45),
+    ground: Color(0xFFE2B66E),
+    road: Color(0xFFB98A4E),
+    propTrunk: Color(0xFF3F7A3A),
+    propCrown: Color(0xFF2F6A2E),
+    beam: Color(0xFF5E8F3A),
+    block: Color(0xFFA9773F),
+    props: SceneProps.cacti,
+  );
 }
 
 /// Procedural 2.5D forest: layered parallax, perspective lanes, big clear
@@ -201,7 +276,10 @@ class ForestPainter {
     required this.armsUp,
     required this.lanes,
     required this.warningMs,
+    this.theme = SceneTheme.forest,
   });
+
+  final SceneTheme theme;
 
   final Size size;
   final double t;
@@ -231,8 +309,8 @@ class ForestPainter {
 
   void paint(Canvas c) {
     _sky(c);
-    _hills(c, 0.15, const Color(0xFF214A33), 0.30, 60);
-    _hills(c, 0.35, const Color(0xFF1A3D29), 0.34, 90);
+    _hills(c, 0.15, theme.hillFar, 0.30, 60);
+    _hills(c, 0.35, theme.hillNear, 0.34, 90);
     _trees(c);
     _road(c);
     final visible =
@@ -255,14 +333,14 @@ class ForestPainter {
       r,
       Paint()
         ..shader = Gradient.linear(Offset.zero, Offset(0, horizon), [
-          const Color(0xFFFFC27A),
-          const Color(0xFF7FC8A9),
+          theme.skyTop,
+          theme.skyBottom,
         ]),
     );
     c.drawCircle(
       Offset(w * 0.78, horizon * 0.45),
       w * 0.07,
-      Paint()..color = const Color(0xFFFFF1C1),
+      Paint()..color = theme.sun,
     );
   }
 
@@ -283,7 +361,7 @@ class ForestPainter {
 
   void _trees(Canvas c) {
     final ground = Rect.fromLTWH(0, horizon, w, h - horizon);
-    c.drawRect(ground, Paint()..color = const Color(0xFF2E6B3F));
+    c.drawRect(ground, Paint()..color = theme.ground);
     // Trees streaming past on both sides of the road.
     for (var i = 0; i < 10; i++) {
       final phase = ((t * 0.55 + i / 10) % 1.0);
@@ -292,7 +370,11 @@ class ForestPainter {
       final s = scaleAt(d) * h * 0.22;
       for (final side in [-1.0, 1.0]) {
         final x = w / 2 + side * (w * 0.08 + (w * 0.5) * (1 - d) + s * 0.4);
-        final trunk = Paint()..color = const Color(0xFF4A2F1B);
+        if (theme.props == SceneProps.cacti) {
+          _cactus(c, x, y, s);
+          continue;
+        }
+        final trunk = Paint()..color = theme.propTrunk;
         c.drawRect(
           Rect.fromCenter(
             center: Offset(x, y - s * 0.2),
@@ -306,9 +388,45 @@ class ForestPainter {
           ..lineTo(x - s * 0.35, y - s * 0.3)
           ..lineTo(x + s * 0.35, y - s * 0.3)
           ..close();
-        c.drawPath(crown, Paint()..color = const Color(0xFF173F25));
+        c.drawPath(crown, Paint()..color = theme.propCrown);
       }
     }
+  }
+
+  /// A simple procedural saguaro-style silhouette: trunk plus two arms.
+  void _cactus(Canvas c, double x, double y, double s) {
+    final body = Paint()..color = theme.propTrunk;
+    final arm = Paint()..color = theme.propCrown;
+    final r = Radius.circular(s * 0.06);
+    c.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTRB(x - s * 0.07, y - s * 0.8, x + s * 0.07, y),
+        r,
+      ),
+      body,
+    );
+    c.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTRB(x - s * 0.28, y - s * 0.55, x - s * 0.16, y - s * 0.3),
+        r,
+      ),
+      arm,
+    );
+    c.drawRect(
+      Rect.fromLTRB(x - s * 0.28, y - s * 0.36, x - s * 0.07, y - s * 0.3),
+      arm,
+    );
+    c.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTRB(x + s * 0.16, y - s * 0.65, x + s * 0.28, y - s * 0.4),
+        r,
+      ),
+      arm,
+    );
+    c.drawRect(
+      Rect.fromLTRB(x + s * 0.07, y - s * 0.46, x + s * 0.28, y - s * 0.4),
+      arm,
+    );
   }
 
   void _road(Canvas c) {
@@ -318,7 +436,7 @@ class ForestPainter {
       ..lineTo(laneX(lanes - 0.5, 1), horizon)
       ..lineTo(laneX(lanes - 0.5, 0), heroY + h * 0.2)
       ..close();
-    c.drawPath(road, Paint()..color = const Color(0xFF8C6A45));
+    c.drawPath(road, Paint()..color = theme.road);
     final line = Paint()
       ..color = const Color(0x88FFFFFF)
       ..strokeWidth = 3;
@@ -355,7 +473,7 @@ class ForestPainter {
         );
         c.drawRRect(
           RRect.fromRectAndRadius(r, Radius.circular(10 * s)),
-          Paint()..color = const Color(0xFF6B3E1F),
+          Paint()..color = theme.beam,
         );
         c.drawRRect(
           RRect.fromRectAndRadius(r, Radius.circular(10 * s)),
@@ -386,7 +504,7 @@ class ForestPainter {
             ..lineTo(x + rw * 0.2, y - rh * 1.1)
             ..lineTo(x + rw / 2, y)
             ..close();
-          c.drawPath(rock, Paint()..color = const Color(0xFF7A7A7A));
+          c.drawPath(rock, Paint()..color = theme.block);
           c.drawPath(rock, outline);
         }
       case EncounterType.orb:

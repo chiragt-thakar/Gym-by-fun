@@ -26,6 +26,7 @@ class Settings {
     this.deviceTier,
     this.seenTypes = const {},
     this.sessionsPlayed = 0,
+    this.completedLevels = const {},
   });
 
   final AppLanguage language;
@@ -45,6 +46,9 @@ class Settings {
   final DeviceTier? deviceTier;
   final Set<EncounterType> seenTypes;
   final int sessionsPlayed;
+
+  /// Level ids the player has finished at least once (unlocks the next stage).
+  final Set<String> completedLevels;
 
   S get s => S(language);
 
@@ -73,6 +77,7 @@ class Settings {
     DeviceTier? deviceTier,
     Set<EncounterType>? seenTypes,
     int? sessionsPlayed,
+    Set<String>? completedLevels,
   }) => Settings(
     language: language ?? this.language,
     difficulty: difficulty ?? this.difficulty,
@@ -87,6 +92,7 @@ class Settings {
     deviceTier: deviceTier ?? this.deviceTier,
     seenTypes: seenTypes ?? this.seenTypes,
     sessionsPlayed: sessionsPlayed ?? this.sessionsPlayed,
+    completedLevels: completedLevels ?? this.completedLevels,
   );
 
   Map<String, Object?> toJson() => {
@@ -103,6 +109,7 @@ class Settings {
     'deviceTier': deviceTier?.name,
     'seenTypes': [for (final t in seenTypes) t.name],
     'sessionsPlayed': sessionsPlayed,
+    'completedLevels': [...completedLevels],
   };
 
   factory Settings.fromJson(Map<String, dynamic> j) => Settings(
@@ -127,6 +134,10 @@ class Settings {
         ?EncounterType.values.asNameMap()[n],
     },
     sessionsPlayed: (j['sessionsPlayed'] as num?)?.toInt() ?? 0,
+    completedLevels: {
+      for (final n in (j['completedLevels'] as List<dynamic>? ?? const []))
+        if (n is String) n,
+    },
   );
 }
 

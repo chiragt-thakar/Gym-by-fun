@@ -3,11 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:game_director/game_director.dart';
 import 'package:go_router/go_router.dart';
 
+import '../l10n/coach_strings.dart';
 import '../l10n/tr.dart';
 
 import '../services/api_client.dart';
+import '../services/coach_service.dart';
 import '../services/session_queue.dart';
 import '../services/settings.dart';
+import '../services/voice.dart';
 import '../widgets/common.dart';
 
 class ResultsData {
@@ -37,11 +40,48 @@ class ResultsScreen extends ConsumerStatefulWidget {
 class _ResultsState extends ConsumerState<ResultsScreen> {
   int? _effort;
   bool _saved = false;
+  bool _coachApplied = false;
+
+  SessionSummary? _summary() {
+    final d = widget.data;
+    if (d == null || d.tutorial) return null;
+    return SessionSummary.fromResult(
+      d.result,
+      date: d.startedAt,
+      effort: _effort,
+      moveStats: moveStatsFrom(d.moveStats),
+    );
+  }
+
+  /// Kavi's advice including this run (not yet stored until Done).
+  CoachAdvice? _advice() {
+    final s = _summary();
+    if (s == null) return null;
+    return const Coach().advise([...ref.read(coachHistoryProvider), s]);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final recap = _advice()?.recap;
+      if (recap == null) return;
+      final lang = ref.read(settingsProvider).language;
+      ref.read(voiceProvider).say(coachText(lang, recap), force: true);
+    });
+  }
+
+  void _record() {
+    final s = _summary();
+    if (s != null) ref.read(coachHistoryProvider.notifier).record(s);
+  }
 
   Future<void> _save() async {
     final d = widget.data;
     if (d == null || _saved || d.tutorial) return;
     _saved = true;
+    _record();
     final q = ref.read(sessionQueueProvider);
     await q.add(
       SessionQueue.fromResult(
@@ -119,6 +159,19 @@ class _ResultsState extends ConsumerState<ResultsScreen> {
     );
   }
 
+  void _applyCoach(DifficultyAdvice a) {
+    ref
+        .read(settingsProvider.notifier)
+        .update(
+          (s) => s.copyWith(
+            difficulty: a.recommended,
+            assist: a.suggestAssist ? true : null,
+            lowImpact: a.suggestLowImpact ? true : null,
+          ),
+        );
+    setState(() => _coachApplied = true);
+  }
+
   @override
   Widget build(BuildContext context) {
     final d = widget.data;
@@ -182,6 +235,14 @@ class _ResultsState extends ConsumerState<ResultsScreen> {
           ),
           Text(tr('1 = very easy · 5 = very hard')),
         ],
+        if (!d.tutorial) ...[
+          const SizedBox(height: 24),
+          _CoachCard(
+            advice: _advice()!,
+            applied: _coachApplied,
+            onApply: _applyCoach,
+          ),
+        ],
         const SizedBox(height: 24),
         BigButton(
           d.tutorial ? tr('Go to home') : tr('Done'),
@@ -226,4 +287,125 @@ class _Stat extends StatelessWidget {
       ),
     ),
   );
+}
+
+/// Coach Kavi's card: recap, up to two tips, next goal and a suggestion.
+class _CoachCard extends ConsumerWidget {
+  const _CoachCard({
+    required this.advice,
+    required this.applied,
+    required this.onApply,
+  });
+  final CoachAdvice advice;
+  final bool applied;
+  final void Function(DifficultyAdvice) onApply;
+
+  static const kaviOrange = Color(0xFFF07A1A);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(settingsProvider).language;
+    final a = advice;
+    final diff = a.difficulty;
+    final offer = diff.changes || diff.suggestAssist;
+    return Card(
+      key: const Key('coach-card'),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: kaviOrange, width: 2),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const CircleAvatar(
+                  backgroundColor: kaviOrange,
+                  child: Icon(Icons.directions_run, color: Colors.white),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  coachKey(lang, 'coach_name'),
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+            if (a.recap != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                coachText(lang, a.recap!),
+                style: const TextStyle(fontSize: 18),
+              ),
+            ],
+            for (final t in a.tips)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.tips_and_updates, color: kaviOrange),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        coachText(lang, t),
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            if (a.nextGoal != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                '${coachKey(lang, 'coach_next_goal')}: '
+                '${coachText(lang, a.nextGoal!)}',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+            if (a.balance != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                coachText(lang, a.balance!),
+                style: const TextStyle(fontSize: 16),
+              ),
+            ],
+            if (offer) ...[
+              const SizedBox(height: 12),
+              Text(
+                reasonText(lang, diff.reason),
+                style: const TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 8),
+              if (applied)
+                Text(coachKey(lang, 'coach_applied'))
+              else
+                FilledButton(
+                  style: FilledButton.styleFrom(backgroundColor: kaviOrange),
+                  onPressed: () => onApply(diff),
+                  child: Text(
+                    diff.changes
+                        ? coachText(
+                            lang,
+                            CoachMessage('coach_try_level', {
+                              'level': difficultyName(lang, diff.recommended),
+                            }),
+                          )
+                        : coachKey(lang, 'coach_try_assist'),
+                    style: const TextStyle(fontSize: 18),
+                  ),
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
 }

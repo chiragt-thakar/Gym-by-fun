@@ -1,0 +1,135 @@
+import 'forest_game.dart';
+
+/// One playable stage: a level config bundled in assets/levels/.
+class Stage {
+  const Stage({
+    required this.levelId,
+    required this.world,
+    required this.worldName,
+    required this.stageNumber,
+    required this.title,
+    required this.description,
+    required this.theme,
+  });
+
+  final String levelId;
+  final int world;
+  final String worldName;
+  final int stageNumber;
+  final String title;
+  final String description;
+  final SceneTheme theme;
+
+  String get asset => 'assets/levels/$levelId.json';
+}
+
+/// A world on the map. Worlds with no stages are "coming soon".
+class World {
+  const World(this.number, this.name, this.stages);
+  final int number;
+  final String name;
+  final List<Stage> stages;
+  bool get comingSoon => stages.isEmpty;
+}
+
+const forestEscapeId = 'w1-forest-escape';
+
+/// Every playable stage, in play order. Unlocking follows this order.
+const stages = <Stage>[
+  Stage(
+    levelId: forestEscapeId,
+    world: 1,
+    worldName: 'Forest Awakening',
+    stageNumber: 1,
+    title: 'Forest Escape',
+    description: 'Duck branches, dodge rocks, open the forest gate.',
+    theme: SceneTheme.forest,
+  ),
+  Stage(
+    levelId: 'w1-river-crossing',
+    world: 1,
+    worldName: 'Forest Awakening',
+    stageNumber: 2,
+    title: 'River Crossing',
+    description: 'Log beams, river rocks and firefly orbs.',
+    theme: SceneTheme.forest,
+  ),
+  Stage(
+    levelId: 'w1-guardian-grove',
+    world: 1,
+    worldName: 'Forest Awakening',
+    stageNumber: 3,
+    title: 'Guardian Grove',
+    description: 'Calm the ancient tree guardian. Branches and roots!',
+    theme: SceneTheme.forest,
+  ),
+  Stage(
+    levelId: 'w2-desert-dunes',
+    world: 2,
+    worldName: 'Desert Trials',
+    stageNumber: 1,
+    title: 'Desert Dunes',
+    description: 'Sand walls, cactus arches and mirage orbs.',
+    theme: SceneTheme.desert,
+  ),
+  Stage(
+    levelId: 'w2-sandstorm-temple',
+    world: 2,
+    worldName: 'Desert Trials',
+    stageNumber: 2,
+    title: 'Sandstorm Temple',
+    description: 'Wide sand walls and the temple gates.',
+    theme: SceneTheme.desert,
+  ),
+];
+
+const _laterWorlds = [
+  'Stadium Nights',
+  'Neon City',
+  'Mountain Expedition',
+  'Ancient Temple',
+  'Shadow Arena',
+  'Cosmic Journey',
+  'Final Guardian',
+];
+
+/// Worlds in map order: the playable ones, then the ones still to come.
+List<World> get worlds {
+  final out = <World>[];
+  for (final st in stages) {
+    if (out.isEmpty || out.last.number != st.world) {
+      out.add(World(st.world, st.worldName, []));
+    }
+    out.last.stages.add(st);
+  }
+  for (final name in _laterWorlds) {
+    out.add(World(out.length + 1, name, const []));
+  }
+  return out;
+}
+
+Stage? stageById(String id) {
+  for (final st in stages) {
+    if (st.levelId == id) return st;
+  }
+  return null;
+}
+
+/// The first stage is always open; each later one opens when the stage
+/// before it is completed.
+bool isUnlocked(Stage stage, Set<String> completed) {
+  final i = stages.indexOf(stage);
+  if (i <= 0) return true;
+  return completed.contains(stages[i - 1].levelId);
+}
+
+/// What the Daily Quest plays: the first unlocked stage not yet completed,
+/// or Forest Escape once everything is done.
+Stage nextStage(Set<String> completed) {
+  for (final st in stages) {
+    if (!completed.contains(st.levelId) && isUnlocked(st, completed)) {
+      return st;
+    }
+  }
+  return stages.first;
+}

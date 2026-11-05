@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../game/stages.dart';
 import '../l10n/tr.dart';
 
 import '../services/api_client.dart';
@@ -31,18 +32,6 @@ final homeDataProvider = FutureProvider.autoDispose<Map<String, dynamic>?>((
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
-  static const worlds = [
-    ('Forest Awakening', true),
-    ('Desert Trials', false),
-    ('Stadium Nights', false),
-    ('Neon City', false),
-    ('Mountain Expedition', false),
-    ('Ancient Temple', false),
-    ('Shadow Arena', false),
-    ('Cosmic Journey', false),
-    ('Final Guardian', false),
-  ];
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final s = ref.watch(settingsProvider);
@@ -51,6 +40,7 @@ class HomeScreen extends ConsumerWidget {
     final progress = data?['progress'] as Map<String, dynamic>?;
     final quests = (data?['quests'] as List<dynamic>?) ?? const [];
     final premium = ref.watch(premiumProvider).value ?? const PremiumState();
+    final next = nextStage(s.completedLevels);
     Color? gymColour;
     if (gym != null) {
       final hex = (gym['colours'] as Map)['primary'] as String;
@@ -82,7 +72,7 @@ class HomeScreen extends ConsumerWidget {
                     ),
                     backgroundColor: gymColour,
                   ),
-                  onPressed: () => context.push('/quest'),
+                  onPressed: () => context.push('/quest?level=${next.levelId}'),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -95,7 +85,8 @@ class HomeScreen extends ConsumerWidget {
                         ),
                       ),
                       Text(
-                        tr('Warm-up · Forest Escape · Cool-down'),
+                        '${tr('Warm-up')} · ${tr(next.title)} · '
+                        '${tr('Cool-down')}',
                         style: TextStyle(fontSize: 16),
                       ),
                     ],
@@ -168,20 +159,8 @@ class HomeScreen extends ConsumerWidget {
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 8),
-              for (final (i, (name, open)) in worlds.indexed)
-                Card(
-                  child: ListTile(
-                    leading: CircleAvatar(child: Text('${i + 1}')),
-                    title: Text(name, style: const TextStyle(fontSize: 19)),
-                    subtitle: Text(
-                      open
-                          ? tr('Squat · Lean · Raise arms')
-                          : tr('Coming soon'),
-                    ),
-                    trailing: Icon(open ? Icons.lock_open : Icons.lock_outline),
-                    onTap: open ? () => context.push('/quest') : null,
-                  ),
-                ),
+              for (final world in worlds)
+                _WorldCard(world: world, completed: s.completedLevels),
               const SizedBox(height: 12),
               Text(
                 s.s.t('not_medical'),
@@ -192,6 +171,68 @@ class HomeScreen extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _WorldCard extends StatelessWidget {
+  const _WorldCard({required this.world, required this.completed});
+  final World world;
+  final Set<String> completed;
+
+  @override
+  Widget build(BuildContext context) {
+    if (world.comingSoon) {
+      return Card(
+        child: ListTile(
+          leading: CircleAvatar(child: Text('${world.number}')),
+          title: Text(world.name, style: const TextStyle(fontSize: 19)),
+          subtitle: Text(tr('Coming soon')),
+          trailing: const Icon(Icons.lock_outline),
+        ),
+      );
+    }
+    return Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ListTile(
+            leading: CircleAvatar(child: Text('${world.number}')),
+            title: Text(
+              world.name,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+            ),
+            subtitle: Text(tr('Squat · Lean · Raise arms')),
+          ),
+          for (final st in world.stages) _stageTile(context, st),
+        ],
+      ),
+    );
+  }
+
+  Widget _stageTile(BuildContext context, Stage st) {
+    final open = isUnlocked(st, completed);
+    final done = completed.contains(st.levelId);
+    return ListTile(
+      key: ValueKey('stage-${st.levelId}'),
+      contentPadding: const EdgeInsets.only(left: 32, right: 16),
+      leading: Icon(
+        done
+            ? Icons.check_circle
+            : open
+            ? Icons.play_circle_fill
+            : Icons.lock_outline,
+        size: 32,
+      ),
+      title: Text(
+        '${world.number}-${st.stageNumber} · ${tr(st.title)}',
+        style: const TextStyle(fontSize: 18),
+      ),
+      subtitle: Text(
+        open ? tr(st.description) : tr('Finish the previous stage to unlock'),
+      ),
+      enabled: open,
+      onTap: open ? () => context.push('/quest?level=${st.levelId}') : null,
     );
   }
 }

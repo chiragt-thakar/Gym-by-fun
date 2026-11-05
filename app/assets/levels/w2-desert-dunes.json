@@ -1,0 +1,510 @@
+{
+  "$schema": "../schema/level.schema.json",
+  "id": "w2-desert-dunes",
+  "version": 1,
+  "schemaVersion": 1,
+  "world": 2,
+  "name": "Desert Dunes",
+  "lanes": 3,
+  "durationS": 180,
+  "hearts": 3,
+  "music": {
+    "track": "desert_run",
+    "bpmByDifficulty": {
+      "beginner": 112,
+      "intermediate": 124,
+      "advanced": 134
+    }
+  },
+  "difficulty": {
+    "beginner": {
+      "warningMs": 2000,
+      "maxDemandingInRow": 3,
+      "hints": "always",
+      "lowImpactDefault": true
+    },
+    "intermediate": {
+      "warningMs": 1600,
+      "maxDemandingInRow": 5,
+      "hints": "firstTime",
+      "lowImpactDefault": true
+    },
+    "advanced": {
+      "warningMs": 1300,
+      "maxDemandingInRow": 7,
+      "hints": "off",
+      "lowImpactDefault": false
+    }
+  },
+  "scoring": {
+    "beam": 100,
+    "laneBlock": 100,
+    "orb": 50,
+    "gate": 150
+  },
+  "segments": [
+    {
+      "id": "practice",
+      "kind": "practice",
+      "startS": 0,
+      "endS": 30,
+      "hint": "Practice run. Get a feel for the sand."
+    },
+    {
+      "id": "learn",
+      "kind": "learn",
+      "startS": 30,
+      "endS": 90
+    },
+    {
+      "id": "breather",
+      "kind": "breather",
+      "startS": 90,
+      "endS": 106,
+      "hint": "Shade ahead. Breathe and grab the mirages."
+    },
+    {
+      "id": "combos",
+      "kind": "combo",
+      "startS": 106,
+      "endS": 150,
+      "hint": "Dune combos coming!"
+    },
+    {
+      "id": "checkpoint",
+      "kind": "checkpoint",
+      "startS": 150,
+      "endS": 151,
+      "hint": "Checkpoint! A heart comes back."
+    },
+    {
+      "id": "finale",
+      "kind": "finale",
+      "startS": 151,
+      "endS": 180,
+      "hint": "Reach the oasis!"
+    }
+  ],
+  "encounters": [
+    {
+      "atS": 8,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ],
+      "hint": "A sand wall! Lean left or right to pass it."
+    },
+    {
+      "atS": 12,
+      "type": "beam",
+      "hint": "A low cactus arch! Squat to duck under."
+    },
+    {
+      "atS": 14,
+      "type": "beam",
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 16,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 18,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 20,
+      "type": "beam"
+    },
+    {
+      "atS": 24,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "A mirage orb! Raise both arms to grab it."
+    },
+    {
+      "atS": 33,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 36.4,
+      "type": "beam"
+    },
+    {
+      "atS": 39.8,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 43.2,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 43.2,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 46.6,
+      "type": "beam"
+    },
+    {
+      "atS": 50.0,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 53.4,
+      "type": "beam"
+    },
+    {
+      "atS": 56.8,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 56.8,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 60.2,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 63.6,
+      "type": "beam"
+    },
+    {
+      "atS": 67.0,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 70.4,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 70.4,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 73.8,
+      "type": "beam"
+    },
+    {
+      "atS": 77.2,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 80.6,
+      "type": "beam"
+    },
+    {
+      "atS": 84.0,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 87.4,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 93,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 97,
+      "type": "orb",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 101,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 104,
+      "type": "orb",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 107,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 108.7,
+      "type": "beam"
+    },
+    {
+      "atS": 110.2,
+      "type": "beam"
+    },
+    {
+      "atS": 110.9,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 111.9,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 113.4,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 115.1,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 116.6,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 118.3,
+      "type": "beam"
+    },
+    {
+      "atS": 119.8,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 121.5,
+      "type": "beam"
+    },
+    {
+      "atS": 123.0,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 124.7,
+      "type": "beam"
+    },
+    {
+      "atS": 126.2,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 126.9,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 127.9,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 129.4,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 131.1,
+      "type": "beam"
+    },
+    {
+      "atS": 132.6,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 134.3,
+      "type": "beam"
+    },
+    {
+      "atS": 135.8,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 137.5,
+      "type": "beam"
+    },
+    {
+      "atS": 139.0,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 140.7,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 142.2,
+      "type": "beam"
+    },
+    {
+      "atS": 143.9,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 145.4,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 147.1,
+      "type": "beam"
+    },
+    {
+      "atS": 154,
+      "type": "gate",
+      "hint": "An oasis gate! Arms up to open it."
+    },
+    {
+      "atS": 156,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 158,
+      "type": "beam"
+    },
+    {
+      "atS": 161,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 164.5,
+      "type": "gate"
+    },
+    {
+      "atS": 168,
+      "type": "beam"
+    },
+    {
+      "atS": 171,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 174.5,
+      "type": "gate"
+    },
+    {
+      "atS": 178,
+      "type": "gate",
+      "hint": "Last gate. The oasis!"
+    }
+  ]
+}
