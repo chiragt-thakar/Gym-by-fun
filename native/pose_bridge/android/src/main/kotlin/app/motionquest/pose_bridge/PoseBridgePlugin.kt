@@ -15,6 +15,7 @@ import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.PluginRegistry
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * MotionQuest pose bridge.
@@ -77,6 +78,9 @@ class PoseBridgePlugin :
     private fun requestPermission(result: MethodChannel.Result) {
         val a = activity ?: return result.error("no_activity", "Not attached", null)
         if (hasPermission()) return result.success(true)
+        if (pendingPermission != null) {
+            return result.error("in_progress", "A permission request is already pending", null)
+        }
         pendingPermission = result
         ActivityCompat.requestPermissions(a, arrayOf(Manifest.permission.CAMERA), REQUEST_CODE)
     }
@@ -113,7 +117,18 @@ class PoseBridgePlugin :
             onError = { msg -> main.post { sink?.error("pose_error", msg, null) } },
         )
         pipeline = p
-        p.start { info -> main.post { result.success(info) } }
+        // The Dart future must be answered exactly once, success or error.
+        val answered = AtomicBoolean(false)
+        p.start(
+            onStarted = { info ->
+                if (answered.compareAndSet(false, true)) main.post { result.success(info) }
+            },
+            onFailed = { msg ->
+                if (answered.compareAndSet(false, true)) {
+                    main.post { result.error("start_failed", msg, null) }
+                }
+            },
+        )
     }
 
     private fun stopPipeline() {
@@ -142,6 +157,8 @@ class PoseBridgePlugin :
 
     override fun onDetachedFromActivity() {
         stopPipeline()
+        pendingPermission?.success(false)
+        pendingPermission = null
         binding?.removeRequestPermissionsResultListener(this)
         binding = null
         activity = null

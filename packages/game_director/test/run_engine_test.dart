@@ -169,4 +169,93 @@ void main() {
     expect(r.cleared, 1);
     expect(r.toJson()['levelId'], 'w1-tiny');
   });
+
+  test('a loss just before the cue still forgives (level-clock margin)', () {
+    final e = RunEngine(
+        tiny([
+          {'atS': 5, 'type': 'beam'}
+        ]),
+        const RunSettings());
+    // Cue at 3500 ms; lost for an instant at ~3400 ms, then back.
+    runFor(e, 3400);
+    e.input(const TrackingPaused(0, TrackingIssue.outOfFrame));
+    e.input(const TrackingResumed(0));
+    final ev = runFor(e, 3000);
+    expect(ev.whereType<EncounterResolved>().single.outcome, Outcome.forgiven);
+    expect(e.hearts, 3);
+  });
+
+  test('a loss well before the cue with time to react is judged normally', () {
+    final e = RunEngine(
+        tiny([
+          {'atS': 5, 'type': 'beam'}
+        ]),
+        const RunSettings());
+    runFor(e, 1000);
+    e.input(const TrackingPaused(0, TrackingIssue.outOfFrame));
+    runFor(e, 1000);
+    e.input(const TrackingResumed(0));
+    final ev = runFor(e, 6000);
+    expect(ev.whereType<EncounterResolved>().single.outcome, Outcome.hit);
+  });
+
+  test('a cue with less than a reaction time of wall play is forgiven', () {
+    final e = RunEngine(
+        tiny([
+          {'atS': 5, 'type': 'beam'},
+          {'atS': 22, 'type': 'beam'},
+          {'atS': 24, 'type': 'beam'},
+          {'atS': 26, 'type': 'beam'},
+          {'atS': 20.4, 'type': 'beam'},
+        ]),
+        const RunSettings());
+    final fail = runFor(e, 30000);
+    expect(fail.whereType<RunFinished>().single.result.completed, isFalse);
+    expect(e.restartFromCheckpoint(), isTrue);
+    // The 20.4 s beam's cue replays at 20 s, only ~400 ms before it arrives.
+    final ev = runFor(e, 600);
+    expect(ev.whereType<CuePlayed>().map((c) => c.encounter.arriveMs),
+        contains(20400));
+    final res = ev
+        .whereType<EncounterResolved>()
+        .firstWhere((r) => r.encounter.arriveMs == 20400);
+    expect(res.outcome, Outcome.forgiven);
+    expect(e.hearts, 3);
+  });
+
+  test('restart from checkpoint resets transient state and replays the hint',
+      () {
+    final e = RunEngine(
+        tiny([
+          {'atS': 5, 'type': 'beam'},
+          {'atS': 22, 'type': 'beam'},
+          {'atS': 24, 'type': 'beam'},
+          {'atS': 26, 'type': 'beam'},
+          {'atS': 28, 'type': 'beam'},
+        ]),
+        const RunSettings());
+    expect(e.restartFromCheckpoint(), isFalse, reason: 'no checkpoint yet');
+    runFor(e, 20200);
+    // Stale state from the failed attempt: a loss after the checkpoint and raised arms.
+    e.input(const TrackingPaused(0, TrackingIssue.outOfFrame));
+    runFor(e, 200);
+    e.input(const TrackingResumed(0));
+    e.input(const MoveStarted(Move.raiseArms, 0));
+    final ev = runFor(e, 10000);
+    expect(ev.whereType<RunFinished>().single.result.completed, isFalse);
+    expect(e.restartFromCheckpoint(), isTrue);
+    expect(e.restartFromCheckpoint(), isFalse, reason: 'idempotent');
+    expect(e.light, TrackingLight.green);
+    expect(e.ducking, isFalse);
+    expect(e.armsUp, isFalse);
+    expect(e.streak, 0);
+    expect(e.pacer.scale, 1);
+    final after = runFor(e, 8000);
+    expect(after.whereType<SegmentStarted>().first.segment.id, 'cp');
+    final outcomes =
+        after.whereType<EncounterResolved>().map((r) => r.outcome).toList();
+    // The stale loss no longer forgives the beams: standing still is hit.
+    expect(outcomes, isNotEmpty);
+    expect(outcomes, everyElement(Outcome.hit));
+  });
 }

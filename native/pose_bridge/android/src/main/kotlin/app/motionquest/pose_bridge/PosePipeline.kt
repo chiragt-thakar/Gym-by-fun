@@ -53,17 +53,41 @@ internal class PosePipeline(
     // Freed in onResult, or in analyze() if detectAsync never accepted it.
     @Volatile private var inFlight: Bitmap? = null
 
-    fun start(onStarted: (Map<String, Any>) -> Unit) {
-        executor.execute {
-            try {
-                landmarker = createLandmarker(preferGpu)
-            } catch (e: Exception) {
-                onError("Pose model failed to load: ${e.message}")
-                return@execute
-            }
+    // Set once by stop(); every async step checks it so a late callback never
+    // binds the camera or touches a closed landmarker after stop.
+    @Volatile private var stopped = false
+
+    /**
+     * Starts model + camera. Exactly one of [onStarted] / [onFailed] is
+     * called (the caller additionally guards against double answers).
+     */
+    fun start(onStarted: (Map<String, Any>) -> Unit, onFailed: (String) -> Unit) {
+        try {
+            executor.execute { startOnExecutor(onStarted, onFailed) }
+        } catch (e: Exception) {
+            onFailed("Pose pipeline not available: ${e.message}")
+        }
+    }
+
+    private fun startOnExecutor(onStarted: (Map<String, Any>) -> Unit, onFailed: (String) -> Unit) {
+        if (stopped) {
+            onFailed("Pose pipeline stopped")
+            return
+        }
+        try {
+            landmarker = createLandmarker(preferGpu)
+        } catch (e: Exception) {
+            onFailed("Pose model failed to load: ${e.message}")
+            return
+        }
+        try {
             val future = ProcessCameraProvider.getInstance(context)
             future.addListener({
                 try {
+                    if (stopped) {
+                        onFailed("Pose pipeline stopped")
+                        return@addListener
+                    }
                     val p = future.get()
                     provider = p
                     val analysis = ImageAnalysis.Builder()
@@ -85,9 +109,11 @@ internal class PosePipeline(
                     p.bindToLifecycle(owner, CameraSelector.DEFAULT_FRONT_CAMERA, analysis)
                     onStarted(mapOf("delegate" to delegateUsed))
                 } catch (e: Exception) {
-                    onError("Camera failed to start: ${e.message}")
+                    onFailed("Camera failed to start: ${e.message}")
                 }
             }, ContextCompat.getMainExecutor(context))
+        } catch (e: Exception) {
+            onFailed("Camera failed to start: ${e.message}")
         }
     }
 
@@ -121,7 +147,7 @@ internal class PosePipeline(
 
     private fun analyze(image: ImageProxy) {
         val lm = landmarker
-        if (lm == null || !busy.compareAndSet(false, true)) {
+        if (stopped || lm == null || !busy.compareAndSet(false, true)) {
             image.close() // drop: inference still busy with the previous frame
             return
         }
@@ -166,6 +192,7 @@ internal class PosePipeline(
         inFlight?.let { if (!it.isRecycled) it.recycle() }
         inFlight = null
         busy.set(false)
+        if (stopped) return
         val ts = result.timestampMs()
         val poses = result.landmarks()
         val out: DoubleArray
@@ -190,13 +217,20 @@ internal class PosePipeline(
     }
 
     fun stop() {
+        if (stopped) return
+        stopped = true
         try {
             ContextCompat.getMainExecutor(context).execute { provider?.unbindAll() }
         } catch (_: Exception) {
         }
-        executor.execute {
-            landmarker?.close()
-            landmarker = null
+        try {
+            executor.execute {
+                landmarker?.close()
+                landmarker = null
+                inFlight?.let { if (!it.isRecycled) it.recycle() }
+                inFlight = null
+            }
+        } catch (_: Exception) {
         }
         executor.shutdown()
     }

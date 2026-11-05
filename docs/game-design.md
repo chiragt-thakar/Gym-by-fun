@@ -42,7 +42,14 @@ hips moved more than one torso sideways.
 | 2:30–3:00 | Finale | Gate sequence, then results |
 
 3 hearts. Hitting a beam, lane block or gate costs one; a missed orb costs
-nothing; tracking loss between cue and arrival forgives the encounter.
+nothing. Tracking failure never costs a heart: an encounter is forgiven if
+tracking is lost at arrival, was lost at any point from 300 ms (level clock)
+before its cue to arrival, or the player has had less than a reaction time
+(800 ms wall clock, 1200 ms in assist) of tracked play since the cue or
+since tracking came back. A checkpoint restart (only after running out of
+hearts past the checkpoint, once per loss) resets tracking light, loss
+times, held moves, grace timers, streak, pace and the current segment, so
+the checkpoint hint replays and pending encounters are cued again.
 
 ## Stages
 

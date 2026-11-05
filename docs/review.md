@@ -12,6 +12,7 @@ fixers can work in parallel.
 ## Bucket A: app and native
 
 ### A1. Rule 5 broken when frames stop arriving (critical, motion/app)
+✅ Fixed: `MotionSession` watchdog emits one `TrackingPaused(noPerson)` after 500 ms with no frames, `session.light` is red while `stalled`, `TrackingResumed` on the first frame back (tested).
 `app/lib/services/pose_service.dart:154` (`source.frames.listen(_onFrame)`), `:162` (`_engine?.process(f)`)
 Tracking loss is only detected inside `MotionEngine.process`, which runs only
 when a frame arrives. If frames stop (native error, camera taken by another
@@ -24,6 +25,7 @@ player loses hearts while the camera is dead.
 arrived for about 500 ms, then resumes on the next good frame.
 
 ### A2. No app-lifecycle handling: run keeps going in the background (critical, app)
+✅ Fixed: `_QuestState` is a `WidgetsBindingObserver`; inactive/hidden/paused freezes the game (`pauseEngine`, Flame auto-resume off), stops camera and voice, holds the exercise timer; resume needs the player to tap Resume on the pause overlay.
 `app/lib/screens/quest_screen.dart:90` (`_QuestState`, no `WidgetsBindingObserver` anywhere in `app/lib`)
 Nothing reacts to `AppLifecycleState.paused`/`inactive`. CameraX stops on
 the activity's ON_STOP. Meanwhile the warm-up/cool-down `Timer.periodic`
@@ -36,6 +38,7 @@ pause the engine (`game.pauseEngine()`), stop the voice and timers, and call
 `session.stop()`. On resume, show a "Ready?" overlay and restart the session.
 
 ### A3. Native `start()` never answers on failure, so the loading spinner spins forever (high, native)
+✅ Fixed: `PosePipeline.start` takes `onFailed`; model, provider, bind and rejected-executor failures all answer `result.error("start_failed")`, guarded by an `AtomicBoolean` (not compiled locally).
 `native/pose_bridge/android/src/main/kotlin/app/motionquest/pose_bridge/PosePipeline.kt:60-62`, `:87-89`; `PoseBridgePlugin.kt:116`
 If the model fails to load or `bindToLifecycle` throws, only `onError` runs.
 That goes to the event sink, which may not even be listening yet. The
@@ -46,6 +49,7 @@ stays on `_Phase.loading` with no way out.
 `result.error(...)` on both catch paths, exactly once.
 
 ### A4. Unhandled exceptions and stream errors in `_prepare` / session (high, app)
+✅ Fixed: `PlatformException` from start is caught and shown as an error screen; frame stream has `onError` that pauses tracking instead of crashing (tested).
 `app/lib/screens/quest_screen.dart:136` and `app/lib/services/pose_service.dart:153-154`
 - `source.start()` can throw a `PlatformException` (`no_permission`,
   `no_activity`, `no_lifecycle`). This is not caught in `_prepare`, so the
@@ -59,6 +63,7 @@ stays on `_Phase.loading` with no way out.
 listen call that emits `TrackingPaused` and logs the error.
 
 ### A5. `setState` after async gaps, and a leaked camera if the user leaves during loading (high, app)
+✅ Fixed: `mounted` checks after every await; a session started after the widget was disposed is disposed; `_onRunFinished` guarded.
 `app/lib/screens/quest_screen.dart:137`, `:152`, `:162`
 `_prepare` awaits voice init, asset load and `session.start()`, then calls
 `setState` without checking `mounted`. If the user backs out while it
@@ -71,6 +76,7 @@ MediaPipe) is never stopped: the camera keeps running with no UI.
 Guard `_onRunFinished` with `mounted`.
 
 ### A6. No pause/quit during a run, and Android back exits mid-run (high, UX)
+✅ Fixed: `PopScope` routes back to the pause overlay; HUD pause button; overlay offers Resume or an explicit "Quit (this run is not saved)".
 `app/lib/screens/quest_screen.dart:256-330` (`_RunView`), no `PopScope` anywhere in `app/lib`
 The run has no pause or quit button. Because navigation uses `context.go`,
 the system back gesture closes the app or route abruptly. The session is
@@ -80,6 +86,7 @@ either.
 a partial result) and a visible pause button in the HUD.
 
 ### A7. Camera and inference run for the whole 75 s warm-up (medium, app/privacy/battery)
+✅ Fixed: camera starts only when the run phase begins (after warm-up), stopped at cool-down.
 `app/lib/screens/quest_screen.dart:136-152`
 `session.start()` runs before `_Phase.warmup`. The front camera and the GPU
 model stay hot through the warm-up even though nothing consumes events. The
@@ -90,6 +97,7 @@ issue.
 before). Stop it on the cool-down, which `_onRunFinished` already does.
 
 ### A8. Native stop/start race binds the camera after stop (medium, native)
+✅ Fixed: `@Volatile stopped` checked before binding and in `analyze`/`onResult`; `inFlight` recycled on stop; stop is idempotent (not compiled locally).
 `native/pose_bridge/android/src/main/kotlin/app/motionquest/pose_bridge/PosePipeline.kt:64-90`, `:192-202`
 `stop()` can run before the `ProcessCameraProvider` future listener fires,
 for example on a fast back or a `start` right after `stop` in
@@ -102,6 +110,7 @@ results, and the `inFlight` bitmap is not recycled on stop.
 binding and in `analyze`/`onResult`. Recycle `inFlight` in `stop()`.
 
 ### A9. Concurrent `requestPermission` leaves a Dart future hanging (low, native)
+✅ Fixed: a second concurrent request gets `in_progress`; a pending result completes with `false` on detach.
 `native/pose_bridge/android/src/main/kotlin/app/motionquest/pose_bridge/PoseBridgePlugin.kt:80`
 A second call overwrites `pendingPermission`, so the first `Result` is
 never answered. `onDetachedFromActivity` also does not complete it.
@@ -109,6 +118,7 @@ never answered. `onDetachedFromActivity` also does not complete it.
 result. Complete any pending result with `false` on detach.
 
 ### A10. Checkpoint is a dead feature, and the tutorial is marked done even when failed (medium, game logic)
+✅ Fixed: failing after the checkpoint offers "Continue from checkpoint" (`restartFromCheckpoint`); `tutorialDone` only set on a completed run; `seenTypes` adds only encounters that arrived.
 `app/lib/screens/quest_screen.dart:155-164`, `:190`; `app/lib/game/forest_game.dart:161`
 The app never calls `RunEngine.restartFromCheckpoint()`. Running out of
 hearts after the checkpoint just ends the run, even though the checkpoint
@@ -120,6 +130,7 @@ the player failed, so first-time hints are suppressed forever.
 add only the types actually encountered to `seenTypes`.
 
 ### A11. Telemetry reports fabricated values (low, app/data integrity)
+✅ Fixed: `moveStats` no longer sends `falseTriggers`/`avgLatencyMs`; `session_queue.dart` still sends `falseTriggers: 0` because the server schema requires it (Bucket B should make it optional).
 `app/lib/services/pose_service.dart:183` (`'falseTriggers': 0`), `:184` (session-wide `avgLatencyMs` copied to every move)
 Hard-coded or duplicated numbers go to the server as per-move accuracy
 stats and would mislead threshold tuning.

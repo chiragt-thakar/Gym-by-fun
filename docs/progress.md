@@ -78,6 +78,27 @@
   < 150 MB check.
 - See `docs/performance.md` for the budgets and how to measure them on a device.
 
+## Pre-launch review fixes, Bucket A (app + native)
+- Frame watchdog in `MotionSession` (rule 5), stream errors pause tracking.
+- Quest screen: lifecycle pause, pause button + back → pause overlay
+  (Resume / Quit unsaved), camera only during the run, mounted guards,
+  start errors shown, checkpoint continue, tutorialDone only on completion.
+- Native: `start` always answered once; stop/start race and permission
+  re-entrancy fixed (Kotlin not compiled in this environment; build on CI).
+- Telemetry: unmeasured per-move fields no longer sent from `moveStats`.
+
+## Pre-launch review fixes, Bucket B (server + packages)
+- Billing webhooks: marker + apply in one transaction (`processWebhookOnce`);
+  a failed apply is retried successfully; unhandled Razorpay types not recorded.
+- `DELETE /me` immediately deletes pain reports, devices, calibrations,
+  sessions (+ moves), progress, crew scores; keeps entitlements (anonymised
+  billing linkage), withdrawn consents, left memberships until hard delete.
+- `/me/export` adds crew scores, sign-in session metadata (no hashes),
+  billing linkage; a test fails if a new `user_id` table is not exported.
+- `RunEngine`: checkpoint restart resets all transient state and is
+  once-per-loss; forgiveness adds a 300 ms pre-cue margin and a wall-clock
+  reaction-time rule.
+
 ## How to verify
 ```bash
 (cd packages/motion_core && dart test)        # accuracy report printed at the end

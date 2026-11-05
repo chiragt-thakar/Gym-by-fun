@@ -169,6 +169,9 @@ class RunEngine {
   /// measured in wall time.
   int? _lastLostWall;
 
+  /// Wall-clock time each planned encounter's cue was (last) played.
+  late final List<int?> _cueWall = List.filled(plan.length, null);
+
   int _nextCue = 0;
   int _nextResolve = 0;
   bool _checkpointDone = false;
@@ -261,13 +264,15 @@ class RunEngine {
     }
 
     while (_nextCue < plan.length && plan[_nextCue].warnMs <= now) {
+      _cueWall[_nextCue] = _wallMs;
       final p = plan[_nextCue++];
       out.add(CuePlayed(now, p));
       if (p.hint != null) out.add(HintShown(now, p.hint!));
     }
 
     while (_nextResolve < plan.length && plan[_nextResolve].arriveMs <= now) {
-      out.addAll(_resolve(plan[_nextResolve++], now));
+      final i = _nextResolve++;
+      out.addAll(_resolve(plan[i], now, _cueWall[i]));
       if (finished) return out;
     }
 
@@ -288,16 +293,21 @@ class RunEngine {
     return out;
   }
 
-  List<RunEvent> _resolve(PlannedEncounter p, int now) {
+  List<RunEvent> _resolve(PlannedEncounter p, int now, int? cueWall) {
     final out = <RunEvent>[];
     // Forgiven (rule 5) when the player could not have answered fairly:
     // tracking is lost now, was lost at any point from just before the cue
-    // to arrival (level clock), or came back less than a reaction time ago
-    // (wall clock: the level clock was slowed or stopped meanwhile).
+    // to arrival (level clock), or the player has had less than a reaction
+    // time of tracked play since the cue or since tracking came back (wall
+    // clock: the level clock was slowed or stopped meanwhile).
+    final greenSinceWall = [
+      if (cueWall != null) cueWall,
+      if (_lastLostWall != null) _lastLostWall!,
+    ].fold<int?>(null, (a, b) => a == null || b > a ? b : a);
     final trackingLost = _light == TrackingLight.red ||
         (_lastLostClock != null &&
             _lastLostClock! >= p.warnMs - _cueMarginMs) ||
-        (_lastLostWall != null && _wallMs - _lastLostWall! < _reactionMs);
+        (greenSinceWall != null && _wallMs - greenSinceWall < _reactionMs);
     Outcome outcome;
     if (trackingLost) {
       outcome = Outcome.forgiven;
