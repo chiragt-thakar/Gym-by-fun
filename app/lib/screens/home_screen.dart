@@ -47,6 +47,112 @@ class HomeScreen extends ConsumerWidget {
       final hex = (gym['colours'] as Map)['primary'] as String;
       gymColour = Color(int.parse('FF${hex.substring(1)}', radix: 16));
     }
+    Widget header(BuildContext context) => Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          height: 140,
+          child: FilledButton(
+            style: FilledButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28),
+              ),
+              backgroundColor: gymColour,
+            ),
+            onPressed: () => context.push('/quest?level=${next.levelId}'),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.play_arrow_rounded, size: 56),
+                Text(
+                  s.s.t('daily_quest'),
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                Text(
+                  '${tr('Warm-up')} · ${tr(next.title)} · '
+                  '${tr('Cool-down')}',
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _Tile(
+                Icons.local_fire_department,
+                tr('Streak'),
+                '${progress?['streak'] ?? '–'}',
+              ),
+            ),
+            Expanded(
+              child: _Tile(
+                Icons.shield,
+                tr('Shields'),
+                '${progress?['shields'] ?? 2}',
+              ),
+            ),
+            Expanded(
+              child: _Tile(
+                Icons.star,
+                tr('Hero level'),
+                '${progress?['heroLevel'] ?? 1}',
+              ),
+            ),
+          ],
+        ),
+        if (premium.premium)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Chip(
+              avatar: const Icon(Icons.workspace_premium),
+              label: Text(
+                premium.source == 'gym'
+                    ? tr('Premium via your gym')
+                    : tr('Premium'),
+                style: const TextStyle(fontSize: 17),
+              ),
+            ),
+          ),
+        const SizedBox(height: 8),
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.groups, size: 36),
+            title: Text(
+              gym == null ? tr('Gym Crew') : '${gym['name']} crew',
+              style: const TextStyle(fontSize: 20),
+            ),
+            subtitle: Text(
+              gym == null
+                  ? (s.signedIn
+                        ? tr('Have a gym code? Join your crew.')
+                        : tr('Sign in to join your gym crew.'))
+                  : quests.isEmpty
+                  ? 'See this week\'s crew board'
+                  : 'Trainer quest: ${(quests.first as Map)['title']}',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(s.signedIn ? '/crew' : '/sign-in'),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(tr('World map'), style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: 8),
+      ],
+    );
+    final footer = Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Text(
+        s.s.t('not_medical'),
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontSize: 14, color: Colors.white60),
+      ),
+    );
     return Scaffold(
       appBar: AppBar(
         title: Text(gym?['name'] as String? ?? 'MotionQuest'),
@@ -61,114 +167,22 @@ class HomeScreen extends ConsumerWidget {
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async => ref.invalidate(homeDataProvider),
-          child: ListView(
+          // Built lazily: only the header, the world cards on screen and the
+          // footer exist at any time. Each world card has its own repaint
+          // layer so scrolling never repaints its stage tiles.
+          child: ListView.builder(
             padding: const EdgeInsets.all(20),
-            children: [
-              SizedBox(
-                height: 140,
-                child: FilledButton(
-                  style: FilledButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(28),
-                    ),
-                    backgroundColor: gymColour,
-                  ),
-                  onPressed: () => context.push('/quest?level=${next.levelId}'),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.play_arrow_rounded, size: 56),
-                      Text(
-                        s.s.t('daily_quest'),
-                        style: const TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      Text(
-                        '${tr('Warm-up')} · ${tr(next.title)} · '
-                        '${tr('Cool-down')}',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    ],
-                  ),
+            itemCount: worlds.length + 2,
+            itemBuilder: (context, i) {
+              if (i == 0) return header(context);
+              if (i == worlds.length + 1) return footer;
+              return RepaintBoundary(
+                child: _WorldCard(
+                  world: worlds[i - 1],
+                  completed: s.completedLevels,
                 ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: _Tile(
-                      Icons.local_fire_department,
-                      tr('Streak'),
-                      '${progress?['streak'] ?? '–'}',
-                    ),
-                  ),
-                  Expanded(
-                    child: _Tile(
-                      Icons.shield,
-                      tr('Shields'),
-                      '${progress?['shields'] ?? 2}',
-                    ),
-                  ),
-                  Expanded(
-                    child: _Tile(
-                      Icons.star,
-                      tr('Hero level'),
-                      '${progress?['heroLevel'] ?? 1}',
-                    ),
-                  ),
-                ],
-              ),
-              if (premium.premium)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Chip(
-                    avatar: const Icon(Icons.workspace_premium),
-                    label: Text(
-                      premium.source == 'gym'
-                          ? tr('Premium via your gym')
-                          : tr('Premium'),
-                      style: const TextStyle(fontSize: 17),
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 8),
-              Card(
-                child: ListTile(
-                  leading: const Icon(Icons.groups, size: 36),
-                  title: Text(
-                    gym == null ? tr('Gym Crew') : '${gym['name']} crew',
-                    style: const TextStyle(fontSize: 20),
-                  ),
-                  subtitle: Text(
-                    gym == null
-                        ? (s.signedIn
-                              ? tr('Have a gym code? Join your crew.')
-                              : tr('Sign in to join your gym crew.'))
-                        : quests.isEmpty
-                        ? 'See this week\'s crew board'
-                        : 'Trainer quest: ${(quests.first as Map)['title']}',
-                  ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.push(s.signedIn ? '/crew' : '/sign-in'),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                tr('World map'),
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 8),
-              for (final world in worlds)
-                _WorldCard(world: world, completed: s.completedLevels),
-              const SizedBox(height: 12),
-              Text(
-                s.s.t('not_medical'),
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 14, color: Colors.white60),
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),

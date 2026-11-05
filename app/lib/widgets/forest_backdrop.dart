@@ -26,7 +26,7 @@ class ForestBackdropPainter extends CustomPainter {
   late Path _farTrees;
   late Path _nearTrees;
   late List<Offset> _stars;
-  late Shader _glow;
+  final Paint _glowPaint = Paint();
 
   static final _farHillPaint = Paint()..color = const Color(0xFF12241B);
   static final _farTreePaint = Paint()..color = const Color(0xFF16301F);
@@ -98,7 +98,7 @@ class ForestBackdropPainter extends CustomPainter {
       for (var i = 0; i < 26; i++)
         Offset(rnd.nextDouble() * w, rnd.nextDouble() * h * 0.45),
     ];
-    _glow =
+    _glowPaint.shader =
         RadialGradient(
           colors: [Lantern.glow.withAlpha(46), Lantern.glow.withAlpha(0)],
         ).createShader(
@@ -110,7 +110,7 @@ class ForestBackdropPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (size.isEmpty) return;
     if (_size != size) _build(size);
-    canvas.drawRect(Offset.zero & size, Paint()..shader = _glow);
+    canvas.drawRect(Offset.zero & size, _glowPaint);
     for (final s in _stars) {
       canvas.drawCircle(s, 1.6, _starPaint);
     }

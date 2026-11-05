@@ -58,6 +58,50 @@ free storage). These budgets are release gates, not aspirations.
   stay within the normal heap instead of asking the OS for more RAM.
 - The `.task` model is stored uncompressed so MediaPipe can memory-map it.
 
+**Game renderer and HUD (`app/lib/game/forest_game.dart`)**
+- `ForestPainter` runs every frame and now allocates no `Paint`, `Path`,
+  `Shader` or `List` per frame. Paints are cached per `SceneTheme` (an
+  `Expando`, so themes are never kept alive). Fixed-colour paints are static,
+  and only stroke widths that scale with depth are changed before a draw. Two
+  static scratch `Path`s are reused with `reset()`. The sky gradient shader is
+  rebuilt only when the horizon height changes. The visuals are unchanged.
+- Visible encounters: the plan is sorted by `arriveMs`, so the painter
+  binary-searches the first encounter with `arriveMs >= clock - 350`. It then
+  walks forward while `arriveMs - (warningMs + wideBlockExtraMs) <= clock`
+  and draws that window back to front (far first). This replaces a
+  `where().toList()..sort()` that ran every frame.
+- `ForestGame` keeps one painter and updates its per-frame fields in place.
+- HUD: `hud.value` is assigned only when a shown field changed. Progress is
+  quantised to 1/500 (well under 1 dp on the bar), so the Flutter HUD rebuilds
+  a few times a second instead of 60 times.
+- `test/perf_test.dart` paints 600 frames for each of the 4 themes (2,400 in
+  total, sweeping the whole level). This takes well under a second locally,
+  and the test bound is 8 s. The test also checks that the HUD is not
+  reassigned when nothing changed.
+
+**Widgets**
+- `BodyMap`: every paint is a static final. Geometry was already cached per
+  style.
+- `ForestBackdrop`: the glow `Paint` is cached together with its shader. It
+  is no longer created on each paint.
+- Home world map: `ListView.builder` (header, one item per world, footer), so
+  world cards are built lazily. Each card sits in its own `RepaintBoundary`.
+
+## Asset sizes (bundled in the APK)
+
+| Asset | Size |
+|---|---|
+| `app/assets/levels` (11 JSON) | 82.7 KB |
+| `app/assets/audio` (8 WAV cues) | 141.0 KB |
+| **Total `app/assets`** | **223.7 KB** |
+
+The cues are already 22.05 kHz, mono, 16-bit, 0.12–0.62 s each. The highest
+tone is 1.76 kHz, so 16 kHz would be safe for the tones, but it would cut the
+top of the noise "whoosh". It would save only about 39 KB before zip
+compression, which is under 0.1 % of an APK dominated by the MediaPipe native
+libraries and the `.task` model. We left the cues as they are. Revisit this
+only if assets grow, for example by moving to OGG/Opus.
+
 ## How to measure on a device
 
 1. Install a release APK (`flutter build apk --release --split-per-abi`) or a

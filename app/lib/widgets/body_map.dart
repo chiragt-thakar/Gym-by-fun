@@ -113,13 +113,12 @@ class _SwatchPainter extends CustomPainter {
     );
     final path = Path()..addRRect(rect);
     _paintRegion(canvas, path, primary, size.width / 22);
-    canvas.drawRRect(
-      rect,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..color = _outline,
-    );
+    canvas.drawRRect(rect, _swatchEdge);
   }
+
+  static final _swatchEdge = Paint()
+    ..style = PaintingStyle.stroke
+    ..color = _outline;
 
   @override
   bool shouldRepaint(_SwatchPainter old) => old.primary != primary;
@@ -148,33 +147,43 @@ Path _buildDots() {
   return p;
 }
 
+// Paints are created once; only the hatch stroke width varies per call.
+final _primaryFill = Paint()..color = bodyMapPrimary;
+final _secondaryFill = Paint()..color = bodyMapSecondary;
+final _hatchPaint = Paint()
+  ..style = PaintingStyle.stroke
+  ..color = _ink.withValues(alpha: 0.55);
+final _dotsPaint = Paint()..color = _ink.withValues(alpha: 0.45);
+final _primaryEdge = Paint()
+  ..style = PaintingStyle.stroke
+  ..strokeWidth = 1.0
+  ..color = _ink;
+final _secondaryEdge = Paint()
+  ..style = PaintingStyle.stroke
+  ..strokeWidth = 0.6
+  ..color = _ink;
+final _outlinePaint = Paint()
+  ..style = PaintingStyle.stroke
+  ..strokeWidth = 1.0
+  ..color = _outline;
+final _hairPaint = Paint()..color = _hair;
+final _silhouettePaint = Paint()..color = _silhouette;
+
 void _paintRegion(Canvas canvas, Path region, bool primary, double unit) {
-  canvas.drawPath(
-    region,
-    Paint()..color = primary ? bodyMapPrimary : bodyMapSecondary,
-  );
+  canvas.drawPath(region, primary ? _primaryFill : _secondaryFill);
   canvas
     ..save()
     ..clipPath(region);
   if (primary) {
     canvas.drawPath(
       _hatch,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 0.9 / unit.clamp(0.2, 10)
-        ..color = _ink.withValues(alpha: 0.55),
+      _hatchPaint..strokeWidth = 0.9 / unit.clamp(0.2, 10),
     );
   } else {
-    canvas.drawPath(_dots, Paint()..color = _ink.withValues(alpha: 0.45));
+    canvas.drawPath(_dots, _dotsPaint);
   }
   canvas.restore();
-  canvas.drawPath(
-    region,
-    Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = primary ? 1.0 : 0.6
-      ..color = _ink,
-  );
+  canvas.drawPath(region, primary ? _primaryEdge : _secondaryEdge);
 }
 
 /// Paths are built once per style and reused; repaint only when the style or
@@ -206,17 +215,13 @@ class BodyMapPainter extends CustomPainter {
       ..translate((size.width - _w * scale) / 2, (size.height - _h * scale) / 2)
       ..scale(scale);
 
-    final outline = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0
-      ..color = _outline;
     if (g.hairBack != null) {
-      canvas.drawPath(g.hairBack!, Paint()..color = _hair);
+      canvas.drawPath(g.hairBack!, _hairPaint);
     }
     canvas
-      ..drawPath(g.body, Paint()..color = _silhouette)
-      ..drawPath(g.body, outline)
-      ..drawPath(g.hairFront, Paint()..color = _hair);
+      ..drawPath(g.body, _silhouettePaint)
+      ..drawPath(g.body, _outlinePaint)
+      ..drawPath(g.hairFront, _hairPaint);
 
     for (final r in secondary) {
       if (primary.contains(r)) continue;
