@@ -258,4 +258,26 @@ void main() {
     expect(outcomes, isNotEmpty);
     expect(outcomes, everyElement(Outcome.hit));
   });
+
+  test('a pause fed as a tracking loss clears a held squat (Q2-2, Q2-3)', () {
+    final e = RunEngine(
+        tiny([
+          {'atS': 5, 'type': 'beam'},
+          {'atS': 10, 'type': 'beam'}
+        ]),
+        const RunSettings());
+    runFor(e, 4500);
+    e.input(const MoveStarted(Move.squat, 0));
+    expect(e.ducking, isTrue);
+    // The app pauses, then resumes: no MoveEnded ever arrives.
+    e.input(const TrackingPaused(0, TrackingIssue.noPerson));
+    e.input(const TrackingResumed(0));
+    expect(e.ducking, isFalse);
+    // The 5 s beam arrives within the reaction window: forgiven.
+    final ev = runFor(e, 800);
+    expect(ev.whereType<EncounterResolved>().single.outcome, Outcome.forgiven);
+    // The held squat no longer clears later beams for free.
+    final ev2 = runFor(e, 5000);
+    expect(ev2.whereType<EncounterResolved>().single.outcome, Outcome.hit);
+  });
 }

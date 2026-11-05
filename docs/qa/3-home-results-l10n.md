@@ -45,3 +45,11 @@ Daily Quest button bypasses the stage info sheet and the premium lock (pushes `/
 ## Verification
 - Re-run `python3 -I /tmp/claude-0/-home-user-Gym-by-fun/fc067a71-4314-57a0-b0b3-5304bfb87adc/scratchpad/l10n.py` after fixes; expect only interpolation/number literals.
 - Switch language to Hindi, open Home and a stage sheet: stage titles/descriptions currently remain English.
+
+## Fixes (2026-11-05)
+- ✅ Fixed: Q3-2 — results headline via `_headline()`: forest-themed stages (and unknown stage) keep 'You escaped the forest!'; other stages show 'Stage complete!' / 'Good effort — this stage will be there tomorrow.'. New optional `ResultsData.levelId`; quest_screen.dart still needs `levelId: _stage.levelId` passed in its `ResultsData(...)` (outside this task's files).
+- ✅ Fixed: Q3-1 (home/results/stage sheet part) — 63 hi/gu entries added to tr.dart: 18 stage titles, 18 descriptions, 9 world names, Warm-up, Cool-down, 'Finish the previous stage to unlock', crew strings, results pain areas/dialog/OK/forgiven text, 'Stage complete!'. Home world names, crew title/subtitle and results pain dialog, areas, OK and forgiven line now go through tr(). Settings/crew-screen strings left to the other task.
+- ✅ Fixed: Q3-5 — Shields and Hero level show '–' when progress is unavailable.
+- ✅ Fixed: Q3-4 — home stage tiles show a workspace_premium icon and 'Premium ·' subtitle when payments are on and the player is not Premium.
+- ✅ Fixed: Q3-3 — `isUnlocked(..., premiumLocked:)` skips Premium stages in the unlock chain when payments are on and the player is not Premium; `nextStage` uses it. Unchanged with payments off.
+- ✅ Fixed: Q3-6 — `PremiumState.fromJson` treats a past `activeUntil` as not Premium.

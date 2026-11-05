@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 import type { AppContext } from '../../context.js';
 import { sha256 } from '../../lib/crypto.js';
 import { addMonths } from '../../lib/time.js';
@@ -93,7 +95,9 @@ const RC_EXTENDS = new Set(['INITIAL_PURCHASE', 'RENEWAL', 'PRODUCT_CHANGE', 'UN
  * (the store already set the expiry); expiration ends it.
  */
 export async function applyRevenueCat(ctx: AppContext, e: RevenueCatEvent): Promise<'applied' | 'ignored'> {
-  const user = await ctx.db.selectFrom('users').select('id').where('id', '=', e.app_user_id).executeTakeFirst();
+  // RevenueCat anonymous ids ($RCAnonymousID:...) are not our users.
+  if (!z.string().uuid().safeParse(e.app_user_id).success) return 'ignored';
+  const user = await ctx.db.selectFrom('users').select('id').where('id', '=', e.app_user_id.toLowerCase()).executeTakeFirst();
   if (!user) return 'ignored';
   const ref = e.original_transaction_id ?? 'play';
   if (RC_EXTENDS.has(e.type) && e.expiration_at_ms) {
@@ -110,19 +114,22 @@ export async function applyRevenueCat(ctx: AppContext, e: RevenueCatEvent): Prom
 }
 
 export interface GymPaymentNotes {
-  gym_id?: string;
-  plan?: string;
-  period?: string;
+  gym_id?: unknown;
+  plan?: unknown;
+  period?: unknown;
 }
 
 const PLAN_PERIOD_MONTHS: Record<string, number> = { monthly: 1, yearly: 12 };
 
 /** Razorpay (gym licence paid outside the app) → gym licence + members' Premium. */
 export async function applyGymPayment(ctx: AppContext, notes: GymPaymentNotes): Promise<'applied' | 'ignored'> {
-  if (!notes.gym_id || !/^[0-9a-f-]{36}$/.test(notes.gym_id)) return 'ignored';
-  const months = PLAN_PERIOD_MONTHS[notes.period ?? 'yearly'] ?? 12;
-  const plan = ['founding', 'starter', 'growth', 'chain'].includes(notes.plan ?? '') ? (notes.plan as 'founding' | 'starter' | 'growth' | 'chain') : 'starter';
-  const gym = await ctx.db.selectFrom('gyms').select(['id', 'licence_until']).where('id', '=', notes.gym_id).executeTakeFirst();
+  const gymId = z.string().uuid().safeParse(notes.gym_id);
+  if (!gymId.success) return 'ignored';
+  const period = typeof notes.period === 'string' ? notes.period : 'yearly';
+  const months = PLAN_PERIOD_MONTHS[period] ?? 12;
+  const planRaw = typeof notes.plan === 'string' ? notes.plan : '';
+  const plan = ['founding', 'starter', 'growth', 'chain'].includes(planRaw) ? (planRaw as 'founding' | 'starter' | 'growth' | 'chain') : 'starter';
+  const gym = await ctx.db.selectFrom('gyms').select(['id', 'licence_until']).where('id', '=', gymId.data.toLowerCase()).executeTakeFirst();
   if (!gym) return 'ignored';
   const now = ctx.now();
   const from = new Date(gym.licence_until) > now ? new Date(gym.licence_until) : now;

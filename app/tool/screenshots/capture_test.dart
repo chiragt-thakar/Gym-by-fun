@@ -3,7 +3,6 @@
 // Uses the real widgets and painter with the bundled Roboto font.
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -96,6 +95,7 @@ ThemeData _shotTheme() {
 
 Future<void> capture(WidgetTester t, String name, Widget Function() screen) async {
   final key = GlobalKey();
+  // ignore: invalid_use_of_visible_for_testing_member
   SharedPreferences.setMockInitialValues({
     'settings.v1': jsonEncode(const Settings()
         .copyWith(

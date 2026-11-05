@@ -131,6 +131,33 @@ void main() {
     await session.dispose();
   });
 
+  test('a second start while running or starting is a no-op (Q2-1)', () async {
+    final s = SyntheticSession(SyntheticBody(seed: 3));
+    final cal = s.calibrate();
+    final src = ReplayPoseSource(
+      s.record([
+        const ScriptStep(Action.idle, 1000),
+        const ScriptStep(Action.squat, 1400),
+        const ScriptStep(Action.idle, 800),
+      ]).frames,
+    );
+    final session = MotionSession(src, initialCalibration: cal);
+    // Two overlapping starts (double Resume) and one after: one subscription.
+    final both = await Future.wait([session.start(), session.start()]);
+    expect(both, [isTrue, isTrue]);
+    expect(await session.start(), isTrue);
+    expect(session.running, isTrue);
+    final events = <MotionEvent>[];
+    final sub = session.events.listen(events.add);
+    src.playAll();
+    await Future<void>.delayed(Duration.zero);
+    expect(events.whereType<MoveStarted>().map((e) => e.move), [Move.squat]);
+    await session.stop();
+    expect(session.running, isFalse);
+    await sub.cancel();
+    await session.dispose();
+  });
+
   test('frame watchdog pauses tracking when frames stop (rule 5)', () async {
     final s = SyntheticSession(SyntheticBody(seed: 4));
     final cal = s.calibrate();

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:game_director/game_director.dart';
 import 'package:go_router/go_router.dart';
+import 'package:motion_core/motion_core.dart';
 
 import '../l10n/tr.dart';
 
@@ -112,6 +113,8 @@ class _QuestState extends ConsumerState<QuestScreen>
   // start the camera twice or finish the session twice.
   bool _runBegun = false;
   bool _completed = false;
+  bool _resuming = false;
+  bool _finishing = false;
 
   Voice get _voice => ref.read(voiceProvider);
 
@@ -236,7 +239,10 @@ class _QuestState extends ConsumerState<QuestScreen>
     _finishRun(r);
   }
 
-  void _finishRun(RunResult r) {
+  void _finishRun(RunResult? r) {
+    // Double-tap or Finish + Continue in one frame: finish only once (Q2-9).
+    if (r == null || _finishing) return;
+    _finishing = true;
     _result = r;
     _checkpointOffer = null;
     _stats = _session?.moveStats();
@@ -282,20 +288,50 @@ class _QuestState extends ConsumerState<QuestScreen>
     _paused = true;
     _voice.stop();
     if (_phase == _Phase.run) {
-      _game?.pauseEngine();
+      final game = _game;
+      if (game != null) {
+        game.pauseEngine();
+        // Treat the pause as a tracking loss so held moves clear and the
+        // reaction window applies after resume (Q2-2, Q2-3, rule 5). The
+        // engine's own hint output is dropped: the Paused overlay explains.
+        game.engine.input(
+          TrackingPaused(
+            _session?.lastFrame?.timestampMs ?? 0,
+            TrackingIssue.noPerson,
+          ),
+        );
+      }
       _session?.stop();
     }
     if (mounted) setState(() {});
   }
 
   Future<void> _resume() async {
-    if (!_paused) return;
-    if (_phase == _Phase.run) {
-      if (!await _startCamera()) return;
-      // A pending checkpoint choice keeps the game frozen until answered.
-      if (_checkpointOffer == null) _game?.resumeEngine();
+    if (!_paused || _resuming) return;
+    _resuming = true;
+    try {
+      if (_phase == _Phase.run) {
+        if (!await _startCamera()) return;
+        // The app went to the background while the camera was starting
+        // (pause is ignored mid-resume): stay paused (Q2-4).
+        final life = WidgetsBinding.instance.lifecycleState;
+        if (life != null && life != AppLifecycleState.resumed) {
+          await _session?.stop();
+          return;
+        }
+        final game = _game;
+        if (game != null) {
+          game.engine.input(
+            TrackingResumed(_session?.lastFrame?.timestampMs ?? 0),
+          );
+          // A pending checkpoint choice keeps the game frozen until answered.
+          if (_checkpointOffer == null) game.resumeEngine();
+        }
+      }
+      if (mounted) setState(() => _paused = false);
+    } finally {
+      _resuming = false;
     }
-    if (mounted) setState(() => _paused = false);
   }
 
   /// Leaves without saving: the player chose this explicitly.
@@ -335,6 +371,7 @@ class _QuestState extends ConsumerState<QuestScreen>
         .clamp(1, 3600);
     final data = ResultsData(
       result: r,
+      levelId: _stage.levelId,
       clientId: _clientId,
       startedAt: _startedAt,
       durationS: durationS,
@@ -440,7 +477,7 @@ class _QuestState extends ConsumerState<QuestScreen>
                 BigButton(
                   tr('Finish run'),
                   secondary: true,
-                  onPressed: () => _finishRun(_checkpointOffer!),
+                  onPressed: () => _finishRun(_checkpointOffer),
                 ),
               ],
             )

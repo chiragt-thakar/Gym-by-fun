@@ -136,6 +136,8 @@ export async function gymRoutes(app: FastifyInstance, ctx: AppContext) {
 
   app.post('/admin/gyms/:id/quests', { preHandler: admin }, async (req, reply) => {
     const { id } = parse(z.object({ id: z.string().uuid() }), req.params);
+    const gym = await ctx.db.selectFrom('gyms').select('id').where('id', '=', id).executeTakeFirst();
+    if (!gym) throw notFound('gym_not_found');
     const q = await createQuest(ctx, id, req.body);
     return reply.code(201).send(q);
   });

@@ -86,3 +86,8 @@ Method: code review with the run loop traced by hand. No code changed. No tempor
 - Q2-1: a widget or unit test with a fake `PoseSource`. Call `start()` twice and check that one frame produces one event and that `stop()` leaves no live timers (use `fake_async` and check `pendingTimers`).
 - Q2-2 and Q2-3: a `RunEngine` test. Send `MoveStarted(squat)`, apply the new pause hook, then advance to a beam arrival. Expect `forgiven` or `hit`, not `cleared`.
 - Q2-8: a `Director` test with a breather that starts inside the previous encounter's recovery window.
+
+✅ Fixed: Q2-1 — `MotionSession.start` is idempotent (returns true while running; overlapping calls share one in-flight start) and cancels any old subscription/watchdog before subscribing; `stop`/`dispose` cancel both; `_resume` has a `_resuming` guard. Test: `app_logic_test.dart` "a second start while running or starting is a no-op (Q2-1)".
+✅ Fixed: Q2-2 + Q2-3 — `_pause` feeds the RunEngine `TrackingPaused(noPerson)` (clears `ducking`/`armsUp`, records the loss), `_resume` feeds `TrackingResumed` after the camera restarts, so the reaction window applies. Test: `run_engine_test.dart` "a pause fed as a tracking loss clears a held squat (Q2-2, Q2-3)".
+✅ Fixed: Q2-9 — `_finishRun` takes a nullable result and is guarded by `_finishing`; the button no longer uses `_checkpointOffer!`.
+✅ Fixed: Q2-4 — after the camera starts in `_resume`, a non-`resumed` lifecycle state stops the session and the run stays paused.

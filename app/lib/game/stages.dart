@@ -238,11 +238,23 @@ Stage? stageById(String id) {
 }
 
 /// The first stage is always open; each later one opens when the stage
-/// before it is completed.
-bool isUnlocked(Stage stage, Set<String> completed) {
+/// before it is completed. With [premiumLocked] (payments on and the player
+/// not Premium) Premium stages are skipped in the chain: a stage opens when
+/// the closest earlier free stage is completed, so a locked Premium stage
+/// never blocks free content after it. Unchanged while payments are off.
+bool isUnlocked(
+  Stage stage,
+  Set<String> completed, {
+  bool premiumLocked = false,
+}) {
   final i = stages.indexOf(stage);
   if (i <= 0) return true;
-  return completed.contains(stages[i - 1].levelId);
+  if (!premiumLocked) return completed.contains(stages[i - 1].levelId);
+  for (var j = i - 1; j >= 0; j--) {
+    if (infoFor(stages[j]).premium) continue;
+    return completed.contains(stages[j].levelId);
+  }
+  return true;
 }
 
 /// What the Daily Quest plays: the first unlocked stage not yet completed,
@@ -252,7 +264,8 @@ bool isUnlocked(Stage stage, Set<String> completed) {
 Stage nextStage(Set<String> completed, {bool premiumLocked = false}) {
   for (final st in stages) {
     if (premiumLocked && infoFor(st).premium) continue;
-    if (!completed.contains(st.levelId) && isUnlocked(st, completed)) {
+    if (!completed.contains(st.levelId) &&
+        isUnlocked(st, completed, premiumLocked: premiumLocked)) {
       return st;
     }
   }

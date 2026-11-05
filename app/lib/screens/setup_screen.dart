@@ -31,8 +31,12 @@ class _SetupState extends ConsumerState<SetupScreen> {
   int? _startedAt;
   bool _denied = false;
   bool _ready = false;
+  bool _starting = false;
+  bool _finishing = false;
 
   Future<void> _startCamera() async {
+    if (_starting || _session != null) return;
+    setState(() => _starting = true);
     final session = MotionSession(
       ref.read(poseSourceProvider),
       initialCalibration: null,
@@ -43,7 +47,12 @@ class _SetupState extends ConsumerState<SetupScreen> {
       return;
     }
     if (!ok) {
-      setState(() => _denied = true);
+      await session.dispose();
+      if (!mounted) return;
+      setState(() {
+        _denied = true;
+        _starting = false;
+      });
       return;
     }
     _session = session;
@@ -66,17 +75,27 @@ class _SetupState extends ConsumerState<SetupScreen> {
             f.timestampMs - _goodSince! >= 1500;
       });
     });
-    setState(() {});
+    setState(() => _starting = false);
   }
 
   Future<void> _finish() async {
+    if (_finishing) return;
+    _finishing = true;
     final tier = _session?.perf.tier ?? DeviceTier.mid;
+    final notifier = ref.read(settingsProvider.notifier);
+    notifier.update((s) => s.copyWith(setupDone: true, deviceTier: tier));
     await _sub?.cancel();
+    _sub = null;
     await _session?.dispose();
-    ref
-        .read(settingsProvider.notifier)
-        .update((s) => s.copyWith(setupDone: true, deviceTier: tier));
-    if (mounted) context.go('/calibrate');
+    _session = null;
+    if (!mounted) return;
+    // Redoing setup keeps an existing calibration (Q1-8).
+    final s = ref.read(settingsProvider);
+    context.go(
+      s.calibration == null
+          ? '/calibrate'
+          : (s.tutorialDone ? '/home' : '/tutorial'),
+    );
   }
 
   @override
@@ -136,7 +155,7 @@ class _SetupState extends ConsumerState<SetupScreen> {
           BigButton(
             tr('Allow camera and start'),
             icon: Icons.videocam,
-            onPressed: _startCamera,
+            onPressed: _starting ? null : _startCamera,
           ),
         ],
       );

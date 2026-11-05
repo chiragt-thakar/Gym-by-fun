@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../app/theme.dart';
+import '../game/stage_info.dart';
 import '../game/stages.dart';
 import '../l10n/tr.dart';
 
@@ -54,10 +55,8 @@ class HomeScreen extends ConsumerWidget {
     final progress = data?['progress'] as Map<String, dynamic>?;
     final quests = (data?['quests'] as List<dynamic>?) ?? const [];
     final premium = ref.watch(premiumProvider).value ?? const PremiumState();
-    final next = nextStage(
-      s.completedLevels,
-      premiumLocked: PaywallPolicy.paymentsEnabled && !premium.premium,
-    );
+    final premiumLocked = PaywallPolicy.paymentsEnabled && !premium.premium;
+    final next = nextStage(s.completedLevels, premiumLocked: premiumLocked);
     final gymColour = parseGymColour(gym);
     final worldList = worlds;
     Widget header(BuildContext context) => Column(
@@ -112,7 +111,7 @@ class HomeScreen extends ConsumerWidget {
               child: _Tile(
                 Icons.shield,
                 tr('Shields'),
-                '${progress?['shields'] ?? 2}',
+                '${progress?['shields'] ?? '–'}',
               ),
             ),
             const SizedBox(width: 8),
@@ -120,7 +119,7 @@ class HomeScreen extends ConsumerWidget {
               child: _Tile(
                 Icons.star,
                 tr('Hero level'),
-                '${progress?['heroLevel'] ?? 1}',
+                '${progress?['heroLevel'] ?? '–'}',
               ),
             ),
           ],
@@ -143,7 +142,7 @@ class HomeScreen extends ConsumerWidget {
           child: ListTile(
             leading: const Icon(Icons.groups, size: 36),
             title: Text(
-              gym == null ? tr('Gym Crew') : '${gym['name']} crew',
+              gym == null ? tr('Gym Crew') : '${gym['name']} ${tr('crew')}',
               style: const TextStyle(fontSize: 20),
             ),
             subtitle: Text(
@@ -152,8 +151,8 @@ class HomeScreen extends ConsumerWidget {
                         ? tr('Have a gym code? Join your crew.')
                         : tr('Sign in to join your gym crew.'))
                   : quests.isEmpty
-                  ? 'See this week\'s crew board'
-                  : 'Trainer quest: ${(quests.first as Map)['title']}',
+                  ? tr("See this week's crew board")
+                  : '${tr('Trainer quest')}: ${(quests.first as Map)['title']}',
             ),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(s.signedIn ? '/crew' : '/sign-in'),
@@ -199,6 +198,7 @@ class HomeScreen extends ConsumerWidget {
                 child: _WorldCard(
                   world: worldList[i - 1],
                   completed: s.completedLevels,
+                  premiumLocked: premiumLocked,
                 ),
               );
             },
@@ -210,9 +210,16 @@ class HomeScreen extends ConsumerWidget {
 }
 
 class _WorldCard extends StatelessWidget {
-  const _WorldCard({required this.world, required this.completed});
+  const _WorldCard({
+    required this.world,
+    required this.completed,
+    this.premiumLocked = false,
+  });
   final World world;
   final Set<String> completed;
+
+  /// Payments on and the player not Premium: Premium stages show a badge.
+  final bool premiumLocked;
 
   @override
   Widget build(BuildContext context) {
@@ -220,7 +227,7 @@ class _WorldCard extends StatelessWidget {
       return Card(
         child: ListTile(
           leading: CircleAvatar(child: Text('${world.number}')),
-          title: Text(world.name, style: const TextStyle(fontSize: 19)),
+          title: Text(tr(world.name), style: const TextStyle(fontSize: 19)),
           subtitle: Text(tr('Coming soon')),
           trailing: const Icon(Icons.lock_outline),
         ),
@@ -233,7 +240,7 @@ class _WorldCard extends StatelessWidget {
           ListTile(
             leading: CircleAvatar(child: Text('${world.number}')),
             title: Text(
-              world.name,
+              tr(world.name),
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
             ),
             subtitle: Text(tr('Squat · Lean · Raise arms')),
@@ -245,14 +252,17 @@ class _WorldCard extends StatelessWidget {
   }
 
   Widget _stageTile(BuildContext context, Stage st) {
-    final open = isUnlocked(st, completed);
+    final open = isUnlocked(st, completed, premiumLocked: premiumLocked);
     final done = completed.contains(st.levelId);
+    final paywalled = premiumLocked && infoFor(st).premium;
     return ListTile(
       key: ValueKey('stage-${st.levelId}'),
       contentPadding: const EdgeInsets.only(left: 32, right: 16),
       leading: Icon(
         done
             ? Icons.check_circle
+            : paywalled
+            ? Icons.workspace_premium
             : open
             ? Icons.play_circle_fill
             : Icons.lock_outline,
@@ -264,7 +274,11 @@ class _WorldCard extends StatelessWidget {
         style: const TextStyle(fontSize: 18),
       ),
       subtitle: Text(
-        open ? tr(st.description) : tr('Finish the previous stage to unlock'),
+        !open
+            ? tr('Finish the previous stage to unlock')
+            : paywalled
+            ? '${tr('Premium')} · ${tr(st.description)}'
+            : tr(st.description),
       ),
       enabled: open,
       onTap: open

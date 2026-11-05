@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -23,8 +25,58 @@ class _SignInState extends ConsumerState<SignInScreen> {
   bool _sent = false;
   bool _busy = false;
   String? _error;
+  bool _resendCooling = false;
+  Timer? _cooldown;
 
-  String get _e164 => '+91${_phone.text.replaceAll(RegExp(r'\D'), '')}';
+  String get _digits => _phone.text.replaceAll(RegExp(r'\D'), '');
+  String get _e164 => '+91$_digits';
+  bool get _validNumber => RegExp(r'^[6-9]\d{9}$').hasMatch(_digits);
+
+  @override
+  void initState() {
+    super.initState();
+    _phone.addListener(_onPhoneChanged);
+  }
+
+  void _onPhoneChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _cooldown?.cancel();
+    _phone.dispose();
+    _code.dispose();
+    super.dispose();
+  }
+
+  void _startCooldown() {
+    _cooldown?.cancel();
+    _resendCooling = true;
+    _cooldown = Timer(const Duration(seconds: 30), () {
+      if (mounted) setState(() => _resendCooling = false);
+    });
+  }
+
+  Future<void> _sendCode() => _run(() async {
+    await ref.read(apiProvider).startOtp(_e164);
+    if (!mounted) return;
+    setState(() {
+      _sent = true;
+      _code.clear();
+      _startCooldown();
+    });
+  });
+
+  void _changeNumber() {
+    _cooldown?.cancel();
+    setState(() {
+      _sent = false;
+      _resendCooling = false;
+      _code.clear();
+      _error = null;
+    });
+  }
 
   Future<void> _run(Future<void> Function() f) async {
     setState(() {
@@ -42,7 +94,7 @@ class _SignInState extends ConsumerState<SignInScreen> {
           'otp_rate_limited' => tr(
             'Too many tries. Please wait a few minutes.',
           ),
-          _ => 'Something went wrong (${e.code}).',
+          _ => tr('Something went wrong. Please try again.'),
         },
       );
     } catch (_) {
@@ -108,18 +160,18 @@ class _SignInState extends ConsumerState<SignInScreen> {
             ),
           ),
         const SizedBox(height: 12),
-        if (!_sent)
+        if (!_sent) ...[
+          if (_phone.text.isNotEmpty && !_validNumber)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(tr('Enter a 10-digit mobile number.')),
+            ),
           BigButton(
             tr('Send code'),
-            onPressed: _busy
-                ? null
-                : () => _run(() async {
-                    await api.startOtp(_e164);
-                    if (!mounted) return;
-                    setState(() => _sent = true);
-                  }),
-          )
-        else
+            key: const ValueKey('send-code'),
+            onPressed: _busy || !_validNumber ? null : _sendCode,
+          ),
+        ] else ...[
           BigButton(
             tr('Verify'),
             onPressed: _busy
@@ -137,6 +189,19 @@ class _SignInState extends ConsumerState<SignInScreen> {
                     _next();
                   }),
           ),
+          BigButton(
+            tr('Resend code'),
+            key: const ValueKey('resend-code'),
+            secondary: true,
+            onPressed: _busy || _resendCooling ? null : _sendCode,
+          ),
+          BigButton(
+            tr('Change number'),
+            key: const ValueKey('change-number'),
+            secondary: true,
+            onPressed: _busy ? null : _changeNumber,
+          ),
+        ],
         BigButton(
           tr('Play offline for now'),
           secondary: true,

@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 import type { AppContext } from '../../context.js';
 import { requireUser } from '../../lib/auth.js';
-import { forbidden } from '../../lib/errors.js';
+import { badRequest, forbidden } from '../../lib/errors.js';
 import { parse } from '../../lib/validate.js';
 import { recordCrewEffort } from '../gyms/service.js';
 import { hasConsent } from '../identity/routes.js';
@@ -30,8 +30,15 @@ const sessionSchema = z.object({
   lowImpact: z.boolean(),
   completed: z.boolean(),
   effortRating: z.number().int().min(1).max(5).nullish(),
-  moves: z.array(moveSchema).max(10).default([]),
+  moves: z
+    .array(moveSchema)
+    .max(10)
+    .default([])
+    .refine((ms) => new Set(ms.map((m) => m.move)).size === ms.length, { message: 'duplicate_move' }),
 });
+
+/** Sessions may not start more than a day in the future (client clock skew allowance). */
+const MAX_FUTURE_MS = 24 * 60 * 60 * 1000;
 
 export async function progressRoutes(app: FastifyInstance, ctx: AppContext) {
   const auth = requireUser(ctx);
@@ -93,7 +100,19 @@ export async function progressRoutes(app: FastifyInstance, ctx: AppContext) {
     const accepted: string[] = [];
     const duplicates: string[] = [];
     const flagged: string[] = [];
-    const ordered = [...sessions].sort((a, b) => a.startedAt.localeCompare(b.startedAt));
+    // A clientId repeated within one batch is processed once.
+    const unique = [...new Map(sessions.map((s) => [s.clientId, s])).values()];
+    const ordered = unique.sort((a, b) => a.startedAt.localeCompare(b.startedAt));
+    const limit = ctx.now().getTime() + MAX_FUTURE_MS;
+    if (sessions.some((s) => new Date(s.startedAt).getTime() > limit)) throw badRequest('started_at_in_future');
+    const deviceIds = [...new Set(sessions.map((s) => s.deviceId).filter((d): d is string => !!d))];
+    if (deviceIds.length) {
+      const own = await ctx.db.selectFrom('devices').select('id').where('user_id', '=', req.userId).where('id', 'in', deviceIds).execute();
+      if (own.length !== deviceIds.length) throw badRequest('unknown_device');
+    }
+    const levelIds = [...new Set(sessions.map((s) => s.levelId))];
+    const known = await ctx.db.selectFrom('content_versions').select('level_id').distinct().where('level_id', 'in', levelIds).execute();
+    if (known.length !== levelIds.length) throw badRequest('unknown_level');
 
     for (const s of ordered) {
       const implausible = isImplausible(s);
@@ -171,15 +190,14 @@ export async function progressRoutes(app: FastifyInstance, ctx: AppContext) {
           .values(values)
           .onConflict((oc) => oc.column('user_id').doUpdateSet(values))
           .execute();
+        // Same transaction: crew points are never lost after the session commits.
+        await recordCrewEffort({ ...ctx, db: tx }, req.userId, playedAt, points);
         return row.id;
       });
 
       if (!inserted) duplicates.push(s.clientId);
       else if (implausible) flagged.push(s.clientId);
-      else {
-        accepted.push(s.clientId);
-        await recordCrewEffort(ctx, req.userId, new Date(s.startedAt), points);
-      }
+      else accepted.push(s.clientId);
     }
     return { accepted, duplicates, flagged, progress: await getProgress(ctx, req.userId) };
   });

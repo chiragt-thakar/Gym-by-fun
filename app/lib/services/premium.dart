@@ -12,13 +12,18 @@ class PremiumState {
   final String? source;
   final DateTime? activeUntil;
 
-  factory PremiumState.fromJson(Map<String, dynamic> j) => PremiumState(
-    premium: j['premium'] == true,
-    source: j['source'] as String?,
-    activeUntil: j['activeUntil'] == null
-        ? null
-        : DateTime.tryParse(j['activeUntil'] as String),
-  );
+  /// An [activeUntil] in the past (or before [now]) means not Premium, even
+  /// if a stale server or cache still says `premium: true`.
+  factory PremiumState.fromJson(Map<String, dynamic> j, {DateTime? now}) {
+    final raw = j['activeUntil'];
+    final until = raw is String ? DateTime.tryParse(raw) : null;
+    final expired = until != null && until.isBefore(now ?? DateTime.now());
+    return PremiumState(
+      premium: j['premium'] == true && !expired,
+      source: j['source'] as String?,
+      activeUntil: until,
+    );
+  }
 }
 
 final premiumProvider = FutureProvider.autoDispose<PremiumState>((ref) async {

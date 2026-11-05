@@ -125,3 +125,17 @@ plain string literals that never go through `tr()` (Q1-4).
 - `wipeLocalData` covers the keys it documents.
 - The "me" row on the crew board uses an icon as well as colour.
 - `TrackingDot` has shape and semantics.
+
+---
+
+**Fixes (agent pass):**
+- ✅ Fixed: Q1-3 — `calibration_screen.dart` checks `mounted` after every await in `_start`, disposes a late or failed session, guards `_onFrame`, and saves calibration before the async teardown in `_finish`.
+- ✅ Fixed: Q1-1 — Settings is now stateful; consents load from `GET /me/consents` (`ApiClient.consents()`), switches bind to that state, toggle optimistically and revert with a snackbar on failure; switches are disabled until loaded and while a write is in flight.
+- ✅ Fixed: Q1-2 — Sign-in has "Resend code" (30 s cooldown) and "Change number"; "Send code" stays disabled until a valid 10-digit Indian mobile number (starts 6–9) is entered; raw error codes replaced by a generic message.
+- ✅ Fixed: Q1-5 — "Download my data" / "Delete my account" show "Needs a connection and sign-in" on failure and are disabled while busy.
+- ✅ Fixed: Q1-6 — `ApiClient.onSessionExpired` fires when refresh fails; `apiProvider` flips `Settings.signedIn=false`. Refreshes are single-flight (shared Future). Settings also requires `TokenStore.hasSession` to show signed-in actions.
+- ✅ Fixed: Q1-7 — "Leave this gym" asks for confirmation first.
+- ✅ Fixed: Q1-9 — Setup "Allow camera and start" and Crew "Join crew"/"Leave this gym" are guarded by busy flags; setup disposes a failed session.
+- ✅ Fixed (partial): Q1-8 — redoing setup keeps an existing calibration (goes to `/calibrate` only when none). No back action added yet.
+- ✅ Fixed (partial): Q1-10 — pending gym code is removed only after a successful join. Sign-in return-to-caller not changed.
+- ✅ Fixed (partial): Q1-4 — new and touched strings in settings, crew and sign-in go through `tr()`; `l10n/tr.dart` entries not added (owned by another agent), so hi/gu fall back to English for these.

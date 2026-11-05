@@ -51,3 +51,15 @@ Date: 2026-11-05. Method: temporary `server/test/_qa4.test.ts` (deleted) using `
 
 ## Summary
 There are 6 distinct server 500s (Q4-1, 2, 3, 5, 6, 7). Three of them are on webhooks, where a 500 makes the provider retry forever. One is a cross-user data-integrity gap (Q4-2B). One is validation that lets a future `startedAt` corrupt streak and progress (Q4-8). No PII leak was found in the export, the board, or the error bodies (errors are generic `internal`). The Q4-1/2/3/5 fixes are each a few lines of zod, plus an ownership check for devices.
+
+## Fixes (2026-11-05)
+Regression tests: `server/test/qa4-regressions.test.ts`.
+- ✅ Fixed: Q4-1 — `moves` refine rejects duplicate move names (400).
+- ✅ Fixed: Q4-2 — device ids checked once per batch against the user's own devices; unknown/foreign → 400 `unknown_device`.
+- ✅ Fixed: Q4-3 — Razorpay body validated with zod (null → 400); `gym_id` checked with `z.string().uuid()` (uppercase accepted, lowercased for lookup; junk → `ignored`).
+- ✅ Fixed: Q4-4 — missing `x-razorpay-event-id` falls back to `sha256:<raw body hash>`.
+- ✅ Fixed: Q4-5 — non-UUID `app_user_id` → `ignored`; `expiration_at_ms` bounded `.int().positive().max(8.64e15)` (else 400).
+- ✅ Fixed: Q4-6 — weekly report for unknown gym → 404 `gym_not_found`.
+- ✅ Fixed: Q4-7 — admin quest creation for unknown gym → 404 `gym_not_found`.
+- ✅ Fixed: Q4-8 — `startedAt` more than 1 day in the future → 400 `started_at_in_future`; `levelId` not in `content_versions` → 400 `unknown_level`. (No lower bound on age added.)
+- ✅ Fixed: Q4-9 — duplicate `clientId` deduped within a batch; `recordCrewEffort` now runs inside the session transaction.

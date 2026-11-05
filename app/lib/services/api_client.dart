@@ -41,11 +41,20 @@ class TokenStore {
 }
 
 class ApiClient {
-  ApiClient(this.tokens, {http.Client? client, String? base})
-    : _http = client ?? http.Client(),
-      _base = base ?? apiBase;
+  ApiClient(
+    this.tokens, {
+    http.Client? client,
+    String? base,
+    this.onSessionExpired,
+  }) : _http = client ?? http.Client(),
+       _base = base ?? apiBase;
 
   final TokenStore tokens;
+
+  /// Called after a failed refresh cleared the tokens, so app state
+  /// (for example `Settings.signedIn`) can follow.
+  void Function()? onSessionExpired;
+  Future<bool>? _refreshing;
   final http.Client _http;
   final String _base;
 
@@ -84,7 +93,13 @@ class ApiClient {
     return decoded is Map<String, dynamic> ? decoded : {'data': decoded};
   }
 
-  Future<bool> _refresh() async {
+  /// Runs one refresh at a time; concurrent callers share the result so the
+  /// rotating refresh token is never sent twice.
+  Future<bool> _refresh() {
+    return _refreshing ??= _doRefresh().whenComplete(() => _refreshing = null);
+  }
+
+  Future<bool> _doRefresh() async {
     try {
       final r = await _send(
         'POST',
@@ -100,6 +115,7 @@ class ApiClient {
       return true;
     } on ApiException {
       await tokens.clear();
+      onSessionExpired?.call();
       return false;
     }
   }
@@ -157,6 +173,19 @@ class ApiClient {
       ],
     },
   );
+
+  /// Current consent state per purpose (latest row wins; withdrawn = off).
+  Future<Map<String, bool>> consents() async {
+    final r = await _send('GET', '/me/consents');
+    final out = <String, bool>{};
+    for (final c in (r['consents'] as List? ?? const [])) {
+      if (c is Map && c['purpose'] is String) {
+        out[c['purpose'] as String] = c['withdrawnAt'] == null;
+      }
+    }
+    return out;
+  }
+
   Future<Map<String, dynamic>> exportData() => _send('GET', '/me/export');
   Future<void> deleteAccount() async {
     await _send('DELETE', '/me');
@@ -178,5 +207,10 @@ final tokenStoreProvider = Provider<TokenStore>(
   (ref) => TokenStore(ref.watch(sharedPrefsProvider)),
 );
 final apiProvider = Provider<ApiClient>(
-  (ref) => ApiClient(ref.watch(tokenStoreProvider)),
+  (ref) => ApiClient(
+    ref.watch(tokenStoreProvider),
+    onSessionExpired: () => ref
+        .read(settingsProvider.notifier)
+        .update((s) => s.copyWith(signedIn: false)),
+  ),
 );

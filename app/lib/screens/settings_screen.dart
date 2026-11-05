@@ -15,31 +15,123 @@ import '../services/settings.dart';
 import '../app/theme.dart';
 import '../widgets/common.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  /// Server consent state; null until loaded (switches stay disabled).
+  Map<String, bool>? _consents;
+  final _pendingConsent = <String>{};
+  bool _exporting = false;
+  bool _deleting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadConsents();
+  }
+
+  Future<void> _loadConsents() async {
+    if (!ref.read(settingsProvider).signedIn) return;
+    try {
+      final c = await ref.read(apiProvider).consents();
+      if (mounted) setState(() => _consents = c);
+    } catch (_) {
+      // Leave null: switches stay disabled until a connection is back.
+    }
+  }
+
+  void _snack(String text) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  }
+
+  Future<void> _consent(String purpose, bool granted) async {
+    if (_pendingConsent.contains(purpose)) return;
+    final before = _consents?[purpose] ?? false;
+    setState(() {
+      _pendingConsent.add(purpose);
+      _consents = {...?_consents, purpose: granted};
+    });
+    try {
+      await ref.read(apiProvider).setConsents({purpose: granted});
+      _snack(granted ? tr('Turned on') : tr('Turned off'));
+    } catch (_) {
+      if (mounted) {
+        setState(() => _consents = {...?_consents, purpose: before});
+      }
+      _snack(tr('Needs a connection and sign-in'));
+    } finally {
+      if (mounted) setState(() => _pendingConsent.remove(purpose));
+    }
+  }
+
+  Future<void> _export() async {
+    if (_exporting) return;
+    setState(() => _exporting = true);
+    try {
+      final data = await ref.read(apiProvider).exportData();
+      await Clipboard.setData(
+        ClipboardData(text: const JsonEncoder.withIndent('  ').convert(data)),
+      );
+      _snack(tr('Your data was copied to the clipboard.'));
+    } catch (_) {
+      _snack(tr('Needs a connection and sign-in'));
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
+
+  Future<void> _delete() async {
+    if (_deleting) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: Text(tr('Delete your account?')),
+        content: Text(
+          tr(
+            'Your progress, gym membership and any backups are removed. This cannot be undone.',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(c, false),
+            child: Text(tr('Cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(c, true),
+            child: Text(tr('Delete')),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() => _deleting = true);
+    final n = ref.read(settingsProvider.notifier);
+    final prefs = ref.read(sharedPrefsProvider);
+    try {
+      await ref.read(apiProvider).deleteAccount();
+      await wipeLocalData(prefs);
+      if (!mounted) return;
+      ref.invalidate(coachHistoryProvider);
+      n.reset();
+      context.go('/welcome');
+    } catch (_) {
+      _snack(tr('Needs a connection and sign-in'));
+    } finally {
+      if (mounted) setState(() => _deleting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final s = ref.watch(settingsProvider);
     final n = ref.read(settingsProvider.notifier);
-    final api = ref.read(apiProvider);
-
-    Future<void> consent(String purpose, bool granted) async {
-      try {
-        await api.setConsents({purpose: granted});
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(granted ? 'Turned on' : 'Turned off')),
-          );
-        }
-      } catch (_) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Needs a connection and sign-in')),
-          );
-        }
-      }
-    }
+    final signedIn = s.signedIn && ref.read(tokenStoreProvider).hasSession;
 
     return ScreenScaffold(
       title: 'Settings',
@@ -142,76 +234,43 @@ class SettingsScreen extends ConsumerWidget {
         ),
         const _H('Privacy'),
         Text(s.s.t('video_never_leaves')),
-        if (s.signedIn) ...[
+        if (signedIn) ...[
           SwitchListTile(
-            title: const Text('Back up calibration'),
-            subtitle: const Text(
-              'Store your movement range on our server for a new phone. Off by default.',
+            key: const ValueKey('consent-calibration_backup'),
+            title: Text(tr('Back up calibration')),
+            subtitle: Text(
+              tr(
+                'Store your movement range on our server for a new phone. Off by default.',
+              ),
             ),
-            value: false,
-            onChanged: (v) => consent('calibration_backup', v),
+            value: _consents?['calibration_backup'] ?? false,
+            onChanged:
+                _consents == null ||
+                    _pendingConsent.contains('calibration_backup')
+                ? null
+                : (v) => _consent('calibration_backup', v),
           ),
           SwitchListTile(
-            title: const Text('Anonymous analytics'),
-            subtitle: const Text('Crash and usage counts to improve the game.'),
-            value: false,
-            onChanged: (v) => consent('analytics', v),
+            key: const ValueKey('consent-analytics'),
+            title: Text(tr('Anonymous analytics')),
+            subtitle: Text(tr('Crash and usage counts to improve the game.')),
+            value: _consents?['analytics'] ?? false,
+            onChanged:
+                _consents == null || _pendingConsent.contains('analytics')
+                ? null
+                : (v) => _consent('analytics', v),
           ),
           BigButton(
-            'Download my data',
+            tr('Download my data'),
             icon: Icons.download,
             secondary: true,
-            onPressed: () async {
-              try {
-                final data = await api.exportData();
-                await Clipboard.setData(
-                  ClipboardData(
-                    text: const JsonEncoder.withIndent('  ').convert(data),
-                  ),
-                );
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Your data was copied to the clipboard.'),
-                    ),
-                  );
-                }
-              } catch (_) {}
-            },
+            onPressed: _exporting ? null : _export,
           ),
           BigButton(
-            'Delete my account',
+            tr('Delete my account'),
             icon: Icons.delete_forever,
             secondary: true,
-            onPressed: () async {
-              final ok = await showDialog<bool>(
-                context: context,
-                builder: (c) => AlertDialog(
-                  title: const Text('Delete your account?'),
-                  content: const Text(
-                    'Your progress, gym membership and any backups are removed. This cannot be undone.',
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(c, false),
-                      child: const Text('Cancel'),
-                    ),
-                    FilledButton(
-                      onPressed: () => Navigator.pop(c, true),
-                      child: const Text('Delete'),
-                    ),
-                  ],
-                ),
-              );
-              if (ok != true) return;
-              try {
-                await api.deleteAccount();
-                await wipeLocalData(ref.read(sharedPrefsProvider));
-                ref.invalidate(coachHistoryProvider);
-                n.reset();
-                if (context.mounted) context.go('/welcome');
-              } catch (_) {}
-            },
+            onPressed: _deleting ? null : _delete,
           ),
           BigButton(
             tr('Sign out'),
@@ -234,9 +293,14 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ] else
           BigButton(
-            'Sign in',
+            tr('Sign in'),
             icon: Icons.login,
-            onPressed: () => context.push('/sign-in'),
+            onPressed: () async {
+              await context.push('/sign-in');
+              if (!mounted) return;
+              _consents = null;
+              await _loadConsents();
+            },
           ),
         const _H('About'),
         Text(s.s.t('not_medical')),

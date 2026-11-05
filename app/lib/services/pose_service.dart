@@ -160,7 +160,25 @@ class MotionSession {
   set calibration(CalibrationProfile c) =>
       _engine = MotionEngine(calibration: c, thresholds: thresholds);
 
-  Future<bool> start({DeviceTier tier = DeviceTier.mid}) async {
+  /// True while frames are subscribed (between a successful [start] and
+  /// [stop]).
+  bool get running => _sub != null;
+  Future<bool>? _starting;
+
+  /// Starts the camera and frame stream. Idempotent: a second call while
+  /// running returns true, and one while a start is in flight shares it, so
+  /// there is only ever one frame subscription and one watchdog (Q2-1).
+  Future<bool> start({DeviceTier tier = DeviceTier.mid}) {
+    if (_sub != null) return Future.value(true);
+    return _starting ??= _start(tier).whenComplete(() => _starting = null);
+  }
+
+  void _cancelTimers() {
+    _watchdog?.cancel();
+    _watchdog = null;
+  }
+
+  Future<bool> _start(DeviceTier tier) async {
     if (!await source.ensurePermission()) return false;
     final c = initialCalibration;
     if (c != null) {
@@ -177,6 +195,8 @@ class MotionSession {
       }
     }
     delegate = await source.start(tier: tier);
+    _cancelTimers();
+    await _sub?.cancel();
     _sub = source.frames.listen(_onFrame, onError: _onStreamError);
     _sinceFrame
       ..reset()
@@ -255,8 +275,7 @@ class MotionSession {
   };
 
   Future<void> stop() async {
-    _watchdog?.cancel();
-    _watchdog = null;
+    _cancelTimers();
     _sinceFrame.stop();
     if (_stalled || (_engine?.paused ?? false)) _resumeOnStart = true;
     _stalled = false;

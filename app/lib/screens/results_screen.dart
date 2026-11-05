@@ -12,6 +12,8 @@ import '../services/session_queue.dart';
 import '../services/settings.dart';
 import '../services/voice.dart';
 import '../app/theme.dart';
+import '../game/forest_game.dart' show SceneTheme;
+import '../game/stages.dart';
 import '../widgets/common.dart';
 
 class ResultsData {
@@ -22,6 +24,7 @@ class ResultsData {
     required this.durationS,
     this.moveStats,
     this.tutorial = false,
+    this.levelId,
   });
   final RunResult result;
   final String clientId;
@@ -29,6 +32,9 @@ class ResultsData {
   final int durationS;
   final Map<String, Map<String, int>>? moveStats;
   final bool tutorial;
+
+  /// The stage played; picks the headline. Null means Forest Escape.
+  final String? levelId;
 }
 
 class ResultsScreen extends ConsumerStatefulWidget {
@@ -146,7 +152,7 @@ class _ResultsState extends ConsumerState<ResultsScreen> {
             for (final a in areas)
               ListTile(
                 title: Text(
-                  a[0].toUpperCase() + a.substring(1),
+                  tr(a[0].toUpperCase() + a.substring(1)),
                   style: const TextStyle(fontSize: 20),
                 ),
                 onTap: () => Navigator.pop(c, a),
@@ -169,13 +175,11 @@ class _ResultsState extends ConsumerState<ResultsScreen> {
       builder: (c) => AlertDialog(
         title: Text(tr('Thank you for telling us')),
         content: Text(
-          '${sent ? 'We review every report within a week. ' : ''}Stop if it hurts, rest, and if pain continues please see a doctor. Low-impact mode keeps moves gentler.',
+          '${sent ? '${tr('We review every report within a week.')} ' : ''}'
+          '${tr('Stop if it hurts, rest, and if pain continues please see a doctor. Low-impact mode keeps moves gentler.')}',
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(c),
-            child: const Text('OK'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(c), child: Text(tr('OK'))),
         ],
       ),
     );
@@ -210,9 +214,7 @@ class _ResultsState extends ConsumerState<ResultsScreen> {
       showBack: false,
       children: [
         Text(
-          r.completed
-              ? tr('You escaped the forest!')
-              : tr('Good effort — the forest will be there tomorrow.'),
+          _headline(r.completed, d.levelId),
           style: Theme.of(context).textTheme.headlineMedium,
         ),
         const SizedBox(height: 16),
@@ -243,7 +245,8 @@ class _ResultsState extends ConsumerState<ResultsScreen> {
           Padding(
             padding: const EdgeInsets.only(top: 12),
             child: Text(
-              '${r.forgiven} obstacle(s) were skipped because tracking dropped — no hearts lost.',
+              '${r.forgiven} '
+              '${tr('obstacle(s) were skipped because tracking dropped — no hearts lost.')}',
             ),
           ),
         if (!d.tutorial) ...[
@@ -453,4 +456,19 @@ class _CoachCard extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Results headline: the forest lines for forest stages (and when the stage
+/// is unknown), neutral lines for every other world.
+String _headline(bool completed, String? levelId) {
+  final st = levelId == null ? null : stageById(levelId);
+  final forest = st == null || st.theme == SceneTheme.forest;
+  if (forest) {
+    return completed
+        ? tr('You escaped the forest!')
+        : tr('Good effort — the forest will be there tomorrow.');
+  }
+  return completed
+      ? tr('Stage complete!')
+      : tr('Good effort — this stage will be there tomorrow.');
 }

@@ -1,6 +1,7 @@
 import { sql } from 'kysely';
 
 import type { AppContext } from '../../context.js';
+import { notFound } from '../../lib/errors.js';
 import { addDays, isoWeek, weekStart } from '../../lib/time.js';
 import { firstName } from '../gyms/service.js';
 
@@ -26,7 +27,8 @@ export async function buildWeeklyReport(ctx: AppContext, gymId: string, now: Dat
   const start = addDays(end, -7);
   const priorStart = addDays(start, -14);
   const week = isoWeek(start);
-  const gym = await ctx.db.selectFrom('gyms').select(['name']).where('id', '=', gymId).executeTakeFirstOrThrow();
+  const gym = await ctx.db.selectFrom('gyms').select(['name']).where('id', '=', gymId).executeTakeFirst();
+  if (!gym) throw notFound('gym_not_found');
 
   const members = await ctx.db
     .selectFrom('memberships')

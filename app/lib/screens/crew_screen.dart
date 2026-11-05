@@ -23,6 +23,7 @@ class _CrewState extends ConsumerState<CrewScreen> {
   Map<String, dynamic>? _gym;
   List<dynamic> _board = const [];
   bool _loading = true;
+  bool _busy = false;
 
   @override
   void initState() {
@@ -30,8 +31,8 @@ class _CrewState extends ConsumerState<CrewScreen> {
     final prefs = ref.read(sharedPrefsProvider);
     final pending = prefs.getString(pendingGymCodeKey);
     if (pending != null) {
+      // Removed only after a successful join (Q1-10).
       _code.text = pending;
-      prefs.remove(pendingGymCodeKey);
     }
     _load();
   }
@@ -53,32 +54,86 @@ class _CrewState extends ConsumerState<CrewScreen> {
   }
 
   Future<void> _join() async {
-    setState(() => _error = null);
+    if (_busy) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    final prefs = ref.read(sharedPrefsProvider);
     try {
       await ref
           .read(apiProvider)
           .joinGym(_code.text.trim(), shareActivity: _share);
+      await prefs.remove(pendingGymCodeKey);
+      if (!mounted) return;
       ref.invalidate(homeDataProvider);
       await _load();
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(
         () => _error = switch (e.code) {
-          'gym_code_unknown' =>
+          'gym_code_unknown' => tr(
             'We don\'t know that code. Check the poster at your gym.',
+          ),
           'gym_code_full' => tr(
             'This code has reached its member limit. Ask your gym for a new one.',
           ),
           'gym_code_expired' ||
           'gym_inactive' => tr('This code is no longer active.'),
           'already_in_a_gym' => tr('Leave your current gym first.'),
-          _ => 'Could not join (${e.code}).',
+          _ => tr('Could not join. Please try again.'),
         },
       );
     } catch (_) {
       if (!mounted) return;
       setState(() => _error = tr('Needs a connection.'));
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
+  }
+
+  Future<void> _leave() async {
+    if (_busy) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: Text(tr('Leave this gym?')),
+        content: Text(
+          tr(
+            'Your place on the crew board and free Premium end. You need the poster code to join again.',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(c, false),
+            child: Text(tr('Cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(c, true),
+            child: Text(tr('Leave')),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      await ref.read(apiProvider).leaveGym();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = tr('Needs a connection.');
+      });
+      return;
+    }
+    if (!mounted) return;
+    ref.invalidate(homeDataProvider);
+    setState(() {
+      _busy = false;
+      _gym = null;
+      _board = const [];
+    });
   }
 
   @override
@@ -109,8 +164,10 @@ class _CrewState extends ConsumerState<CrewScreen> {
             value: _share,
             onChanged: (v) => setState(() => _share = v),
             title: Text(tr('Share my activity with my gym')),
-            subtitle: const Text(
-              'Your first name, sessions and effort points appear on the crew board and the owner\'s weekly report. Never body measurements. You can turn this off any time.',
+            subtitle: Text(
+              tr(
+                'Your first name, sessions and effort points appear on the crew board and the owner\'s weekly report. Never body measurements. You can turn this off any time.',
+              ),
             ),
           ),
           if (_error != null)
@@ -122,15 +179,21 @@ class _CrewState extends ConsumerState<CrewScreen> {
                 style: const TextStyle(color: Lantern.warning, fontSize: 17),
               ),
             ),
-          BigButton(tr('Join crew'), icon: Icons.groups, onPressed: _join),
+          BigButton(
+            tr('Join crew'),
+            icon: Icons.groups,
+            onPressed: _busy ? null : _join,
+          ),
         ],
       );
     }
     return ScreenScaffold(
-      title: '${gym['name']} crew',
+      title: '${gym['name']} ${tr('crew')}',
       children: [
         Text(
-          'This week\'s board — effort, not raw reps, so everyone can compete.',
+          tr(
+            'This week\'s board — effort, not raw reps, so everyone can compete.',
+          ),
           style: Theme.of(context).textTheme.bodyLarge,
         ),
         const SizedBox(height: 8),
@@ -168,21 +231,7 @@ class _CrewState extends ConsumerState<CrewScreen> {
         BigButton(
           tr('Leave this gym'),
           secondary: true,
-          onPressed: () async {
-            try {
-              await ref.read(apiProvider).leaveGym();
-            } catch (_) {
-              if (!mounted) return;
-              setState(() => _error = tr('Needs a connection.'));
-              return;
-            }
-            if (!mounted) return;
-            ref.invalidate(homeDataProvider);
-            setState(() {
-              _gym = null;
-              _board = const [];
-            });
-          },
+          onPressed: _busy ? null : _leave,
         ),
       ],
     );

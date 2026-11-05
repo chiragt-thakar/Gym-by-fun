@@ -48,11 +48,18 @@ class _CalibrationState extends ConsumerState<CalibrationScreen> {
   Future<void> _start() async {
     final s = ref.read(settingsProvider);
     await ref.read(voiceProvider).init(s.language);
+    if (!mounted) return;
     final session = MotionSession(
       ref.read(poseSourceProvider),
       initialCalibration: null,
     );
-    if (!await session.start(tier: s.deviceTier ?? DeviceTier.mid)) {
+    final started = await session.start(tier: s.deviceTier ?? DeviceTier.mid);
+    if (!mounted) {
+      await session.dispose();
+      return;
+    }
+    if (!started) {
+      await session.dispose();
       if (mounted) context.go('/setup');
       return;
     }
@@ -61,7 +68,7 @@ class _CalibrationState extends ConsumerState<CalibrationScreen> {
   }
 
   void _onFrame(PoseFrame f) {
-    if (_finishing) return;
+    if (_finishing || !mounted) return;
     final ok = const QualityGate().check(f).ok;
     if (ok) _cal.add(_smoother.smooth(f));
     if (_cal.step != _announced) {
@@ -78,14 +85,13 @@ class _CalibrationState extends ConsumerState<CalibrationScreen> {
   Future<void> _finish() async {
     if (_finishing) return;
     _finishing = true;
+    final notifier = ref.read(settingsProvider.notifier);
+    final profile = _cal.build();
+    notifier.update((s) => s.copyWith(calibration: profile));
     await _sub?.cancel();
     _sub = null;
-    final profile = _cal.build();
     await _session?.dispose();
     _session = null;
-    ref
-        .read(settingsProvider.notifier)
-        .update((s) => s.copyWith(calibration: profile));
     if (mounted) {
       context.go(
         ref.read(settingsProvider).tutorialDone ? '/home' : '/tutorial',
