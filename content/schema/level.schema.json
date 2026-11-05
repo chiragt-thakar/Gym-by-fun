@@ -96,7 +96,7 @@
           },
           {
             "if": { "properties": { "type": { "const": "orb" } } },
-            "then": { "properties": { "lanes": { "maxItems": 1 } } }
+            "then": { "properties": { "lanes": { "type": "array", "maxItems": 1 } } }
           }
         ]
       }
