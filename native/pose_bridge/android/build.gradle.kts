@@ -1,3 +1,5 @@
+import java.net.URI
+
 group = "app.motionquest.pose_bridge"
 version = "1.0-SNAPSHOT"
 
@@ -95,7 +97,7 @@ val downloadPoseModel by tasks.registering {
         val f = poseModelFile.asFile
         if (!f.exists()) {
             f.parentFile.mkdirs()
-            java.net.URI(url).toURL().openStream().use { input ->
+            URI(url).toURL().openStream().use { input ->
                 f.outputStream().use { input.copyTo(it) }
             }
         }
