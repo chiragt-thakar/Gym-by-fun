@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 
 /// High contrast, huge type: the phone is 2 m away on the floor.
 ThemeData buildTheme({Color seed = const Color(0xFF1FB5A8)}) {
-  final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.dark);
+  final scheme = ColorScheme.fromSeed(
+    seedColor: seed,
+    brightness: Brightness.dark,
+  );
   return ThemeData(
     useMaterial3: true,
     colorScheme: scheme,

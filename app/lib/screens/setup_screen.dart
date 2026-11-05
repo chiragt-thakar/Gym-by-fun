@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import '../l10n/tr.dart';
+
 import 'package:motion_core/motion_core.dart';
 
 import '../game/forest_game.dart';
@@ -29,7 +32,10 @@ class _SetupState extends ConsumerState<SetupScreen> {
   bool _ready = false;
 
   Future<void> _startCamera() async {
-    final session = MotionSession(ref.read(poseSourceProvider), initialCalibration: null);
+    final session = MotionSession(
+      ref.read(poseSourceProvider),
+      initialCalibration: null,
+    );
     final ok = await session.start(tier: DeviceTier.mid);
     if (!ok) {
       setState(() => _denied = true);
@@ -48,7 +54,10 @@ class _SetupState extends ConsumerState<SetupScreen> {
       setState(() {
         _frame = f;
         _q = q;
-        _ready = benchDone && _goodSince != null && f.timestampMs - _goodSince! >= 1500;
+        _ready =
+            benchDone &&
+            _goodSince != null &&
+            f.timestampMs - _goodSince! >= 1500;
       });
     });
     setState(() {});
@@ -58,7 +67,9 @@ class _SetupState extends ConsumerState<SetupScreen> {
     final tier = _session?.perf.tier ?? DeviceTier.mid;
     await _sub?.cancel();
     await _session?.dispose();
-    ref.read(settingsProvider.notifier).update((s) => s.copyWith(setupDone: true, deviceTier: tier));
+    ref
+        .read(settingsProvider.notifier)
+        .update((s) => s.copyWith(setupDone: true, deviceTier: tier));
     if (mounted) context.go('/calibrate');
   }
 
@@ -73,47 +84,97 @@ class _SetupState extends ConsumerState<SetupScreen> {
   Widget build(BuildContext context) {
     final str = ref.watch(settingsProvider).s;
     if (_session == null) {
-      return ScreenScaffold(title: 'Set up your space', children: [
-        const _Step(Icons.smartphone, 'Prop the phone up in portrait against a wall or a bottle, front camera facing you.'),
-        const _Step(Icons.crop_free, 'Clear a 2 × 2 m space, away from furniture edges.'),
-        const _Step(Icons.directions_walk, 'Stand 2 – 2.5 m away so your whole body fits, head to feet.'),
-        const _Step(Icons.light_mode, 'Light in front of you works best; avoid a bright window behind you.'),
-        const SizedBox(height: 12),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(children: [
-              const Icon(Icons.lock, size: 36),
-              const SizedBox(width: 12),
-              Expanded(child: Text(str.t('video_never_leaves'), style: const TextStyle(fontSize: 18))),
-            ]),
+      return ScreenScaffold(
+        title: tr('Set up your space'),
+        children: [
+          _Step(
+            Icons.smartphone,
+            tr(
+              'Prop the phone up in portrait against a wall or a bottle, front camera facing you.',
+            ),
           ),
-        ),
-        if (_denied)
-          const Padding(
-            padding: EdgeInsets.all(8),
-            child: Text('Camera permission is needed to play. You can allow it in Android Settings → Apps → MotionQuest.',
-                style: TextStyle(color: Colors.orangeAccent, fontSize: 17)),
+          _Step(
+            Icons.crop_free,
+            tr('Clear a 2 × 2 m space, away from furniture edges.'),
           ),
-        BigButton('Allow camera and start', icon: Icons.videocam, onPressed: _startCamera),
-      ]);
+          _Step(
+            Icons.directions_walk,
+            tr('Stand 2 – 2.5 m away so your whole body fits, head to feet.'),
+          ),
+          _Step(
+            Icons.light_mode,
+            tr(
+              'Light in front of you works best; avoid a bright window behind you.',
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  const Icon(Icons.lock, size: 36),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      str.t('video_never_leaves'),
+                      style: const TextStyle(fontSize: 18),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_denied)
+            Padding(
+              padding: EdgeInsets.all(8),
+              child: Text(
+                tr(
+                  'Camera permission is needed to play. You can allow it in Android Settings → Apps → MotionQuest.',
+                ),
+                style: TextStyle(color: Colors.orangeAccent, fontSize: 17),
+              ),
+            ),
+          BigButton(
+            tr('Allow camera and start'),
+            icon: Icons.videocam,
+            onPressed: _startCamera,
+          ),
+        ],
+      );
     }
-    final hint = _q.ok ? 'Great — hold still…' : ref.watch(settingsProvider).s.t(ForestGame.issueKey(_q.issue!));
+    final hint = _q.ok
+        ? tr('Great — hold still…')
+        : ref.watch(settingsProvider).s.t(ForestGame.issueKey(_q.issue!));
     return Scaffold(
       body: SafeArea(
-        child: Column(children: [
-          Expanded(
-            child: CustomPaint(painter: SkeletonPainter(_frame, ok: _q.ok), child: const SizedBox.expand()),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(children: [
-              Text(hint, style: Theme.of(context).textTheme.titleLarge, textAlign: TextAlign.center),
-              const SizedBox(height: 8),
-              BigButton('Next: calibrate', onPressed: _ready ? _finish : null),
-            ]),
-          ),
-        ]),
+        child: Column(
+          children: [
+            Expanded(
+              child: CustomPaint(
+                painter: SkeletonPainter(_frame, ok: _q.ok),
+                child: const SizedBox.expand(),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Text(
+                    hint,
+                    style: Theme.of(context).textTheme.titleLarge,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  BigButton(
+                    tr('Next: calibrate'),
+                    onPressed: _ready ? _finish : null,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -125,7 +186,7 @@ class _Step extends StatelessWidget {
   final String text;
   @override
   Widget build(BuildContext context) => ListTile(
-        leading: Icon(icon, size: 36),
-        title: Text(text, style: const TextStyle(fontSize: 18)),
-      );
+    leading: Icon(icon, size: 36),
+    title: Text(text, style: const TextStyle(fontSize: 18)),
+  );
 }

@@ -16,7 +16,15 @@ import '../services/settings.dart';
 
 const pendingGymCodeKey = 'pendingGymCode';
 
-const _onboarding = {'/welcome', '/age', '/readiness', '/sign-in', '/setup', '/calibrate', '/tutorial'};
+const _onboarding = {
+  '/welcome',
+  '/age',
+  '/readiness',
+  '/sign-in',
+  '/setup',
+  '/calibrate',
+  '/tutorial',
+};
 
 /// Where a player who hasn't finished onboarding must go next.
 String? nextOnboardingStep(Settings s) {
@@ -38,12 +46,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       // (onboarding may come first), then continue to the crew screen.
       if (path == '/join') {
         final code = state.uri.queryParameters['code'];
-        if (code != null && RegExp(r'^[A-Za-z]{1,4}-[A-Za-z0-9]{6}$').hasMatch(code)) {
-          ref.read(sharedPrefsProvider).setString(pendingGymCodeKey, code.toUpperCase());
+        if (code != null &&
+            RegExp(r'^[A-Za-z]{1,4}-[A-Za-z0-9]{6}$').hasMatch(code)) {
+          ref
+              .read(sharedPrefsProvider)
+              .setString(pendingGymCodeKey, code.toUpperCase());
         }
         return nextOnboardingStep(s) ?? (s.signedIn ? '/crew' : '/sign-in');
       }
-      if (_onboarding.contains(path) || path == '/debug' || path == '/recorder') return null;
+      if (_onboarding.contains(path) || path == '/debug' || path == '/recorder')
+        return null;
       return nextOnboardingStep(s);
     },
     routes: [
@@ -53,11 +65,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/sign-in', builder: (_, _) => const SignInScreen()),
       GoRoute(path: '/setup', builder: (_, _) => const SetupScreen()),
       GoRoute(path: '/calibrate', builder: (_, _) => const CalibrationScreen()),
-      GoRoute(path: '/tutorial', builder: (_, _) => const QuestScreen(tutorial: true)),
+      GoRoute(
+        path: '/tutorial',
+        builder: (_, _) => const QuestScreen(tutorial: true),
+      ),
       GoRoute(path: '/join', redirect: (_, _) => '/home'),
       GoRoute(path: '/home', builder: (_, _) => const HomeScreen()),
       GoRoute(path: '/quest', builder: (_, _) => const QuestScreen()),
-      GoRoute(path: '/results', builder: (_, st) => ResultsScreen(data: st.extra as ResultsData?)),
+      GoRoute(
+        path: '/results',
+        builder: (_, st) => ResultsScreen(data: st.extra as ResultsData?),
+      ),
       GoRoute(path: '/settings', builder: (_, _) => const SettingsScreen()),
       GoRoute(path: '/crew', builder: (_, _) => const CrewScreen()),
       GoRoute(path: '/debug', builder: (_, _) => const DebugScreen()),

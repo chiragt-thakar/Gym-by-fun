@@ -36,18 +36,23 @@ class _RecorderState extends ConsumerState<RecorderScreen> {
   Future<void> _toggle() async {
     if (_rec != null) return _stop();
     final s = ref.read(settingsProvider);
-    final session = MotionSession(ref.read(poseSourceProvider), initialCalibration: s.calibration);
+    final session = MotionSession(
+      ref.read(poseSourceProvider),
+      initialCalibration: s.calibration,
+    );
     if (!await session.start(tier: s.deviceTier ?? DeviceTier.mid)) return;
     _session = session;
-    final rec = RecordingBuilder(meta: {
-      'subject': _subject.text.trim(),
-      'clothing': _clothing,
-      'lighting': _lighting,
-      'tier': (s.deviceTier ?? DeviceTier.mid).name,
-      'recordedAt': DateTime.now().toUtc().toIso8601String(),
-      'consent': 'verbal consent recorded by operator; landmarks only, no video',
-    })
-      ..calibration = s.calibration;
+    final rec = RecordingBuilder(
+      meta: {
+        'subject': _subject.text.trim(),
+        'clothing': _clothing,
+        'lighting': _lighting,
+        'tier': (s.deviceTier ?? DeviceTier.mid).name,
+        'recordedAt': DateTime.now().toUtc().toIso8601String(),
+        'consent':
+            'verbal consent recorded by operator; landmarks only, no video',
+      },
+    )..calibration = s.calibration;
     _rec = rec;
     _sub = session.frames.listen((f) {
       rec.add(f);
@@ -61,37 +66,47 @@ class _RecorderState extends ConsumerState<RecorderScreen> {
     await _sub?.cancel();
     await _session?.dispose();
     final rec = _rec!.build();
-    final dir = Directory('${(await getApplicationDocumentsDirectory()).path}/recordings')..createSync(recursive: true);
-    final name = '${_subject.text.trim()}_${DateTime.now().millisecondsSinceEpoch}.json';
+    final dir = Directory(
+      '${(await getApplicationDocumentsDirectory()).path}/recordings',
+    )..createSync(recursive: true);
+    final name =
+        '${_subject.text.trim()}_${DateTime.now().millisecondsSinceEpoch}.json';
     final file = File('${dir.path}/$name');
     await file.writeAsString(rec.encode());
     setState(() {
       _rec = null;
       _session = null;
-      _saved = '${file.path}\n${rec.frames.length} frames · ${rec.labels.length} labels';
+      _saved =
+          '${file.path}\n${rec.frames.length} frames · ${rec.labels.length} labels';
     });
   }
 
   Widget _label(Move m, String text) => GestureDetector(
-        onTapDown: (_) {
-          _rec?.beginLabel(m, _lastTs);
-          setState(() => _held.add(m));
-        },
-        onTapUp: (_) {
-          _rec?.endLabel(m, _lastTs);
-          setState(() => _held.remove(m));
-        },
-        onTapCancel: () {
-          _rec?.endLabel(m, _lastTs);
-          setState(() => _held.remove(m));
-        },
-        child: Container(
-          height: 72,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(color: _held.contains(m) ? Colors.green : Colors.white12, borderRadius: BorderRadius.circular(14)),
-          child: Text(text, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-        ),
-      );
+    onTapDown: (_) {
+      _rec?.beginLabel(m, _lastTs);
+      setState(() => _held.add(m));
+    },
+    onTapUp: (_) {
+      _rec?.endLabel(m, _lastTs);
+      setState(() => _held.remove(m));
+    },
+    onTapCancel: () {
+      _rec?.endLabel(m, _lastTs);
+      setState(() => _held.remove(m));
+    },
+    child: Container(
+      height: 72,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: _held.contains(m) ? Colors.green : Colors.white12,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+      ),
+    ),
+  );
 
   @override
   void dispose() {
@@ -103,39 +118,75 @@ class _RecorderState extends ConsumerState<RecorderScreen> {
   @override
   Widget build(BuildContext context) {
     final recording = _rec != null;
-    return ScreenScaffold(title: 'Landmark recorder', children: [
-      const Text('Records 33 body points per frame. No images or video are saved.'),
-      if (!recording) ...[
-        TextField(controller: _subject, decoration: const InputDecoration(labelText: 'Subject ID (no names)')),
-        DropdownButtonFormField<String>(
-          initialValue: _clothing,
-          decoration: const InputDecoration(labelText: 'Clothing'),
-          items: [for (final c in ['track pants', 'kurta', 'saree', 'shorts', 'loose t-shirt']) DropdownMenuItem(value: c, child: Text(c))],
-          onChanged: (v) => _clothing = v!,
+    return ScreenScaffold(
+      title: 'Landmark recorder',
+      children: [
+        const Text(
+          'Records 33 body points per frame. No images or video are saved.',
         ),
-        DropdownButtonFormField<String>(
-          initialValue: _lighting,
-          decoration: const InputDecoration(labelText: 'Lighting'),
-          items: [for (final l in ['tube light', 'evening', 'daylight', 'dim']) DropdownMenuItem(value: l, child: Text(l))],
-          onChanged: (v) => _lighting = v!,
+        if (!recording) ...[
+          TextField(
+            controller: _subject,
+            decoration: const InputDecoration(
+              labelText: 'Subject ID (no names)',
+            ),
+          ),
+          DropdownButtonFormField<String>(
+            initialValue: _clothing,
+            decoration: const InputDecoration(labelText: 'Clothing'),
+            items: [
+              for (final c in [
+                'track pants',
+                'kurta',
+                'saree',
+                'shorts',
+                'loose t-shirt',
+              ])
+                DropdownMenuItem(value: c, child: Text(c)),
+            ],
+            onChanged: (v) => _clothing = v!,
+          ),
+          DropdownButtonFormField<String>(
+            initialValue: _lighting,
+            decoration: const InputDecoration(labelText: 'Lighting'),
+            items: [
+              for (final l in ['tube light', 'evening', 'daylight', 'dim'])
+                DropdownMenuItem(value: l, child: Text(l)),
+            ],
+            onChanged: (v) => _lighting = v!,
+          ),
+        ],
+        SizedBox(
+          height: 260,
+          child: CustomPaint(
+            painter: SkeletonPainter(_frame),
+            child: const SizedBox.expand(),
+          ),
         ),
+        if (recording) ...[
+          Text(
+            '${_rec!.frameCount} frames — hold a button while the move happens',
+          ),
+          const SizedBox(height: 8),
+          _label(Move.squat, 'SQUAT'),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(child: _label(Move.leanLeft, 'LEAN LEFT')),
+              const SizedBox(width: 8),
+              Expanded(child: _label(Move.leanRight, 'LEAN RIGHT')),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _label(Move.raiseArms, 'ARMS UP'),
+        ],
+        BigButton(
+          recording ? 'Stop and save' : 'Start recording',
+          icon: recording ? Icons.stop : Icons.fiber_manual_record,
+          onPressed: _toggle,
+        ),
+        if (_saved != null) SelectableText('Saved: $_saved'),
       ],
-      SizedBox(height: 260, child: CustomPaint(painter: SkeletonPainter(_frame), child: const SizedBox.expand())),
-      if (recording) ...[
-        Text('${_rec!.frameCount} frames — hold a button while the move happens'),
-        const SizedBox(height: 8),
-        _label(Move.squat, 'SQUAT'),
-        const SizedBox(height: 8),
-        Row(children: [
-          Expanded(child: _label(Move.leanLeft, 'LEAN LEFT')),
-          const SizedBox(width: 8),
-          Expanded(child: _label(Move.leanRight, 'LEAN RIGHT')),
-        ]),
-        const SizedBox(height: 8),
-        _label(Move.raiseArms, 'ARMS UP'),
-      ],
-      BigButton(recording ? 'Stop and save' : 'Start recording', icon: recording ? Icons.stop : Icons.fiber_manual_record, onPressed: _toggle),
-      if (_saved != null) SelectableText('Saved: $_saved'),
-    ]);
+    );
   }
 }

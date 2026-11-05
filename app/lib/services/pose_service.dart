@@ -73,7 +73,8 @@ class PerfStats {
   /// Camera capture → event in Dart (excludes display latency).
   double get pipelineMs => inferenceMs + dartMs;
 
-  static double _avg(List<double> v) => v.isEmpty ? 0 : v.reduce((a, b) => a + b) / v.length;
+  static double _avg(List<double> v) =>
+      v.isEmpty ? 0 : v.reduce((a, b) => a + b) / v.length;
 
   DeviceTier get tier {
     if (fps >= 27 && inferenceMs <= 25) return DeviceTier.upperMid;
@@ -84,7 +85,11 @@ class PerfStats {
 
 /// One live tracking session: pose frames → motion engine → events.
 class MotionSession {
-  MotionSession(this.source, {required this.initialCalibration, this.thresholds = const MotionThresholds()});
+  MotionSession(
+    this.source, {
+    required this.initialCalibration,
+    this.thresholds = const MotionThresholds(),
+  });
 
   final PoseSource source;
   final CalibrationProfile? initialCalibration;
@@ -105,12 +110,14 @@ class MotionSession {
   Stream<PoseFrame> get frames => _frames.stream;
   MotionEngine? get engine => _engine;
 
-  set calibration(CalibrationProfile c) => _engine = MotionEngine(calibration: c, thresholds: thresholds);
+  set calibration(CalibrationProfile c) =>
+      _engine = MotionEngine(calibration: c, thresholds: thresholds);
 
   Future<bool> start({DeviceTier tier = DeviceTier.mid}) async {
     if (!await source.ensurePermission()) return false;
     final c = initialCalibration;
-    if (c != null) _engine = MotionEngine(calibration: c, thresholds: thresholds);
+    if (c != null)
+      _engine = MotionEngine(calibration: c, thresholds: thresholds);
     delegate = await source.start(tier: tier);
     _sub = source.frames.listen(_onFrame);
     return true;
@@ -130,13 +137,13 @@ class MotionSession {
   }
 
   Map<String, Map<String, int>> moveStats() => {
-        for (final m in Move.values)
-          m.name: {
-            'attempts': started[m]! + rejected[m]!,
-            'falseTriggers': 0,
-            'avgLatencyMs': perf.pipelineMs.round(),
-          }
-      };
+    for (final m in Move.values)
+      m.name: {
+        'attempts': started[m]! + rejected[m]!,
+        'falseTriggers': 0,
+        'avgLatencyMs': perf.pipelineMs.round(),
+      },
+  };
 
   Future<void> stop() async {
     await _sub?.cancel();

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:motion_core/motion_core.dart';
 
+import '../l10n/tr.dart';
 import '../services/pose_service.dart';
 import '../services/settings.dart';
 import '../services/voice.dart';
@@ -46,7 +47,10 @@ class _CalibrationState extends ConsumerState<CalibrationScreen> {
   Future<void> _start() async {
     final s = ref.read(settingsProvider);
     await ref.read(voiceProvider).init(s.language);
-    final session = MotionSession(ref.read(poseSourceProvider), initialCalibration: null);
+    final session = MotionSession(
+      ref.read(poseSourceProvider),
+      initialCalibration: null,
+    );
     if (!await session.start(tier: s.deviceTier ?? DeviceTier.mid)) {
       if (mounted) context.go('/setup');
       return;
@@ -61,7 +65,7 @@ class _CalibrationState extends ConsumerState<CalibrationScreen> {
     if (ok) _cal.add(_smoother.smooth(f));
     if (_cal.step != _announced) {
       _announced = _cal.step;
-      ref.read(voiceProvider).say(_instructions[_cal.step]!, force: true);
+      ref.read(voiceProvider).say(tr(_instructions[_cal.step]!), force: true);
     }
     setState(() {
       _frame = f;
@@ -78,8 +82,13 @@ class _CalibrationState extends ConsumerState<CalibrationScreen> {
     final profile = _cal.build();
     await _session?.dispose();
     _session = null;
-    ref.read(settingsProvider.notifier).update((s) => s.copyWith(calibration: profile));
-    if (mounted) context.go(ref.read(settingsProvider).tutorialDone ? '/home' : '/tutorial');
+    ref
+        .read(settingsProvider.notifier)
+        .update((s) => s.copyWith(calibration: profile));
+    if (mounted)
+      context.go(
+        ref.read(settingsProvider).tutorialDone ? '/home' : '/tutorial',
+      );
   }
 
   @override
@@ -95,26 +104,64 @@ class _CalibrationState extends ConsumerState<CalibrationScreen> {
     final idx = CalibrationStep.values.indexOf(step);
     return Scaffold(
       body: SafeArea(
-        child: Column(children: [
-          LinearProgressIndicator(value: idx / (CalibrationStep.values.length - 1), minHeight: 10),
-          Expanded(child: CustomPaint(painter: SkeletonPainter(_frame, ok: !_paused), child: const SizedBox.expand())),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(children: [
-              Text(_instructions[step]!, style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
-              const SizedBox(height: 12),
-              if (step == CalibrationStep.squats) Text('${_cal.squatsDone} / 2', style: Theme.of(context).textTheme.titleLarge),
-              SizedBox(width: 64, height: 64, child: CircularProgressIndicator(value: _cal.progress, strokeWidth: 8)),
-              if (_paused)
-                const Padding(
-                  padding: EdgeInsets.only(top: 12),
-                  child: Text('Make sure your whole body is in the frame.', style: TextStyle(fontSize: 18, color: Colors.amberAccent)),
-                ),
-              const SizedBox(height: 8),
-              const Text('Move only as far as feels comfortable. The game uses your range.', textAlign: TextAlign.center),
-            ]),
-          ),
-        ]),
+        child: Column(
+          children: [
+            LinearProgressIndicator(
+              value: idx / (CalibrationStep.values.length - 1),
+              minHeight: 10,
+            ),
+            Expanded(
+              child: CustomPaint(
+                painter: SkeletonPainter(_frame, ok: !_paused),
+                child: const SizedBox.expand(),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  Text(
+                    tr(_instructions[step]!),
+                    style: Theme.of(context).textTheme.headlineMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  if (step == CalibrationStep.squats)
+                    Text(
+                      '${_cal.squatsDone} / 2',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  SizedBox(
+                    width: 64,
+                    height: 64,
+                    child: CircularProgressIndicator(
+                      value: _cal.progress,
+                      strokeWidth: 8,
+                    ),
+                  ),
+                  if (_paused)
+                    Padding(
+                      padding: EdgeInsets.only(top: 12),
+                      child: Text(
+                        tr('Make sure your whole body is in the frame.'),
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.amberAccent,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                  Text(
+                    tr(
+                      'Move only as far as feels comfortable. The game uses your range.',
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -16,7 +16,8 @@ class S {
   S(this.lang);
   final AppLanguage lang;
 
-  String t(String key) => _strings[key]?[lang] ?? _strings[key]?[AppLanguage.en] ?? key;
+  String t(String key) =>
+      _strings[key]?[lang] ?? _strings[key]?[AppLanguage.en] ?? key;
 
   static const Map<String, Map<AppLanguage, String>> _strings = {
     'app_name': {AppLanguage.en: 'MotionQuest'},
@@ -30,9 +31,21 @@ class S {
       AppLanguage.hi: 'अपनी भाषा चुनें',
       AppLanguage.gu: 'તમારી ભાષા પસંદ કરો',
     },
-    'continue': {AppLanguage.en: 'Continue', AppLanguage.hi: 'आगे बढ़ें', AppLanguage.gu: 'આગળ વધો'},
-    'daily_quest': {AppLanguage.en: 'Daily Quest', AppLanguage.hi: 'डेली क्वेस्ट', AppLanguage.gu: 'ડેઇલી ક્વેસ્ટ'},
-    'play': {AppLanguage.en: 'Play', AppLanguage.hi: 'खेलें', AppLanguage.gu: 'રમો'},
+    'continue': {
+      AppLanguage.en: 'Continue',
+      AppLanguage.hi: 'आगे बढ़ें',
+      AppLanguage.gu: 'આગળ વધો',
+    },
+    'daily_quest': {
+      AppLanguage.en: 'Daily Quest',
+      AppLanguage.hi: 'डेली क्वेस्ट',
+      AppLanguage.gu: 'ડેઇલી ક્વેસ્ટ',
+    },
+    'play': {
+      AppLanguage.en: 'Play',
+      AppLanguage.hi: 'खेलें',
+      AppLanguage.gu: 'રમો',
+    },
     'squat_hint': {
       AppLanguage.en: 'Squat to duck!',
       AppLanguage.hi: 'झुकने के लिए स्क्वाट करें!',
@@ -74,7 +87,8 @@ class S {
       AppLanguage.gu: 'થોડા પાછળ જાઓ.',
     },
     'low_visibility': {
-      AppLanguage.en: 'I can\'t see you clearly. Add some light or move clutter away.',
+      AppLanguage.en:
+          'I can\'t see you clearly. Add some light or move clutter away.',
       AppLanguage.hi: 'आप साफ़ नहीं दिख रहे। रोशनी बढ़ाएं।',
       AppLanguage.gu: 'તમે સ્પષ્ટ દેખાતા નથી. થોડો પ્રકાશ વધારો.',
     },
@@ -83,9 +97,21 @@ class S {
       AppLanguage.hi: 'मिल गए! चलिए आगे।',
       AppLanguage.gu: 'મળી ગયા! ચાલો આગળ.',
     },
-    'warmup': {AppLanguage.en: 'Warm-up', AppLanguage.hi: 'वार्म-अप', AppLanguage.gu: 'વોર્મ-અપ'},
-    'cooldown': {AppLanguage.en: 'Cool-down', AppLanguage.hi: 'कूल-डाउन', AppLanguage.gu: 'કૂલ-ડાઉન'},
-    'well_done': {AppLanguage.en: 'Well done!', AppLanguage.hi: 'शाबाश!', AppLanguage.gu: 'શાબાશ!'},
+    'warmup': {
+      AppLanguage.en: 'Warm-up',
+      AppLanguage.hi: 'वार्म-अप',
+      AppLanguage.gu: 'વોર્મ-અપ',
+    },
+    'cooldown': {
+      AppLanguage.en: 'Cool-down',
+      AppLanguage.hi: 'कूल-डाउन',
+      AppLanguage.gu: 'કૂલ-ડાઉન',
+    },
+    'well_done': {
+      AppLanguage.en: 'Well done!',
+      AppLanguage.hi: 'शाबाश!',
+      AppLanguage.gu: 'શાબાશ!',
+    },
     'stop_if_hurts': {
       AppLanguage.en: 'Stop if anything hurts.',
       AppLanguage.hi: 'दर्द हो तो रुक जाएं।',
@@ -97,9 +123,12 @@ class S {
       AppLanguage.gu: 'કેમેરા આ જ ફોન પર તમારી મુદ્રા વાંચે છે. વિડિયો ક્યારેય ફોનની બહાર જતો નથી અને સેવ થતો નથી.',
     },
     'not_medical': {
-      AppLanguage.en: 'MotionQuest is a game for general fitness, not medical advice.',
-      AppLanguage.hi: 'MotionQuest सामान्य फिटनेस के लिए एक गेम है, चिकित्सा सलाह नहीं।',
-      AppLanguage.gu: 'MotionQuest સામાન્ય ફિટનેસ માટેની ગેમ છે, તબીબી સલાહ નથી.',
+      AppLanguage.en:
+          'MotionQuest is a game for general fitness, not medical advice.',
+      AppLanguage.hi:
+          'MotionQuest सामान्य फिटनेस के लिए एक गेम है, चिकित्सा सलाह नहीं।',
+      AppLanguage.gu:
+          'MotionQuest સામાન્ય ફિટનેસ માટેની ગેમ છે, તબીબી સલાહ નથી.',
     },
   };
 }

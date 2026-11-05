@@ -42,18 +42,17 @@ class HudState {
     TrackingIssue? trackingIssue,
     bool clearIssue = false,
     Outcome? lastOutcome,
-  }) =>
-      HudState(
-        hearts: hearts ?? this.hearts,
-        maxHearts: maxHearts,
-        energy: energy ?? this.energy,
-        score: score ?? this.score,
-        progress: progress ?? this.progress,
-        light: light ?? this.light,
-        hint: clearHint ? null : (hint ?? this.hint),
-        trackingIssue: clearIssue ? null : (trackingIssue ?? this.trackingIssue),
-        lastOutcome: lastOutcome ?? this.lastOutcome,
-      );
+  }) => HudState(
+    hearts: hearts ?? this.hearts,
+    maxHearts: maxHearts,
+    energy: energy ?? this.energy,
+    score: score ?? this.score,
+    progress: progress ?? this.progress,
+    light: light ?? this.light,
+    hint: clearHint ? null : (hint ?? this.hint),
+    trackingIssue: clearIssue ? null : (trackingIssue ?? this.trackingIssue),
+    lastOutcome: lastOutcome ?? this.lastOutcome,
+  );
 }
 
 /// Side effects the game asks for (sound, voice), so it stays testable.
@@ -74,7 +73,9 @@ class ForestGame extends FlameGame {
     required this.audio,
     this.lightOf,
     this.onFinished,
-  }) : hud = ValueNotifier(HudState(hearts: engine.hearts, maxHearts: engine.level.hearts));
+  }) : hud = ValueNotifier(
+         HudState(hearts: engine.hearts, maxHearts: engine.level.hearts),
+       );
 
   final RunEngine engine;
   final Stream<MotionEvent> motionEvents;
@@ -137,7 +138,8 @@ class ForestGame extends FlameGame {
           audio.say(text);
         case EncounterResolved(:final outcome):
           if (outcome == Outcome.cleared) audio.cue('clear');
-          if (outcome == Outcome.hit && e.encounter.type.damages) audio.cue('hit');
+          if (outcome == Outcome.hit && e.encounter.type.damages)
+            audio.cue('hit');
           hud.value = hud.value.copyWith(lastOutcome: outcome);
         case CheckpointReached():
           audio.cue('checkpoint');
@@ -160,11 +162,11 @@ class ForestGame extends FlameGame {
   }
 
   static String issueKey(TrackingIssue i) => switch (i) {
-        TrackingIssue.tooFar => 'too_far',
-        TrackingIssue.tooClose => 'too_close',
-        TrackingIssue.lowVisibility => 'low_visibility',
-        TrackingIssue.noPerson || TrackingIssue.outOfFrame => 'step_back',
-      };
+    TrackingIssue.tooFar => 'too_far',
+    TrackingIssue.tooClose => 'too_close',
+    TrackingIssue.lowVisibility => 'low_visibility',
+    TrackingIssue.noPerson || TrackingIssue.outOfFrame => 'step_back',
+  };
 
   // ---------------------------------------------------------------- render
 
@@ -222,7 +224,8 @@ class ForestPainter {
     return w / 2 - roadHalf + laneW * (lane + 0.5);
   }
 
-  double depthY(double d) => heroY + (horizon - heroY) * (1 - math.pow(1 - d, 1.6).toDouble());
+  double depthY(double d) =>
+      heroY + (horizon - heroY) * (1 - math.pow(1 - d, 1.6).toDouble());
   double scaleAt(double d) => 1 - d * 0.82;
 
   void paint(Canvas c) {
@@ -231,12 +234,15 @@ class ForestPainter {
     _hills(c, 0.35, const Color(0xFF1A3D29), 0.34, 90);
     _trees(c);
     _road(c);
-    final visible = plan
-        .where((p) => clockMs >= p.warnMs && clockMs <= p.arriveMs + 350)
-        .toList()
-      ..sort((a, b) => b.arriveMs.compareTo(a.arriveMs)); // far first
+    final visible =
+        plan
+            .where((p) => clockMs >= p.warnMs && clockMs <= p.arriveMs + 350)
+            .toList()
+          ..sort((a, b) => b.arriveMs.compareTo(a.arriveMs)); // far first
     for (final p in visible) {
-      final d = ((p.arriveMs - clockMs) / warningMs).clamp(-0.2, 1.0).toDouble();
+      final d = ((p.arriveMs - clockMs) / warningMs)
+          .clamp(-0.2, 1.0)
+          .toDouble();
       _encounter(c, p, d);
     }
     _hero(c);
@@ -245,18 +251,26 @@ class ForestPainter {
   void _sky(Canvas c) {
     final r = Rect.fromLTWH(0, 0, w, horizon + 2);
     c.drawRect(
-        r,
-        Paint()
-          ..shader = Gradient.linear(Offset.zero, Offset(0, horizon),
-              [const Color(0xFFFFC27A), const Color(0xFF7FC8A9)]));
-    c.drawCircle(Offset(w * 0.78, horizon * 0.45), w * 0.07, Paint()..color = const Color(0xFFFFF1C1));
+      r,
+      Paint()
+        ..shader = Gradient.linear(Offset.zero, Offset(0, horizon), [
+          const Color(0xFFFFC27A),
+          const Color(0xFF7FC8A9),
+        ]),
+    );
+    c.drawCircle(
+      Offset(w * 0.78, horizon * 0.45),
+      w * 0.07,
+      Paint()..color = const Color(0xFFFFF1C1),
+    );
   }
 
   void _hills(Canvas c, double speed, Color color, double amp, double period) {
     final path = Path()..moveTo(0, horizon);
     final off = t * 40 * speed;
     for (var x = 0.0; x <= w; x += 8) {
-      final y = horizon - h * amp * 0.25 * (0.5 + 0.5 * math.sin((x + off) / period));
+      final y =
+          horizon - h * amp * 0.25 * (0.5 + 0.5 * math.sin((x + off) / period));
       path.lineTo(x, y);
     }
     path
@@ -278,7 +292,14 @@ class ForestPainter {
       for (final side in [-1.0, 1.0]) {
         final x = w / 2 + side * (w * 0.08 + (w * 0.5) * (1 - d) + s * 0.4);
         final trunk = Paint()..color = const Color(0xFF4A2F1B);
-        c.drawRect(Rect.fromCenter(center: Offset(x, y - s * 0.2), width: s * 0.12, height: s * 0.4), trunk);
+        c.drawRect(
+          Rect.fromCenter(
+            center: Offset(x, y - s * 0.2),
+            width: s * 0.12,
+            height: s * 0.4,
+          ),
+          trunk,
+        );
         final crown = Path()
           ..moveTo(x, y - s * 1.1)
           ..lineTo(x - s * 0.35, y - s * 0.3)
@@ -304,7 +325,11 @@ class ForestPainter {
       for (var k = 0; k < 12; k++) {
         final d0 = ((k / 12 + t * 0.8) % 1.0);
         final d1 = (d0 + 0.035).clamp(0.0, 1.0);
-        c.drawLine(Offset(laneX(l + 0.5, d0), depthY(d0)), Offset(laneX(l + 0.5, d1), depthY(d1)), line);
+        c.drawLine(
+          Offset(laneX(l + 0.5, d0), depthY(d0)),
+          Offset(laneX(l + 0.5, d1), depthY(d1)),
+          line,
+        );
       }
     }
   }
@@ -321,9 +346,20 @@ class ForestPainter {
       case EncounterType.beam:
         // A low branch across the whole road at head height: duck!
         final left = laneX(-0.5, dd), right = laneX(lanes - 0.5, dd);
-        final r = Rect.fromLTRB(left, y - h * 0.30 * s, right, y - h * 0.24 * s);
-        c.drawRRect(RRect.fromRectAndRadius(r, Radius.circular(10 * s)), Paint()..color = const Color(0xFF6B3E1F));
-        c.drawRRect(RRect.fromRectAndRadius(r, Radius.circular(10 * s)), outline);
+        final r = Rect.fromLTRB(
+          left,
+          y - h * 0.30 * s,
+          right,
+          y - h * 0.24 * s,
+        );
+        c.drawRRect(
+          RRect.fromRectAndRadius(r, Radius.circular(10 * s)),
+          Paint()..color = const Color(0xFF6B3E1F),
+        );
+        c.drawRRect(
+          RRect.fromRectAndRadius(r, Radius.circular(10 * s)),
+          outline,
+        );
         // Chevrons pointing down.
         for (var i = 0; i < 3; i++) {
           final cx = left + (right - left) * (0.25 + i * 0.25);
@@ -331,10 +367,13 @@ class ForestPainter {
             ..moveTo(cx - 14 * s, r.bottom + 8 * s)
             ..lineTo(cx, r.bottom + 22 * s)
             ..lineTo(cx + 14 * s, r.bottom + 8 * s);
-          c.drawPath(ch, Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 5 * s
-            ..color = const Color(0xFFFFFFFF));
+          c.drawPath(
+            ch,
+            Paint()
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 5 * s
+              ..color = const Color(0xFFFFFFFF),
+          );
         }
       case EncounterType.laneBlock:
         for (final l in p.lanes) {
@@ -352,8 +391,16 @@ class ForestPainter {
       case EncounterType.orb:
         final x = laneX(p.lanes.first.toDouble(), dd);
         final cy = y - h * 0.34 * s;
-        c.drawCircle(Offset(x, cy), 30 * s, Paint()..color = const Color(0x6600E5FF));
-        c.drawCircle(Offset(x, cy), 18 * s, Paint()..color = const Color(0xFF7CF7FF));
+        c.drawCircle(
+          Offset(x, cy),
+          30 * s,
+          Paint()..color = const Color(0x6600E5FF),
+        );
+        c.drawCircle(
+          Offset(x, cy),
+          18 * s,
+          Paint()..color = const Color(0xFF7CF7FF),
+        );
         // Star shape so it reads without colour.
         final star = Path();
         for (var i = 0; i < 10; i++) {
@@ -371,9 +418,23 @@ class ForestPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 16 * s
           ..color = const Color(0xFFB8860B);
-        c.drawArc(Rect.fromLTRB(left, top, right, y + (right - left) * 0.3), math.pi, math.pi, false, arch);
-        c.drawLine(Offset(left, y), Offset(left, top + (right - left) * 0.3), arch);
-        c.drawLine(Offset(right, y), Offset(right, top + (right - left) * 0.3), arch);
+        c.drawArc(
+          Rect.fromLTRB(left, top, right, y + (right - left) * 0.3),
+          math.pi,
+          math.pi,
+          false,
+          arch,
+        );
+        c.drawLine(
+          Offset(left, y),
+          Offset(left, top + (right - left) * 0.3),
+          arch,
+        );
+        c.drawLine(
+          Offset(right, y),
+          Offset(right, top + (right - left) * 0.3),
+          arch,
+        );
         // Up arrows: raise your arms.
         final cx = (left + right) / 2;
         final arrow = Path()
@@ -394,11 +455,23 @@ class ForestPainter {
     final dark = Paint()..color = const Color(0xFF2B1A10);
     // Cape-like body (original hero: a fox-orange runner with a teal scarf).
     final torso = RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(x, top + body * 0.55), width: w * 0.09, height: body * 0.6), const Radius.circular(14));
+      Rect.fromCenter(
+        center: Offset(x, top + body * 0.55),
+        width: w * 0.09,
+        height: body * 0.6,
+      ),
+      const Radius.circular(14),
+    );
     c.drawRRect(torso, paint);
     c.drawCircle(Offset(x, top + body * 0.12), w * 0.04, paint);
-    c.drawRect(Rect.fromCenter(center: Offset(x, top + body * 0.3), width: w * 0.1, height: body * 0.06),
-        Paint()..color = const Color(0xFF1FB5A8));
+    c.drawRect(
+      Rect.fromCenter(
+        center: Offset(x, top + body * 0.3),
+        width: w * 0.1,
+        height: body * 0.06,
+      ),
+      Paint()..color = const Color(0xFF1FB5A8),
+    );
     final arm = Paint()
       ..strokeWidth = w * 0.018
       ..strokeCap = StrokeCap.round

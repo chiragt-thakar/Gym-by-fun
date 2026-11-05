@@ -12,10 +12,12 @@ Future<void> main() async {
   // Portrait first: the whole body fits a phone propped up in portrait.
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   final prefs = await SharedPreferences.getInstance();
-  runApp(ProviderScope(
-    overrides: [sharedPrefsProvider.overrideWithValue(prefs)],
-    child: const MotionQuestApp(),
-  ));
+  runApp(
+    ProviderScope(
+      overrides: [sharedPrefsProvider.overrideWithValue(prefs)],
+      child: const MotionQuestApp(),
+    ),
+  );
 }
 
 class MotionQuestApp extends ConsumerWidget {
@@ -23,6 +25,8 @@ class MotionQuestApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Rebuild everything when the language changes.
+    ref.watch(settingsProvider.select((s) => s.language));
     return MaterialApp.router(
       title: 'MotionQuest',
       debugShowCheckedModeBanner: false,

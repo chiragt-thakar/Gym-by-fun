@@ -48,13 +48,16 @@ class Voice {
   Future<void> say(String text, {bool force = false}) async {
     if (!_ready) return;
     final now = DateTime.now();
-    if (!force && now.difference(_lastSpoke) < const Duration(milliseconds: 1200)) return;
+    if (!force &&
+        now.difference(_lastSpoke) < const Duration(milliseconds: 1200))
+      return;
     _lastSpoke = now;
     await _tts.stop();
     await _tts.speak(text);
   }
 
-  Future<void> sayKey(String key, {bool force = false}) => say(S(_lang).t(key), force: force);
+  Future<void> sayKey(String key, {bool force = false}) =>
+      say(S(_lang).t(key), force: force);
 
   Future<void> stop() => _tts.stop();
 }

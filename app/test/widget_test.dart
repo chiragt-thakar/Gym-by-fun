@@ -58,4 +58,16 @@ void main() {
     expect(container.read(sharedPrefsProvider).getString(pendingGymCodeKey), 'IRON-AB12CD');
     expect(find.text('Your body is the controller.'), findsOneWidget); // onboarding first
   });
+
+  testWidgets('choosing Hindi translates the following screens', (t) async {
+    await pumpApp(t);
+    await t.tap(find.text('हिंदी'));
+    await t.pumpAndSettle();
+    await t.tap(find.text('आगे बढ़ें'));
+    await t.pumpAndSettle();
+    expect(find.text('मेरी उम्र 18 या उससे अधिक है'), findsOneWidget);
+    await t.tap(find.text('मेरी उम्र 18 या उससे अधिक है'));
+    await t.pumpAndSettle();
+    expect(find.text('तैयारी जाँच'), findsOneWidget);
+  });
 }

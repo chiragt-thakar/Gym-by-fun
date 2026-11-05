@@ -11,20 +11,31 @@ import 'api_client.dart';
 /// Offline-first session storage: every finished run is written to a local
 /// file first and uploaded when online. Uploads are idempotent (clientId).
 class SessionQueue {
-  SessionQueue(this._api, {Future<Directory> Function()? dir}) : _dir = dir ?? getApplicationSupportDirectory;
+  SessionQueue(this._api, {Future<Directory> Function()? dir})
+    : _dir = dir ?? getApplicationSupportDirectory;
 
   final ApiClient _api;
   final Future<Directory> Function() _dir;
 
-  Future<File> get _file async => File('${(await _dir()).path}/session_queue.json');
+  Future<File> get _file async =>
+      File('${(await _dir()).path}/session_queue.json');
 
   static String newClientId() {
     final r = Random.secure();
-    return List.generate(16, (_) => r.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
+    return List.generate(
+      16,
+      (_) => r.nextInt(256).toRadixString(16).padLeft(2, '0'),
+    ).join();
   }
 
-  static Map<String, Object?> fromResult(RunResult r,
-      {required String clientId, required DateTime startedAt, required int durationS, int? effortRating, Map<String, Map<String, int>>? moveStats}) {
+  static Map<String, Object?> fromResult(
+    RunResult r, {
+    required String clientId,
+    required DateTime startedAt,
+    required int durationS,
+    int? effortRating,
+    Map<String, Map<String, int>>? moveStats,
+  }) {
     return {
       'clientId': clientId,
       'levelId': r.levelId,
@@ -43,8 +54,9 @@ class SessionQueue {
             'attempts': moveStats?[e.key.name]?['attempts'] ?? e.value,
             'recognised': e.value,
             'falseTriggers': moveStats?[e.key.name]?['falseTriggers'] ?? 0,
-            if (moveStats?[e.key.name]?['avgLatencyMs'] != null) 'avgLatencyMs': moveStats![e.key.name]!['avgLatencyMs'],
-          }
+            if (moveStats?[e.key.name]?['avgLatencyMs'] != null)
+              'avgLatencyMs': moveStats![e.key.name]!['avgLatencyMs'],
+          },
       ],
     };
   }
@@ -53,14 +65,18 @@ class SessionQueue {
     final f = await _file;
     if (!await f.exists()) return [];
     try {
-      return [for (final e in jsonDecode(await f.readAsString()) as List<dynamic>) Map<String, Object?>.from(e as Map)];
+      return [
+        for (final e in jsonDecode(await f.readAsString()) as List<dynamic>)
+          Map<String, Object?>.from(e as Map),
+      ];
     } catch (_) {
       return [];
     }
   }
 
   Future<void> add(Map<String, Object?> session) async {
-    final all = await pending()..add(session);
+    final all = await pending()
+      ..add(session);
     await _write(all);
   }
 
@@ -94,4 +110,6 @@ class SessionQueue {
   }
 }
 
-final sessionQueueProvider = Provider<SessionQueue>((ref) => SessionQueue(ref.watch(apiProvider)));
+final sessionQueueProvider = Provider<SessionQueue>(
+  (ref) => SessionQueue(ref.watch(apiProvider)),
+);
