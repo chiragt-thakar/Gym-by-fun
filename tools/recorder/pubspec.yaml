@@ -1,0 +1,14 @@
+name: recorder_tools
+description: Replay landmark recordings through motion_core and print the Phase 0 accuracy report.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  motion_core:
+    path: ../../packages/motion_core
+
+dev_dependencies:
+  lints: ^5.0.0
