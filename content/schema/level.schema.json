@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://motionquest.app/schema/level.schema.json",
+  "title": "MotionQuest level",
+  "description": "A hand-designed level. Validated in CI and by the server before it reaches phones.",
+  "type": "object",
+  "required": ["id", "version", "schemaVersion", "world", "name", "lanes", "durationS", "difficulty", "scoring", "segments", "encounters"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "id": { "type": "string", "pattern": "^w[0-9]+-[a-z0-9-]+$" },
+    "version": { "type": "integer", "minimum": 1 },
+    "schemaVersion": { "const": 1 },
+    "world": { "type": "integer", "minimum": 1, "maximum": 8 },
+    "name": { "type": "string", "minLength": 1, "maxLength": 60 },
+    "lanes": { "const": 3 },
+    "durationS": { "type": "number", "minimum": 30, "maximum": 900 },
+    "hearts": { "type": "integer", "minimum": 1, "maximum": 5 },
+    "music": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "track": { "type": "string" },
+        "bpmByDifficulty": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "beginner": { "type": "integer" },
+            "intermediate": { "type": "integer" },
+            "advanced": { "type": "integer" }
+          }
+        }
+      }
+    },
+    "difficulty": {
+      "type": "object",
+      "required": ["beginner", "intermediate", "advanced"],
+      "additionalProperties": false,
+      "properties": {
+        "beginner": { "$ref": "#/$defs/difficulty" },
+        "intermediate": { "$ref": "#/$defs/difficulty" },
+        "advanced": { "$ref": "#/$defs/difficulty" }
+      }
+    },
+    "scoring": {
+      "type": "object",
+      "required": ["beam", "laneBlock", "orb", "gate"],
+      "additionalProperties": false,
+      "properties": {
+        "beam": { "type": "integer", "minimum": 0 },
+        "laneBlock": { "type": "integer", "minimum": 0 },
+        "orb": { "type": "integer", "minimum": 0 },
+        "gate": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "segments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "startS", "endS"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "kind": { "enum": ["practice", "learn", "breather", "combo", "checkpoint", "finale"] },
+          "startS": { "type": "number", "minimum": 0 },
+          "endS": { "type": "number", "exclusiveMinimum": 0 },
+          "hint": { "type": "string", "maxLength": 80 }
+        }
+      }
+    },
+    "encounters": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["atS", "type"],
+        "additionalProperties": false,
+        "properties": {
+          "atS": { "type": "number", "minimum": 0 },
+          "type": { "enum": ["beam", "laneBlock", "orb", "gate"] },
+          "lanes": {
+            "type": "array",
+            "items": { "type": "integer", "minimum": 0, "maximum": 2 },
+            "minItems": 1,
+            "maxItems": 2,
+            "uniqueItems": true
+          },
+          "minDifficulty": { "enum": ["beginner", "intermediate", "advanced"] },
+          "hint": { "type": "string", "maxLength": 80 }
+        },
+        "allOf": [
+          {
+            "if": { "properties": { "type": { "enum": ["laneBlock", "orb"] } } },
+            "then": { "required": ["lanes"] }
+          },
+          {
+            "if": { "properties": { "type": { "const": "orb" } } },
+            "then": { "properties": { "lanes": { "maxItems": 1 } } }
+          }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "difficulty": {
+      "type": "object",
+      "required": ["warningMs", "maxDemandingInRow", "hints"],
+      "additionalProperties": false,
+      "properties": {
+        "warningMs": { "type": "integer", "minimum": 1000, "maximum": 4000 },
+        "maxDemandingInRow": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "hints": { "enum": ["always", "firstTime", "off"] },
+        "lowImpactDefault": { "type": "boolean" }
+      }
+    }
+  }
+}
