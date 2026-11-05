@@ -21,7 +21,17 @@
 - **server**: identity, progress, gyms (incl. Phase 2 codes, QR poster, crew
   board, trainer page, Monday WhatsApp report), billing (Phase 3 webhooks and
   entitlements), content. 41 integration tests on real PostgreSQL + Redis.
-- **CI**: GitHub Actions for all of the above plus a debug APK and size budget.
+- **CI**: GitHub Actions for all of the above plus a debug APK and size budget;
+  runs on `main`, development branches and PRs.
+- **Production hardening (server)**: security headers, CORS allow-list, global
+  Redis-backed rate limit, `/livez` + `/healthz` readiness, `MIGRATE_ON_BOOT`,
+  privacy policy and terms pages, QR `/join` page, Razorpay gym payment links
+  (prices + 18 % GST). 46 server tests.
+- **Production hardening (app)**: release signing from `key.properties`/CI
+  secrets, R8 + resource shrinking with MediaPipe keep rules, QR deep link
+  `motionquest://join?code=…` kept through onboarding, all player screens in
+  Hindi and Gujarati. 14 app tests.
+- **Launch checklist**: [launch-checklist.md](launch-checklist.md).
 
 ### Not verified yet (needs real phones / people)
 - Synthetic landmark corpus only: record 5+ consenting people (heights,
@@ -29,8 +39,8 @@
   the files to `packages/motion_core/test/recordings/`.
 - On-device fps, inference time and movement-to-action latency (< 150 ms)
   on budget, mid and upper-mid phones — read them on the debug screen.
-- The native bridge and APK were not compiled in the development container
-  (Android SDK host blocked); CI builds the APK.
+- The native bridge and APK are compiled only in CI (the development
+  container cannot reach the Android SDK host).
 - Playtests (5–10 people), Play closed testing track, crash-free rate.
 
 ### Next
@@ -41,8 +51,9 @@
 4. Phase 2 remaining: gym branding assets upload, pilot onboarding of 5 gyms,
    WhatsApp BSP account + template approval.
 5. Phase 3 remaining: RevenueCat SDK + paywall rules in the app (after the third
-   session or a locked world, never mid-run), Razorpay payment-link creation,
-   World 2, Garba Quest, highlight clips, referrals.
+   session or a locked world, never mid-run), Google sign-in and Crashlytics in
+   the app (need your Firebase project), World 2, Garba Quest, highlight clips,
+   referrals.
 
 ## How to verify
 ```bash
