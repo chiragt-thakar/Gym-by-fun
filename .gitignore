@@ -1,0 +1,34 @@
+# Dart / Flutter
+.dart_tool/
+.packages
+build/
+pubspec.lock.bak
+*.iml
+.flutter-plugins
+.flutter-plugins-dependencies
+coverage/
+
+# Android / Gradle
+.gradle/
+local.properties
+*.keystore
+*.jks
+captures/
+
+# Node
+node_modules/
+dist/
+*.log
+.env
+.env.*
+!.env.example
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+
+# Never commit camera footage
+*.mp4
+*.mov
+*.webm

@@ -1,0 +1,11 @@
+name: motion_core
+description: Pure-Dart motion pipeline for MotionQuest — quality gate, One Euro smoothing, calibration and move recognisers.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.5.0
+
+dev_dependencies:
+  lints: ^5.0.0
+  test: ^1.25.0
