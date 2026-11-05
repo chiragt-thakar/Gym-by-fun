@@ -109,3 +109,13 @@
 ```
 On a phone: Settings → Developer → Tracking debug screen shows the skeleton,
 recogniser states, fps, inference and capture→event latency.
+
+## Session 3 (multi-agent)
+- 9 stages across 4 playable worlds (Forest, Desert, Neon City, Mountain) with themes and unlocking.
+- Coach Kavi: offline rule-based coach (difficulty advice, form tips, recap, goals) in en/hi/gu.
+- Forest Lantern UI identity; performance pass (allocation-light motion core, ring buffers, ARM-only split release APKs, bitmap safety).
+- Production review (docs/review.md): all 16 findings fixed (watchdog, background pause, pause/quit, checkpoint continue, atomic webhooks, full deletion/export, native start/stop safety).
+- Stage info sheet: body map (player-chosen female/male/neutral), trained regions, benefits with guideline sources, disclaimer; Free/Premium badges (nothing locked while PAYMENTS is off).
+- docs/stages-roadmap.md: full spec for all remaining worlds, events, moves, bosses, age bands, Free vs Premium, body targets and anti-boredom rules.
+- First successful Android APK build in CI (run 11).
+- Open: 27 benefit sentences still English-only in hi/gu; native-speaker review of translations; budget-tier body-size threshold to tune with field data.

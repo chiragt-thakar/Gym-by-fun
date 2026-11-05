@@ -9,6 +9,7 @@ import '../services/api_client.dart';
 import '../services/premium.dart';
 import '../services/session_queue.dart';
 import '../services/settings.dart';
+import 'stage_info_sheet.dart';
 
 /// Gym branding and progress, if signed in. Null when offline or signed out.
 final homeDataProvider = FutureProvider.autoDispose<Map<String, dynamic>?>((
@@ -232,7 +233,13 @@ class _WorldCard extends StatelessWidget {
         open ? tr(st.description) : tr('Finish the previous stage to unlock'),
       ),
       enabled: open,
-      onTap: open ? () => context.push('/quest?level=${st.levelId}') : null,
+      onTap: open
+          ? () => showStageInfoSheet(
+              context,
+              st,
+              onPlay: () => context.push('/quest?level=${st.levelId}'),
+            )
+          : null,
     );
   }
 }

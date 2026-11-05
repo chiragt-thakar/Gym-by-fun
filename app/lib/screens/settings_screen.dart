@@ -7,6 +7,7 @@ import 'package:game_director/game_director.dart';
 import 'package:go_router/go_router.dart';
 
 import '../l10n/strings.dart';
+import '../l10n/tr.dart';
 import '../services/api_client.dart';
 import '../services/settings.dart';
 import '../app/theme.dart';
@@ -82,6 +83,25 @@ class SettingsScreen extends ConsumerWidget {
             onChanged: (l) => n.update((x) => x.copyWith(language: l)),
           ),
         ),
+        ListTile(
+          title: Text(
+            tr('Body diagram style'),
+            style: const TextStyle(fontSize: 18),
+          ),
+          subtitle: Text(tr('Used on stage info. You choose; we never guess.')),
+        ),
+        SegmentedButton<BodyStyle>(
+          key: const ValueKey('body-style'),
+          segments: [
+            ButtonSegment(value: BodyStyle.neutral, label: Text(tr('Neutral'))),
+            ButtonSegment(value: BodyStyle.female, label: Text(tr('Female'))),
+            ButtonSegment(value: BodyStyle.male, label: Text(tr('Male'))),
+          ],
+          selected: {s.bodyStyle},
+          onSelectionChanged: (v) =>
+              n.update((x) => x.copyWith(bodyStyle: v.first)),
+        ),
+        const SizedBox(height: 8),
         BigButton(
           'Recalibrate',
           icon: Icons.accessibility_new,

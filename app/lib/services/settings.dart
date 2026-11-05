@@ -10,6 +10,9 @@ import '../l10n/tr.dart';
 
 enum DeviceTier { upperMid, mid, budget }
 
+/// How the body diagram is drawn. Chosen by the player; never inferred.
+enum BodyStyle { neutral, female, male }
+
 /// Everything the player chooses, kept on the device.
 class Settings {
   const Settings({
@@ -27,6 +30,7 @@ class Settings {
     this.seenTypes = const {},
     this.sessionsPlayed = 0,
     this.completedLevels = const {},
+    this.bodyStyle = BodyStyle.neutral,
   });
 
   final AppLanguage language;
@@ -49,6 +53,9 @@ class Settings {
 
   /// Level ids the player has finished at least once (unlocks the next stage).
   final Set<String> completedLevels;
+
+  /// Body diagram style on stage info. The player picks it in Settings.
+  final BodyStyle bodyStyle;
 
   S get s => S(language);
 
@@ -78,6 +85,7 @@ class Settings {
     Set<EncounterType>? seenTypes,
     int? sessionsPlayed,
     Set<String>? completedLevels,
+    BodyStyle? bodyStyle,
   }) => Settings(
     language: language ?? this.language,
     difficulty: difficulty ?? this.difficulty,
@@ -93,6 +101,7 @@ class Settings {
     seenTypes: seenTypes ?? this.seenTypes,
     sessionsPlayed: sessionsPlayed ?? this.sessionsPlayed,
     completedLevels: completedLevels ?? this.completedLevels,
+    bodyStyle: bodyStyle ?? this.bodyStyle,
   );
 
   Map<String, Object?> toJson() => {
@@ -110,6 +119,7 @@ class Settings {
     'seenTypes': [for (final t in seenTypes) t.name],
     'sessionsPlayed': sessionsPlayed,
     'completedLevels': [...completedLevels],
+    'bodyStyle': bodyStyle.name,
   };
 
   factory Settings.fromJson(Map<String, dynamic> j) => Settings(
@@ -138,6 +148,8 @@ class Settings {
       for (final n in (j['completedLevels'] as List<dynamic>? ?? const []))
         if (n is String) n,
     },
+    bodyStyle:
+        BodyStyle.values.asNameMap()[j['bodyStyle']] ?? BodyStyle.neutral,
   );
 }
 
