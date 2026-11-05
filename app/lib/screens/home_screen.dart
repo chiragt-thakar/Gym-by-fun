@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../l10n/tr.dart';
 
 import '../services/api_client.dart';
+import '../services/premium.dart';
 import '../services/session_queue.dart';
 import '../services/settings.dart';
 
@@ -49,6 +50,7 @@ class HomeScreen extends ConsumerWidget {
     final gym = data?['gym'] as Map<String, dynamic>?;
     final progress = data?['progress'] as Map<String, dynamic>?;
     final quests = (data?['quests'] as List<dynamic>?) ?? const [];
+    final premium = ref.watch(premiumProvider).value ?? const PremiumState();
     Color? gymColour;
     if (gym != null) {
       final hex = (gym['colours'] as Map)['primary'] as String;

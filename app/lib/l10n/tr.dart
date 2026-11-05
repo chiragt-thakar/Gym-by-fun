@@ -260,6 +260,8 @@ const Map<String, (String, String)> _t = {
     'स्क्वाट · झुकना · हाथ ऊपर',
     'સ્ક્વોટ · નમવું · હાથ ઉપર',
   ),
+  'Premium': ('प्रीमियम', 'પ્રીમિયમ'),
+  'Premium via your gym': ('आपके जिम से प्रीमियम', 'તમારા જિમ તરફથી પ્રીમિયમ'),
   // Crew
   'Join your gym crew': ('अपने जिम क्रू से जुड़ें', 'તમારા જિમ ક્રૂમાં જોડાઓ'),
   'Members of partner gyms get Premium free.': (
