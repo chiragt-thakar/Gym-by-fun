@@ -369,7 +369,13 @@ class _QuestState extends ConsumerState<QuestScreen>
   void dispose() {
     _disposed = true;
     WidgetsBinding.instance.removeObserver(this);
-    _session?.dispose();
+    final session = _session;
+    _session = null;
+    session?.dispose();
+    // Drop the run (engine, plan, HUD notifier) with the screen so nothing
+    // from it outlives the results screen.
+    _game?.dispose();
+    _game = null;
     _voice.stop();
     super.dispose();
   }
@@ -515,7 +521,9 @@ class _RunView extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
-          GameWidget(game: game),
+          // Keyed and built once per run: HUD changes rebuild only the
+          // ValueListenableBuilder below, never the GameWidget.
+          GameWidget(key: const ValueKey('forest-game'), game: game),
           SafeArea(
             child: ValueListenableBuilder<HudState>(
               valueListenable: game.hud,

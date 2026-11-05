@@ -54,11 +54,40 @@ class Voice {
     }
   }
 
+  /// One reusable low-latency player per cue (at most [cues].length), so
+  /// cues never create a new platform player per play the way
+  /// `FlameAudio.play` does.
+  final Map<String, AudioPlayer> _players = {};
+
   Future<void> cue(String name) async {
     if (!_audioReady) return;
     try {
-      await FlameAudio.play('$name.wav', volume: 0.9);
+      final p = _players[name] ??= AudioPlayer()
+        ..audioCache = FlameAudio.audioCache;
+      await p.stop();
+      await p.play(
+        AssetSource('$name.wav'),
+        volume: 0.9,
+        mode: PlayerMode.lowLatency,
+      );
     } catch (_) {}
+  }
+
+  /// Releases the cue players and the cached sounds.
+  Future<void> dispose() async {
+    final players = _players.values.toList();
+    _players.clear();
+    for (final p in players) {
+      try {
+        await p.dispose();
+      } catch (_) {}
+    }
+    try {
+      await FlameAudio.audioCache.clearAll();
+    } catch (_) {}
+    _audioReady = false;
+    _cueLoad = null;
+    await stop();
   }
 
   /// Speaks a line, skipping it if another started under 1.2 s ago.
@@ -86,4 +115,8 @@ class Voice {
   }
 }
 
-final voiceProvider = Provider<Voice>((_) => Voice());
+final voiceProvider = Provider<Voice>((ref) {
+  final voice = Voice();
+  ref.onDispose(voice.dispose);
+  return voice;
+});

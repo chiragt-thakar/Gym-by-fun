@@ -106,14 +106,39 @@ class ForestGame extends FlameGame {
 
   @override
   void onRemove() {
+    // GameWidget detaches the game when the run view leaves the tree (also
+    // on a phase change); stop listening to motion straight away.
     _sub?.cancel();
+    _sub = null;
     super.onRemove();
+  }
+
+  bool _disposed = false;
+
+  /// Whether [dispose] has run; the game must not be shown again after it.
+  bool get isDisposed => _disposed;
+
+  /// Releases what the game holds outside Flame: the motion subscription and
+  /// the [hud] notifier. The owner (QuestScreen) calls this exactly when it
+  /// drops the game; it is not tied to [onRemove] or [onDispose] because a
+  /// GameWidget may detach and re-attach the same game. Safe to call twice.
+  /// Also runs [FlameGame.dispose], clearing components and image caches.
+  @override
+  void dispose() {
+    if (_disposed) {
+      return;
+    }
+    _disposed = true;
+    _sub?.cancel();
+    _sub = null;
+    hud.dispose();
+    super.dispose();
   }
 
   @override
   void update(double dt) {
     super.update(dt);
-    if (engine.finished) return;
+    if (_disposed || engine.finished) return;
     final l = lightOf?.call();
     if (l != null) engine.setLight(l);
     final ms = (dt * 1000).round().clamp(0, 100);
@@ -157,6 +182,7 @@ class ForestGame extends FlameGame {
   }
 
   void _handle(List<RunEvent> events) {
+    if (_disposed) return;
     for (final e in events) {
       switch (e) {
         case CuePlayed():
