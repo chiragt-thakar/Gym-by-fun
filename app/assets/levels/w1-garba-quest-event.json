@@ -1,0 +1,594 @@
+{
+  "$schema": "../schema/level.schema.json",
+  "id": "w1-garba-quest-event",
+  "version": 1,
+  "schemaVersion": 1,
+  "world": 1,
+  "name": "Garba Quest",
+  "lanes": 3,
+  "durationS": 180,
+  "hearts": 3,
+  "music": {
+    "track": "garba_taali",
+    "bpmByDifficulty": {
+      "beginner": 96,
+      "intermediate": 108,
+      "advanced": 120
+    }
+  },
+  "difficulty": {
+    "beginner": {
+      "warningMs": 2200,
+      "maxDemandingInRow": 3,
+      "hints": "always",
+      "lowImpactDefault": true
+    },
+    "intermediate": {
+      "warningMs": 1600,
+      "maxDemandingInRow": 5,
+      "hints": "firstTime",
+      "lowImpactDefault": true
+    },
+    "advanced": {
+      "warningMs": 1300,
+      "maxDemandingInRow": 7,
+      "hints": "off",
+      "lowImpactDefault": false
+    }
+  },
+  "scoring": {
+    "beam": 100,
+    "laneBlock": 100,
+    "orb": 50,
+    "gate": 150
+  },
+  "segments": [
+    {
+      "id": "practice",
+      "kind": "practice",
+      "startS": 0,
+      "endS": 20,
+      "hint": "Find the beat. Clap your hands up high!"
+    },
+    {
+      "id": "round1",
+      "kind": "learn",
+      "startS": 20,
+      "endS": 70,
+      "hint": "Round 1: move with the taali beat."
+    },
+    {
+      "id": "breather",
+      "kind": "breather",
+      "startS": 70,
+      "endS": 75,
+      "hint": "Breathe. Sway and catch the lights."
+    },
+    {
+      "id": "round2",
+      "kind": "combo",
+      "startS": 75,
+      "endS": 125,
+      "hint": "Round 2: circle the floor, left and right!"
+    },
+    {
+      "id": "checkpoint",
+      "kind": "checkpoint",
+      "startS": 125,
+      "endS": 126,
+      "hint": "Checkpoint! A heart comes back."
+    },
+    {
+      "id": "round3",
+      "kind": "combo",
+      "startS": 126,
+      "endS": 170,
+      "hint": "Round 3: the circle spins faster!"
+    },
+    {
+      "id": "finale",
+      "kind": "finale",
+      "startS": 170,
+      "endS": 180,
+      "hint": "Almost there! Final taali!"
+    }
+  ],
+  "encounters": [
+    {
+      "atS": 5,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "Orb on the beat! Raise both arms."
+    },
+    {
+      "atS": 7.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 10,
+      "type": "gate",
+      "hint": "A festive arch. Reach up through it."
+    },
+    {
+      "atS": 13,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ],
+      "hint": "Lean right to circle round."
+    },
+    {
+      "atS": 15.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 18,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ],
+      "hint": "Now lean left."
+    },
+    {
+      "atS": 21,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 23.5,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 26.0,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 28.5,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 31.0,
+      "type": "gate"
+    },
+    {
+      "atS": 33.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 36.0,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 38.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 41.0,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 43.5,
+      "type": "gate"
+    },
+    {
+      "atS": 46,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "Surprise! Golden lights circle the floor."
+    },
+    {
+      "atS": 48,
+      "type": "orb",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 50,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 53,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 55.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 58.0,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 60.5,
+      "type": "gate"
+    },
+    {
+      "atS": 63.0,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 65.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 68.0,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 71,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 73.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 76,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 78.2,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 80.4,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 82.6,
+      "type": "gate"
+    },
+    {
+      "atS": 84.8,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 87.0,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 91,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "Surprise! A bonus taali. Catch every light."
+    },
+    {
+      "atS": 92.5,
+      "type": "orb",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 94,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 96.5,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 98.7,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 100.9,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 103.1,
+      "type": "gate"
+    },
+    {
+      "atS": 105.3,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 107.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 108.6,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 111,
+      "type": "gate"
+    },
+    {
+      "atS": 113.5,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 115.7,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 117.9,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 120.1,
+      "type": "gate"
+    },
+    {
+      "atS": 122.3,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 127,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 129.0,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 131.0,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 133.0,
+      "type": "gate"
+    },
+    {
+      "atS": 136,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "Almost there! Golden lights for the last rounds."
+    },
+    {
+      "atS": 137.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 139,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 141.5,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 143.5,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 145.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 147.5,
+      "type": "gate"
+    },
+    {
+      "atS": 149.5,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 151.5,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 153,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 155.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 158,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 160.0,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 162.0,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 164.0,
+      "type": "gate"
+    },
+    {
+      "atS": 166.0,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 168.0,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 171,
+      "type": "gate"
+    },
+    {
+      "atS": 173.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 176,
+      "type": "gate",
+      "hint": "Final taali! Arms high!"
+    }
+  ]
+}

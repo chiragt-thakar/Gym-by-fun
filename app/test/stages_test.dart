@@ -58,9 +58,15 @@ void main() {
     expect(isUnlocked(stages[2], {forestEscapeId}), isFalse);
     // World 2 opens after the World 1 finale.
     expect(
-      isUnlocked(stageById('w2-desert-dunes')!, {'w1-guardian-grove'}),
+      isUnlocked(stageById('w2-desert-dunes')!, {'w1-garba-quest-event'}),
       isTrue,
     );
+    expect(
+      isUnlocked(stageById('w1-firefly-trail')!, {'w1-guardian-grove'}),
+      isTrue,
+    );
+    expect(stageById('w1-firefly-trail')!.stageNumber, 4);
+    expect(stageById('w1-garba-quest-event')!.stageNumber, 5);
   });
 
   test('daily quest plays the next uncompleted stage', () {

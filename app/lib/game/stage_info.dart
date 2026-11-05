@@ -148,6 +148,38 @@ const stageInfos = <String, StageInfo>{
     references: [who2020, acsm11, garber2011],
     tier: StageTier.free,
   ),
+  'w1-firefly-trail': StageInfo(
+    levelId: 'w1-firefly-trail',
+    primary: [BodyRegion.shoulders, BodyRegion.upperBack],
+    secondary: [BodyRegion.quads, BodyRegion.obliques],
+    movements: _all,
+    intensity: Intensity.light,
+    benefits: [
+      'Overhead reaches move the shoulders and arms.',
+      'Easy squats keep the legs active.',
+      'A relaxed way to add movement to your day.',
+    ],
+    references: [who2020, acsm11],
+    tier: StageTier.free,
+  ),
+  'w1-garba-quest-event': StageInfo(
+    levelId: 'w1-garba-quest-event',
+    primary: [
+      BodyRegion.obliques,
+      BodyRegion.hipAbductors,
+      BodyRegion.shoulders,
+    ],
+    secondary: [BodyRegion.glutes, BodyRegion.core],
+    movements: [MovementPattern.sideBend, MovementPattern.overheadReach],
+    intensity: Intensity.light,
+    benefits: [
+      'Side leans work the waist and outer hips.',
+      'Overhead reaches move the shoulders and arms.',
+      'Adds active minutes to your week.',
+    ],
+    references: [who2020, acsm11],
+    tier: StageTier.free,
+  ),
   'w2-desert-dunes': StageInfo(
     levelId: 'w2-desert-dunes',
     primary: [BodyRegion.obliques, BodyRegion.hipAbductors],

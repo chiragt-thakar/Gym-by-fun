@@ -46,6 +46,8 @@ worlds 5 to 9 in order. **Stadium Nights is world 5**, so the plan's "5 Ancient 
 | 1 | `w1-forest-escape` | 1 Forest Awakening | 1-1 Forest Escape | 3:01 (181 s, 56 enc.) | Tutorial: squat, lean, raise arms, gates | Implemented |
 | 2 | `w1-river-crossing` | 1 Forest Awakening | 1-2 River Crossing | 3:00 (180 s, 68) | Lean-then-squat combos | Implemented |
 | 3 | `w1-guardian-grove` | 1 Forest Awakening | 1-3 Guardian Grove | 3:30 (210 s, 82) | Mini-boss: sweeping branches, root walls, gate calm | Implemented |
+| 3a | `w1-firefly-trail` | 1 Forest Awakening | 1-4 Firefly Trail | 3:00 (180 s, 67) | Gentle reach-heavy replay: firefly orbs, deer bonus trail (~45 s), glade breather (~90 s), golden gate + "almost there" (135 s), checkpoint 140 s | Implemented |
+| 3b | `w1-garba-quest-event` | 1 Forest Awakening (event slot) | 1-5 Garba Quest | 3:00 (180 s, 74) | Navratri rhythm event (interim): orbs, arches and circling lean patterns on a 4-beat taali (2.5 s → 2.2 s → 2.0 s), checkpoint 125 s; `SceneTheme.neon`. Ships in World 1 because the schema allows world 1–8 only; becomes `w0-garba-quest` once world 0 + event windows exist | Implemented |
 | 4 | `w2-desert-dunes` | 2 Desert Trials | 2-1 Desert Dunes | 3:00 (180 s, 68) | Desert theme, mirage orbs | Implemented |
 | 5 | `w2-sandstorm-temple` | 2 Desert Trials | 2-2 Sandstorm Temple | 3:30 (210 s, 82) | Two-lane walls, harder combos | Implemented |
 | 6 | `w3-neon-city-rooftops` | 3 Neon City | 3-1 Neon City Rooftops | 3:00 (180 s, 53) | Neon signs (beams), drones (blocks), power cells (orbs) | Implemented |
@@ -99,7 +101,7 @@ The encounter `type` enum has only four values.
 | `w1-forest-escape` | Forest Escape | 3:01 | S3 | existing | Implemented |
 | `w1-river-crossing` | River Crossing | 3:00 | S3 | existing | Implemented |
 | `w1-guardian-grove` | Guardian Grove | 3:30 | S3.5 | existing | Implemented (mini-boss) |
-| `w1-firefly-trail` *(optional)* | Firefly Trail | 2:30 | practice 0–20, learn 20–80, breather 80–100, combo 100–130, checkpoint 130–131, finale 131–150 | beam 30 %, laneBlock 35 %, orb 35 % | A relaxed replay stage for beginners. Warning 2.2 s on beginner. Not required for unlocks; insert it after 1-3 only if the team wants a softer bridge. |
+| `w1-firefly-trail` | Firefly Trail | 3:00 (Implemented as 1-4) | practice 0–20, learn 20–80, breather 80–100, combo 100–130, checkpoint 130–131, finale 131–150 | beam 30 %, laneBlock 35 %, orb 35 % | A relaxed replay stage for beginners. Warning 2.2 s on beginner. Not required for unlocks; insert it after 1-3 only if the team wants a softer bridge. |
 
 **Sound ideas:** soft wooden whoosh (beam), bird flutter on checkpoint.
 **Hints:** "Fireflies love raised arms." / "Lean early, stay smooth."
@@ -300,7 +302,7 @@ religious symbols or ritual depictions. Run copy past a cultural reviewer before
 
 | Id | Title | Window | Length | Segment plan | Mix | Notes |
 |---|---|---|---|---|---|---|
-| `w0-garba-quest` | Garba Quest | Navratri, 9 nights. Launch in Ahmedabad first (geo/locale flag on the server), then Gujarat, then India | 3:00 | practice 0–20, then 3 × "rounds" 20–70, 75–125 (breather 70–75), 130–175, finale 175–180 | slideWall (side step on the beat) 35 %, orb (arms up on the beat) 35 %, hurdle (calf raise on the beat) 15 %, gate 15 % | A rhythm event. Encounters sit exactly on beats of the music BPM (beginner 96, intermediate 108, advanced 120). Rounds speed up by one BPM step. Nothing damages in round 1. Circular dance-floor prop with original geometric patterns. Gujarati and Hindi hints. |
+| `w0-garba-quest` (interim: `w1-garba-quest-event`, Implemented) | Garba Quest | Navratri, 9 nights. Launch in Ahmedabad first (geo/locale flag on the server), then Gujarat, then India | 3:00 | practice 0–20, then 3 × "rounds" 20–70, 75–125 (breather 70–75), 130–175, finale 175–180 | slideWall (side step on the beat) 35 %, orb (arms up on the beat) 35 %, hurdle (calf raise on the beat) 15 %, gate 15 % | A rhythm event. Encounters sit exactly on beats of the music BPM (beginner 96, intermediate 108, advanced 120). Rounds speed up by one BPM step. Nothing damages in round 1. Circular dance-floor prop with original geometric patterns. Gujarati and Hindi hints. |
 | `w0-garba-quest-night2` *(optional)* | Garba Quest: Raas Night | Same window | 3:00 | as above | adds pads (a stylised "clap" target, answered by a punch at low reach) | Only if punch is shipped. |
 | `w0-diwali-lights-run` | Diwali Lights Run | Diwali week | 3:00 | S3 | orb 35 % ("light the lamps"), beam 20 %, laneBlock 20 %, gate 15 %, jogTrack ×1 | The street lights up as orbs are collected (score unchanged). **No firecracker imagery or loud bangs.** Sounds are soft bells and sparkles. |
 | `w0-holi-colour-dash` | Holi Colour Dash | Holi weekend | 3:00 | S3 | slideWall 20 % (colour clouds), beam 20 %, laneBlock 20 %, orb 30 % (colour bursts), gate 10 % | The runner and road get "painted" by cleared encounters. Use the high-contrast palette; shape cues stay. |

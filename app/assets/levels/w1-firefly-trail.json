@@ -1,0 +1,508 @@
+{
+  "$schema": "../schema/level.schema.json",
+  "id": "w1-firefly-trail",
+  "version": 1,
+  "schemaVersion": 1,
+  "world": 1,
+  "name": "Firefly Trail",
+  "lanes": 3,
+  "durationS": 180,
+  "hearts": 3,
+  "music": {
+    "track": "forest_run",
+    "bpmByDifficulty": {
+      "beginner": 100,
+      "intermediate": 112,
+      "advanced": 124
+    }
+  },
+  "difficulty": {
+    "beginner": {
+      "warningMs": 2200,
+      "maxDemandingInRow": 3,
+      "hints": "always",
+      "lowImpactDefault": true
+    },
+    "intermediate": {
+      "warningMs": 1600,
+      "maxDemandingInRow": 5,
+      "hints": "firstTime",
+      "lowImpactDefault": true
+    },
+    "advanced": {
+      "warningMs": 1300,
+      "maxDemandingInRow": 7,
+      "hints": "off",
+      "lowImpactDefault": false
+    }
+  },
+  "scoring": {
+    "beam": 100,
+    "laneBlock": 100,
+    "orb": 50,
+    "gate": 150
+  },
+  "segments": [
+    {
+      "id": "practice",
+      "kind": "practice",
+      "startS": 0,
+      "endS": 30,
+      "hint": "A calm trail. Follow the fireflies."
+    },
+    {
+      "id": "learn",
+      "kind": "learn",
+      "startS": 30,
+      "endS": 90
+    },
+    {
+      "id": "breather",
+      "kind": "breather",
+      "startS": 90,
+      "endS": 105,
+      "hint": "Firefly glade. Breathe slowly, grab the orbs."
+    },
+    {
+      "id": "combos",
+      "kind": "combo",
+      "startS": 105,
+      "endS": 140,
+      "hint": "Lean, squat, reach. Keep the glow going!"
+    },
+    {
+      "id": "checkpoint",
+      "kind": "checkpoint",
+      "startS": 140,
+      "endS": 141,
+      "hint": "Checkpoint! A heart comes back."
+    },
+    {
+      "id": "finale",
+      "kind": "finale",
+      "startS": 141,
+      "endS": 180,
+      "hint": "Almost there! Light the trail home."
+    }
+  ],
+  "encounters": [
+    {
+      "atS": 6,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "Firefly orb! Raise both arms to catch it."
+    },
+    {
+      "atS": 10,
+      "type": "beam",
+      "hint": "A low branch. Squat to pass under."
+    },
+    {
+      "atS": 14,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 18,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ],
+      "hint": "A fern in the middle. Lean left or right."
+    },
+    {
+      "atS": 22,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 24,
+      "type": "beam",
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 26.5,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 31,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 33,
+      "type": "beam"
+    },
+    {
+      "atS": 35,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 37,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 39,
+      "type": "beam"
+    },
+    {
+      "atS": 41,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 42.5,
+      "type": "beam",
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 45,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "A deer crosses! Follow its bonus firefly trail."
+    },
+    {
+      "atS": 46.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 48,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 51,
+      "type": "beam"
+    },
+    {
+      "atS": 54.5,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 57,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 60,
+      "type": "beam"
+    },
+    {
+      "atS": 62,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 63.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 65,
+      "type": "beam"
+    },
+    {
+      "atS": 67,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 69,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 71,
+      "type": "beam"
+    },
+    {
+      "atS": 72.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "advanced"
+    },
+    {
+      "atS": 74,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 76,
+      "type": "orb",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 78,
+      "type": "beam"
+    },
+    {
+      "atS": 80,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 83,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 86.5,
+      "type": "beam"
+    },
+    {
+      "atS": 92,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "hint": "Glowing jars! Reach up slowly."
+    },
+    {
+      "atS": 96.5,
+      "type": "orb",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 101,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 106,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 108,
+      "type": "beam"
+    },
+    {
+      "atS": 110,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 112,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 114,
+      "type": "beam"
+    },
+    {
+      "atS": 115.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 117,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 119,
+      "type": "beam"
+    },
+    {
+      "atS": 121,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 123,
+      "type": "laneBlock",
+      "lanes": [
+        1,
+        2
+      ]
+    },
+    {
+      "atS": 125,
+      "type": "beam"
+    },
+    {
+      "atS": 128,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 131.5,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 135,
+      "type": "gate",
+      "hint": "Almost there! A golden gate. Reach up through it."
+    },
+    {
+      "atS": 137.5,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 143,
+      "type": "beam"
+    },
+    {
+      "atS": 145,
+      "type": "laneBlock",
+      "lanes": [
+        0
+      ]
+    },
+    {
+      "atS": 147,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 150,
+      "type": "gate"
+    },
+    {
+      "atS": 153,
+      "type": "laneBlock",
+      "lanes": [
+        2
+      ]
+    },
+    {
+      "atS": 155,
+      "type": "beam"
+    },
+    {
+      "atS": 157,
+      "type": "orb",
+      "lanes": [
+        1
+      ],
+      "minDifficulty": "intermediate"
+    },
+    {
+      "atS": 159,
+      "type": "laneBlock",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 162,
+      "type": "gate"
+    },
+    {
+      "atS": 165,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 167,
+      "type": "beam"
+    },
+    {
+      "atS": 169,
+      "type": "laneBlock",
+      "lanes": [
+        0,
+        1
+      ]
+    },
+    {
+      "atS": 172,
+      "type": "gate"
+    },
+    {
+      "atS": 175,
+      "type": "orb",
+      "lanes": [
+        1
+      ]
+    },
+    {
+      "atS": 177.5,
+      "type": "gate",
+      "hint": "Last reach! The trail lights up."
+    }
+  ]
+}
