@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../app/router.dart';
 import '../services/api_client.dart';
 import '../services/settings.dart';
 import '../widgets/common.dart';
@@ -43,7 +44,12 @@ class _SignInState extends ConsumerState<SignInScreen> {
     }
   }
 
-  void _next() => context.go(ref.read(settingsProvider).setupDone ? '/home' : '/setup');
+  void _next() {
+    final s = ref.read(settingsProvider);
+    final pendingCode = ref.read(sharedPrefsProvider).getString(pendingGymCodeKey);
+    if (!s.setupDone) return context.go('/setup');
+    context.go(pendingCode != null && s.signedIn ? '/crew' : '/home');
+  }
 
   @override
   Widget build(BuildContext context) {

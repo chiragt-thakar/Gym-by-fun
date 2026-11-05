@@ -1,3 +1,14 @@
+import java.util.Properties
+
+// Release signing: android/key.properties (git-ignored) or CI secrets via env.
+// storeFile=…/upload.jks  storePassword=…  keyAlias=upload  keyPassword=…
+val keystoreProps = Properties().apply {
+    val f = rootProject.file("key.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+fun signingValue(key: String, env: String): String? =
+    keystoreProps.getProperty(key) ?: System.getenv(env)
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -34,11 +45,27 @@ android {
         noCompress += "task"
     }
 
+    signingConfigs {
+        create("release") {
+            val store = signingValue("storeFile", "MQ_KEYSTORE_PATH")
+            if (store != null) {
+                storeFile = file(store)
+                storePassword = signingValue("storePassword", "MQ_KEYSTORE_PASSWORD")
+                keyAlias = signingValue("keyAlias", "MQ_KEY_ALIAS")
+                keyPassword = signingValue("keyPassword", "MQ_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            val release = signingConfigs.getByName("release")
+            // Without an upload key the release build is signed with the debug
+            // key so it can still be installed locally; Play will refuse it.
+            signingConfig = if (release.storeFile != null) release else signingConfigs.getByName("debug")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 }

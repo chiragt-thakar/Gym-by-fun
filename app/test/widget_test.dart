@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:motionquest/app/router.dart';
 import 'package:motionquest/main.dart';
 import 'package:motionquest/services/settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -47,5 +48,14 @@ void main() {
     await t.pumpAndSettle();
     await t.scrollUntilVisible(find.textContaining('talk to a doctor'), 300);
     expect(find.textContaining('talk to a doctor'), findsOneWidget);
+  });
+
+  testWidgets('a gym QR deep link remembers the code through onboarding', (t) async {
+    await pumpApp(t);
+    final container = ProviderScope.containerOf(t.element(find.byType(MotionQuestApp)));
+    container.read(routerProvider).go('/join?code=iron-ab12cd');
+    await t.pumpAndSettle();
+    expect(container.read(sharedPrefsProvider).getString(pendingGymCodeKey), 'IRON-AB12CD');
+    expect(find.text('Your body is the controller.'), findsOneWidget); // onboarding first
   });
 }

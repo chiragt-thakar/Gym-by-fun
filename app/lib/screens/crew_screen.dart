@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../app/router.dart';
 import '../services/api_client.dart';
+import '../services/settings.dart';
 import '../widgets/common.dart';
 import 'home_screen.dart';
 
@@ -23,6 +25,12 @@ class _CrewState extends ConsumerState<CrewScreen> {
   @override
   void initState() {
     super.initState();
+    final prefs = ref.read(sharedPrefsProvider);
+    final pending = prefs.getString(pendingGymCodeKey);
+    if (pending != null) {
+      _code.text = pending;
+      prefs.remove(pendingGymCodeKey);
+    }
     _load();
   }
 
