@@ -1,5 +1,131 @@
 # Progress
 
+## Gameplay, characters and body guide - 2026-11-09
+- Added authored scene identities across all 18 stages: forest, raft-based
+  river crossings, ruins, desert, neon rooftops, mountain bridges and festival
+  streets. Added config-selected rain/fireflies/sand/stars/snow/petals, a
+  destination charge ring and an earned-progress firefly companion. These are
+  variants of the existing runner, not seven separate game engines.
+- Added optional missions (lights, gates, clear path) in game_director. Targets
+  use the actual difficulty's planned encounters; tracking forgiveness protects
+  the denominator, checkpoint replays cannot count an encounter twice, and raw
+  moves never earn progress. A completed non-tutorial mission earns a persistent
+  cosmetic star on the world map. No stage unlock or heart depends on it.
+- Settings -> Your explorer offers Kavi the fox, Neela the otter and Tara the
+  starbot, using the same original vector art as gameplay. Added animated bent
+  limbs, capes/scarves, boots and smoother recognised duck/reach/lane responses.
+  Character choices have identical timing, scoring and recognition rules.
+- Body guide: outlined, confidence-coloured joints over the native mirror;
+  a filled landmark-only body avatar when the mirror is off. Unseen joints are
+  omitted; camera pixels remain native. The guide stays under the header during
+  play. Improved standing target and short localised action/segment cues, with
+  full authored hints kept on the voice path. Reduced motion stops decoration.
+- Fixed small-screen layout issues exposed by the expanded tests: long settings
+  section titles wrap, warm-up/cool-down can scroll, and mission/guide overlays
+  use header space rather than obscuring the explorer. Added EN/HI/GU text.
+- Both canonical and bundled levels now carry validated gameplay metadata at
+  content version 3. Added server/Dart checks for a beginner mission opportunity.
+  No motion recogniser thresholds or native camera pipeline were changed.
+- Verification: 200 app tests, 353 director tests, 77 motion tests (synthetic
+  replay gate), and 73 server integration tests passed. App/Dart analysis and
+  server lint/typecheck clean; all 18 levels validated. Native debug APK built
+  successfully. Backend tests used isolated temporary PostgreSQL/Redis instances,
+  which were stopped and removed afterward.
+- Rendered and visually checked fixture previews: [river](screenshots/gameplay-river.png),
+  [neon](screenshots/gameplay-neon.png), [mountain](screenshots/gameplay-mountain.png),
+  [body guide](screenshots/gameplay-body-guide.png). No camera image was captured.
+  Physical movement feel, native camera alignment and on-device frame rate still
+  require a consenting person in front of the camera.
+- Installed the updated APK on the authorized Vivo V2348 with `adb install -r`
+  (Success), retaining application data and the existing granted camera
+  permission. Launching MainActivity returned Status ok and the new app process
+  remains alive, with no process-scoped AndroidRuntime/flutter error logs.
+  The device keyguard is currently showing, so the user must unlock the phone
+  to interact with it; no device authentication was bypassed. No camera image
+  or screen capture was taken. Select an explorer in Settings; switch the
+  camera mirror off to use the landmark-only body avatar.
+
+## Installed and launched on phone - 2026-11-09
+- Updated MotionQuest on the user's authorized Vivo V2348 (Android API 36)
+  using `adb install -r` and the newly built debug APK. Installation returned
+  Success; existing application data was retained.
+- Granted `android.permission.CAMERA` through the authorized ADB connection;
+  package inspection confirms `granted=true`.
+- Launched `app.motionquest/.MainActivity` with `am start -W`: Status ok;
+  Android confirms it as the resumed foreground activity and the app process
+  remains running. No camera frames or screenshots were captured.
+- Operational installation only; application source is unchanged from the
+  validated build above. Physical movement accuracy, latency and battery use
+  still require an actual play session.
+
+## Adventure experience implementation - 2026-11-09
+- Replaced the oversized daily button/empty server-stat header with an original
+  illustrated next-adventure card, real total-time estimate, local save/sync
+  status, recent activity calendar and counts, cosmetic keepsake collection,
+  and collapsing chapter maps. Added one-run **Gentle today**: existing
+  low-impact recogniser profile + beginner director + assist; preferences stay
+  unchanged.
+- Added optional typed/schema-validated journey metadata to all 18 canonical
+  and bundled levels; incremented their immutable content versions. Original
+  forest/desert/neon/mountain cover art, authored completion scenes and unique
+  keepsakes give the journey continuity without changing encounter layouts.
+- Gameplay: contextual clear/duck/dodge/gate feedback, existing flow counter,
+  reduced-motion-aware success particles, original fox-hood/scarf detail, and
+  a two-row HUD for small phones. No recogniser thresholds changed.
+- Hands-free foreground pause/checkpoint confirmation: neutral -> recognised
+  arms held 1.2 s -> lower arms -> 3 s fresh, good-frame countdown. Paused
+  gameplay ignores menu input and menu moves are not workout telemetry.
+  Background stops the camera; foreground never starts gameplay by itself.
+  Native stop no longer waits behind Dart stream cancellation. Camera re-entry
+  failures can Retry without losing the paused run/checkpoint. Also fixed Voice
+  provider-ref access during disposal and inherited asset reads in initState.
+- Account/storage fixes: owner-tagged queue, sign-out cleanup with unsynced-run
+  warning, account-switch progress/calibration isolation, in-flight token-change
+  guards, per-record validation isolation, preserved rejected/corrupt files,
+  honest result save errors/Retry and immediate local effort-rating updates.
+  Results now capture actual assist/max hearts and exclude manual pause and
+  cool-down from uploaded run duration.
+- Completed translated settings labels and new player text in English, Hindi
+  and Gujarati; native-speaker review remains required. Research inputs,
+  product decisions, menu rules and unproven retention hypotheses are in
+  [game-design.md](game-design.md); controls in [security.md](security.md).
+- Widget previews: [home](screenshots/next-home.png),
+  [chapter map](screenshots/next-map.png), [results](screenshots/next-results.png).
+  These use test fixture activity, not camera captures or real player results.
+- Validation: Flutter analysis clean; 198 app tests, 349 director tests and 77
+  motion tests passed, including the synthetic replay accuracy gate. Server
+  lint/typecheck clean, all 73 integration tests passed on isolated ephemeral
+  PostgreSQL/Redis containers, and all 18 content files validated. Test
+  containers were removed afterward. Previews were rendered and inspected.
+- The final environment check found the configured Android SDK at the
+  non-default `C:\Android\Sdk` path; the earlier default-path check was
+  insufficient. No phone is attached (`adb devices` is empty), so native preview
+  alignment, on-phone frame rate, battery use and competitive retention remain
+  unverified. Existing release/field gates still apply.
+- Local Android build passed: `cd app && flutter build apk --debug --no-pub`
+  compiled the app and native pose plugin. Installable test artifact:
+  `app/build/app/outputs/flutter-apk/app-debug.apk` (debug build, not a Play
+  release). No APK was installed on a device in this session.
+
+## UX assessment - 2026-11-09
+- Reviewed the onboarding, setup/calibration, home, quest, results, offline
+  queue, account settings, stage selection, renderer and saved screenshots.
+  This was a source/screenshot review, not an Android playtest; gameplay was
+  not changed.
+- Confirmed priorities: isolate queued runs and coach history between accounts;
+  preserve valid sessions when one upload is rejected; enforce stage access
+  inside QuestScreen; replace tap-dependent resume/checkpoint decisions with
+  deliberate, state-specific hands-free choices and a framing countdown.
+- UX opportunities: show total quest time (including the current 75 s warm-up
+  and 60 s cool-down); explain local/sync status; show offline progress instead
+  of empty server-only stats; strengthen movement feedback and distinct world
+  missions; finish translation of settings labels and error states.
+- Verification: all 18 level JSON files passed `npm.cmd run content:validate`;
+  `flutter analyze --no-pub` found no issues; all 143 app tests passed with
+  `flutter test --no-pub --reporter compact`. Flutter checks required access
+  to the SDK cache outside the restricted workspace. Real-phone tracking,
+  distance readability and latency remain unverified in this review.
+
 ## Current phase: 0 → 1 (code complete for Phase 0 and the Phase 1 MVP; field gates pending)
 
 ### Done
@@ -53,8 +179,8 @@
   the files to `packages/motion_core/test/recordings/`.
 - On-device fps, inference time and movement-to-action latency (< 150 ms)
   on budget, mid and upper-mid phones — read them on the debug screen.
-- The native bridge and APK are compiled only in CI (the development
-  container cannot reach the Android SDK host).
+- Native bridge and debug APK now also compile locally (2026-11-09); native
+  preview, camera behaviour and performance on physical phones remain pending.
 - Playtests (5–10 people), Play closed testing track, crash-free rate.
 
 ### Next

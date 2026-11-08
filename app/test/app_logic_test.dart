@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
@@ -20,11 +21,67 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'fakes.dart';
 
+class _SlowCancelSource extends ReplayPoseSource {
+  _SlowCancelSource(this.cancelled) : super(const []);
+  final Completer<void> cancelled;
+  late final _stream = StreamController<PoseFrame>(
+    onCancel: () => cancelled.future,
+  );
+  @override
+  Stream<PoseFrame> get frames => _stream.stream;
+}
+
 LevelConfig forest() => LevelConfig.decode(
   File('assets/levels/w1-forest-escape.json').readAsStringSync(),
 );
 
 void main() {
+  test(
+    'native stop does not wait for event subscription cancellation',
+    () async {
+      final cancelled = Completer<void>();
+      final source = _SlowCancelSource(cancelled);
+      final session = MotionSession(source, initialCalibration: null);
+      await session.start();
+      final stopping = session.stop();
+      expect(source.started, isFalse);
+      cancelled.complete();
+      await stopping;
+      await session.dispose();
+    },
+  );
+  test(
+    'hands-free ready needs neutral, a deliberate hold, release and countdown',
+    () {
+      final gate = ReadyGate();
+      for (var ts = 0; ts < 1000; ts += 50) {
+        expect(gate.update(ts, good: true, raised: true), isFalse);
+      }
+      // Walking into view with arms already raised is not consent.
+      expect(gate.confirmed, isFalse);
+      gate.update(1000, good: true, raised: false);
+      for (var ts = 1050; ts <= 2400; ts += 50) {
+        gate.update(ts, good: true, raised: true);
+      }
+      expect(gate.confirmed, isTrue);
+      for (var ts = 2450; ts < 5450; ts += 50) {
+        expect(gate.update(ts, good: true, raised: false), isFalse);
+      }
+      expect(gate.update(5450, good: true, raised: false), isTrue);
+    },
+  );
+
+  test('ready countdown restarts after bad framing or a missing-frame gap', () {
+    final gate = ReadyGate()..request();
+    for (var ts = 0; ts < 2000; ts += 50) {
+      gate.update(ts, good: true, raised: false);
+    }
+    gate.update(2000, good: false, raised: false);
+    expect(gate.countdown, 3);
+    gate.update(2050, good: true, raised: false);
+    expect(gate.update(6000, good: true, raised: false), isFalse);
+    expect(gate.countdown, 3);
+  });
   test('bundled levels match the canonical content/levels', () {
     for (final f in Directory(
       '../content/levels',
@@ -288,6 +345,145 @@ void main() {
       });
     });
     tearDown(() => tmp.delete(recursive: true));
+
+    test('one invalid session never discards its valid neighbours', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final uploaded = <String>[];
+      final q = SessionQueue(
+        ApiClient(
+          TokenStore(prefs),
+          client: MockClient((req) async {
+            final batch = (jsonDecode(req.body) as Map)['sessions'] as List;
+            if (batch.any((s) => s['clientId'] == 'bad')) {
+              return http.Response('{"error":"invalid_body"}', 400);
+            }
+            uploaded.addAll(batch.map((s) => s['clientId'] as String));
+            return http.Response('{}', 200);
+          }),
+        ),
+        dir: () async => tmp,
+      );
+      for (final id in ['good1', 'bad', 'good2']) {
+        await q.add({'clientId': id});
+      }
+      expect(await q.flush(), 2);
+      expect(uploaded, ['good1', 'good2']);
+      expect(await q.pending(), isEmpty);
+      expect(await q.rejectedCount(), 1);
+    });
+
+    test('forbidden upload keeps every session for retry', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final q = SessionQueue(
+        ApiClient(
+          TokenStore(prefs),
+          client: MockClient(
+            (_) async => http.Response('{"error":"forbidden"}', 403),
+          ),
+        ),
+        dir: () async => tmp,
+      );
+      await q.add({'clientId': 'keep'});
+      expect(await q.flush(), 0);
+      expect((await q.pending()).single['clientId'], 'keep');
+    });
+
+    test('another account never receives the previous account runs', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final tokens = TokenStore(prefs);
+      await tokens.save('a', 'r', accountId: 'player-a');
+      var uploads = 0;
+      final q = SessionQueue(
+        ApiClient(
+          tokens,
+          client: MockClient((req) async {
+            uploads++;
+            return http.Response('{}', 200);
+          }),
+        ),
+        dir: () async => tmp,
+      );
+      await q.add({'clientId': 'private-a'});
+      await tokens.save('b', 'r2', accountId: 'player-b');
+      expect(await q.flush(), 0);
+      expect(uploads, 0);
+      expect(await q.pendingForCurrentAccount(), isEmpty);
+      expect((await q.pending()).length, 1);
+    });
+
+    test(
+      'account change during upload cannot retry under new credentials',
+      () async {
+        final prefs = await SharedPreferences.getInstance();
+        final tokens = TokenStore(prefs);
+        await tokens.save('a', 'refresh-a', accountId: 'player-a');
+        final started = Completer<void>();
+        final response = Completer<http.Response>();
+        var requests = 0;
+        final q = SessionQueue(
+          ApiClient(
+            tokens,
+            client: MockClient((_) {
+              requests++;
+              started.complete();
+              return response.future;
+            }),
+          ),
+          dir: () async => tmp,
+        );
+        await q.add({'clientId': 'private-a'});
+        final upload = q.flush();
+        await started.future;
+        await tokens.save('b', 'refresh-b', accountId: 'player-b');
+        response.complete(http.Response('{"error":"expired"}', 401));
+        expect(await upload, 0);
+        expect(requests, 1);
+        expect((await q.pending()).length, 1);
+      },
+    );
+
+    test(
+      'clear waits for an in-flight upload and removes local runs',
+      () async {
+        final prefs = await SharedPreferences.getInstance();
+        final started = Completer<void>();
+        final response = Completer<http.Response>();
+        final q = SessionQueue(
+          ApiClient(
+            TokenStore(prefs),
+            client: MockClient((_) {
+              started.complete();
+              return response.future;
+            }),
+          ),
+          dir: () async => tmp,
+        );
+        await q.add({'clientId': 'private'});
+        final upload = q.flush();
+        await started.future;
+        final clear = q.clear();
+        response.complete(http.Response('{}', 200));
+        await upload;
+        await clear;
+        expect(await q.pending(), isEmpty);
+        expect(await q.rejectedCount(), 0);
+      },
+    );
+
+    test(
+      'unreadable activity is preserved and reported, never overwritten',
+      () async {
+        final prefs = await SharedPreferences.getInstance();
+        final file = File('${tmp.path}/session_queue.json');
+        await file.writeAsString('{broken');
+        final q = SessionQueue(
+          ApiClient(TokenStore(prefs)),
+          dir: () async => tmp,
+        );
+        await expectLater(q.add({'clientId': 'new'}), throwsFormatException);
+        expect(await file.readAsString(), '{broken');
+      },
+    );
 
     RunResult result() => const RunResult(
       levelId: 'w1-forest-escape',

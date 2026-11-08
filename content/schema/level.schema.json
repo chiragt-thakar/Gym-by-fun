@@ -16,6 +16,26 @@
     "lanes": { "const": 3 },
     "durationS": { "type": "number", "minimum": 30, "maximum": 900 },
     "hearts": { "type": "integer", "minimum": 1, "maximum": 5 },
+    "gameplay": {
+      "type": "object", "additionalProperties": false,
+      "required": ["scene", "mission", "targetFraction", "atmosphere"],
+      "properties": {
+        "scene": {"enum": ["forest", "river", "ruins", "desert", "neon", "mountain", "festival"]},
+        "mission": {"enum": ["lights", "gates", "path"]},
+        "targetFraction": {"type": "number", "minimum": 0.25, "maximum": 1},
+        "atmosphere": {"enum": ["fireflies", "rain", "sand", "stars", "snow", "petals"]}
+      }
+    },
+    "journey": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mission", "completion", "keepsake"],
+      "properties": {
+        "mission": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "completion": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "keepsake": { "type": "string", "minLength": 1, "maxLength": 100 }
+      }
+    },
     "music": {
       "type": "object",
       "additionalProperties": false,

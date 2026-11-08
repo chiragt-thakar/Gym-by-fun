@@ -161,12 +161,27 @@ class FramePainter extends CustomPainter {
   static final _head = Paint()..style = PaintingStyle.stroke;
   static final _edge = Paint();
   static final _shade = Paint()..color = const Color(0x33000000);
+  static final _grid = Paint()
+    ..color = const Color(0x143FD0C0)
+    ..strokeWidth = 1;
+  static final _outline = Paint()
+    ..color = const Color(0xFF0B262B)
+    ..strokeCap = StrokeCap.round;
+  static final _suit = Paint()..color = const Color(0xFF1B777A);
+  static final _visor = Paint()..color = const Color(0xFFB4F6E8);
+  static final _torso = Path();
 
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width, h = size.height;
     final ok = advice.ok;
     if (dimForMirror) canvas.drawRect(Offset.zero & size, _shade);
+    if (!dimForMirror) {
+      for (var i = 1; i < 8; i++) {
+        canvas.drawLine(Offset(w * i / 8, 0), Offset(w * i / 8, h), _grid);
+        canvas.drawLine(Offset(0, h * i / 8), Offset(w, h * i / 8), _grid);
+      }
+    }
 
     if (showTarget) {
       // Where a standing body should sit: head to feet with a margin.
@@ -174,14 +189,35 @@ class FramePainter extends CustomPainter {
       _target.color = c.withValues(alpha: ok ? 0.9 : 0.55);
       _targetFill.color = c.withValues(alpha: ok ? 0.10 : 0.05);
       final head = Offset(w * 0.5, h * 0.14);
-      final body = RRect.fromRectAndRadius(
-        Rect.fromLTRB(w * 0.34, h * 0.22, w * 0.66, h * 0.93),
-        Radius.circular(w * 0.14),
-      );
       canvas.drawCircle(head, h * 0.06, _targetFill);
       canvas.drawCircle(head, h * 0.06, _target);
-      canvas.drawRRect(body, _targetFill);
-      canvas.drawRRect(body, _target);
+      // A standing-body target with actual arm/leg space, rather than a
+      // full-height pill that suggests the player should hide their arms.
+      for (var side = -1.0; side <= 1; side += 2) {
+        final shoulder = Offset(w * (0.5 + side * 0.12), h * 0.27);
+        final hip = Offset(w * (0.5 + side * 0.08), h * 0.56);
+        canvas.drawLine(
+          shoulder,
+          Offset(w * (0.5 + side * 0.23), h * 0.56),
+          _target,
+        );
+        canvas.drawLine(shoulder, hip, _target);
+        canvas.drawLine(
+          hip,
+          Offset(w * (0.5 + side * 0.13), h * 0.91),
+          _target,
+        );
+      }
+      canvas.drawLine(
+        Offset(w * 0.38, h * 0.27),
+        Offset(w * 0.62, h * 0.27),
+        _target,
+      );
+      canvas.drawLine(
+        Offset(w * 0.42, h * 0.56),
+        Offset(w * 0.58, h * 0.56),
+        _target,
+      );
     }
 
     final band = (w < h ? w : h) * 0.16;
@@ -197,27 +233,77 @@ class FramePainter extends CustomPainter {
     final stroke = (w * 0.022).clamp(3.0, 9.0).toDouble();
     _bone
       ..strokeWidth = stroke
-      ..color = ok ? Colors.greenAccent : Lantern.warning;
+      ..color = ok ? Lantern.scarf : Lantern.warning;
     _joint.color = Colors.white;
     Offset p(int i) => Offset(f[i].x * w, f[i].y * h);
+    bool visible(int i) =>
+        f[i].visibility > 0.4 && f[i].x.isFinite && f[i].y.isFinite;
+    final avatarStroke = dimForMirror ? stroke : stroke * 2.2;
+    if (!dimForMirror &&
+        [
+          Lm.leftShoulder,
+          Lm.rightShoulder,
+          Lm.rightHip,
+          Lm.leftHip,
+        ].every(visible)) {
+      final torso = _torso
+        ..reset()
+        ..moveTo(p(Lm.leftShoulder).dx, p(Lm.leftShoulder).dy)
+        ..lineTo(p(Lm.rightShoulder).dx, p(Lm.rightShoulder).dy)
+        ..lineTo(p(Lm.rightHip).dx, p(Lm.rightHip).dy)
+        ..lineTo(p(Lm.leftHip).dx, p(Lm.leftHip).dy)
+        ..close();
+      canvas.drawPath(torso, _suit);
+    }
     for (final (a, b) in Lm.edges) {
-      if (f[a].visibility > 0.4 && f[b].visibility > 0.4) {
+      if (visible(a) && visible(b)) {
+        _outline.strokeWidth = avatarStroke + (dimForMirror ? 3 : 5);
+        canvas.drawLine(p(a), p(b), _outline);
+        _bone
+          ..strokeWidth = avatarStroke
+          ..color = math.min(f[a].visibility, f[b].visibility) < 0.65
+              ? Lantern.warning
+              : ok
+              ? Lantern.scarf
+              : Lantern.warning;
         canvas.drawLine(p(a), p(b), _bone);
       }
     }
     for (final i in Lm.smoothed) {
-      if (f[i].visibility > 0.4) canvas.drawCircle(p(i), stroke * 0.8, _joint);
+      if (visible(i)) {
+        _joint.color = f[i].visibility < 0.65 ? Lantern.warning : Colors.white;
+        canvas.drawCircle(p(i), stroke * 0.95, _outline);
+        canvas.drawCircle(p(i), stroke * 0.58, _joint);
+      }
     }
     final nose = f[Lm.nose];
-    if (nose.visibility > 0.4) {
+    if (nose.visibility > 0.4 &&
+        visible(Lm.leftShoulder) &&
+        visible(Lm.rightShoulder) &&
+        visible(Lm.nose)) {
       final sh = (f[Lm.leftShoulder].x - f[Lm.rightShoulder].x).abs() * w;
       _head
         ..strokeWidth = stroke
         ..color = _bone.color;
+      final radius = math.max(stroke * 2, math.min(sh * 0.29, w * 0.095));
+      if (!dimForMirror) {
+        canvas.drawCircle(p(Lm.nose), radius, _suit);
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromCenter(
+              center: p(Lm.nose),
+              width: radius * 1.4,
+              height: radius * 0.5,
+            ),
+            Radius.circular(radius * 0.2),
+          ),
+          _visor,
+        );
+      }
       canvas.drawCircle(
         p(Lm.nose),
         // max/min, not clamp: in a small PiP the floor exceeds the cap.
-        math.max(stroke * 2, math.min(sh * 0.35, w * 0.12)),
+        radius,
         _head,
       );
     }

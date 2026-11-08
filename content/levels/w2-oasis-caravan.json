@@ -1,7 +1,7 @@
 {
   "$schema": "../schema/level.schema.json",
   "id": "w2-oasis-caravan",
-  "version": 1,
+  "version": 3,
   "schemaVersion": 1,
   "world": 2,
   "name": "Oasis Caravan",
@@ -491,5 +491,16 @@
       "type": "gate",
       "hint": "Last gate. Welcome to the oasis!"
     }
-  ]
+  ],
+  "journey": {
+    "mission": "Follow the light across the desert.",
+    "completion": "A new path glows across the dunes.",
+    "keepsake": "Caravan charm"
+  },
+  "gameplay": {
+    "scene": "river",
+    "mission": "lights",
+    "targetFraction": 0.6,
+    "atmosphere": "sand"
+  }
 }

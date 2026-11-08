@@ -15,6 +15,7 @@ import '../app/theme.dart';
 import '../game/forest_game.dart' show SceneTheme;
 import '../game/stages.dart';
 import '../widgets/common.dart';
+import 'home_screen.dart';
 
 class ResultsData {
   const ResultsData({
@@ -25,6 +26,8 @@ class ResultsData {
     this.moveStats,
     this.tutorial = false,
     this.levelId,
+    this.maxHearts = 3,
+    this.assist,
   });
   final RunResult result;
   final String clientId;
@@ -35,6 +38,8 @@ class ResultsData {
 
   /// The stage played; picks the headline. Null means Forest Escape.
   final String? levelId;
+  final int maxHearts;
+  final bool? assist;
 }
 
 class ResultsScreen extends ConsumerStatefulWidget {
@@ -48,9 +53,12 @@ class _ResultsState extends ConsumerState<ResultsScreen> {
   int? _effort;
   bool _done = false;
   bool _coachApplied = false;
+  bool _saved = false;
+  bool _saveFailed = false;
 
   /// Assist as it was for the run, before any coach change on this screen.
-  late final bool _assist = ref.read(settingsProvider).assist;
+  late final bool _assist =
+      widget.data?.assist ?? ref.read(settingsProvider).assist;
 
   /// The coach history before this run, captured on first show so the card
   /// keeps showing advice "including this run" after it has been saved.
@@ -66,6 +74,7 @@ class _ResultsState extends ConsumerState<ResultsScreen> {
       d.result,
       date: d.startedAt,
       assist: _assist,
+      maxHearts: d.maxHearts,
       clientId: d.clientId,
       effort: _effort,
       moveStats: moveStatsFrom(d.moveStats),
@@ -116,16 +125,31 @@ class _ResultsState extends ConsumerState<ResultsScreen> {
           moveStats: d.moveStats,
         ),
       );
+      if (mounted) {
+        setState(() {
+          _saved = true;
+          _saveFailed = false;
+        });
+        ref.invalidate(syncStatusProvider);
+      }
       if (flush) await q.flush();
+      if (mounted) ref.invalidate(syncStatusProvider);
     } catch (_) {
-      // Offline: it stays queued and syncs next time.
+      // A disk-write failure is different from being offline. Never promise
+      // the run is queued when the local write did not succeed.
+      if (mounted) setState(() => _saveFailed = !_saved);
     }
   }
 
-  Future<void> _save() async {
-    if (_done) return;
+  Future<bool> _save() async {
+    if (_done) return false;
     _done = true;
     await _persist(flush: true);
+    if (_saveFailed) {
+      _done = false;
+      return false;
+    }
+    return true;
   }
 
   Future<void> _painReport() async {
@@ -209,15 +233,119 @@ class _ResultsState extends ConsumerState<ResultsScreen> {
     }
     final r = d.result;
     final s = ref.watch(settingsProvider).s;
+    final st = stageById(d.levelId ?? r.levelId) ?? stages.first;
+    final story = ref.watch(levelCatalogueProvider).value?[st.levelId]?.journey;
     return ScreenScaffold(
       title: s.t('well_done'),
       showBack: false,
       children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Stack(
+            alignment: Alignment.bottomLeft,
+            children: [
+              SizedBox(
+                height: 168,
+                width: double.infinity,
+                child: WorldVista(theme: st.theme, restored: r.completed),
+              ),
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Lantern.night.withValues(alpha: 0.95),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      r.completed ? Icons.auto_awesome : Icons.spa_outlined,
+                      color: Lantern.glow,
+                      size: 30,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      r.completed && story != null
+                          ? tr(story.completion)
+                          : tr('Every move is a step forward.'),
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    if (r.completed && story != null && !d.tutorial)
+                      Text(
+                        '${tr('Keepsake earned')}: ${tr(story.keepsake)}',
+                        style: const TextStyle(color: Lantern.scarf),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (!d.tutorial && r.completed && r.missionWon)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Chip(
+              avatar: const Icon(Icons.auto_awesome, color: Lantern.glow),
+              label: Text(
+                '${tr('Mission star earned')} · ${r.missionCount.clamp(0, r.missionGoal)}/${r.missionGoal}',
+              ),
+            ),
+          ),
         Text(
           _headline(r.completed, d.levelId),
           style: Theme.of(context).textTheme.headlineMedium,
         ),
         const SizedBox(height: 16),
+        if (!d.tutorial)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
+              children: [
+                Icon(
+                  _saveFailed
+                      ? Icons.error_outline
+                      : _saved
+                      ? Icons.offline_pin_outlined
+                      : Icons.hourglass_top,
+                  color: _saveFailed ? Lantern.danger : Lantern.scarf,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    tr(
+                      _saveFailed
+                          ? 'Could not save. Tap Retry before leaving.'
+                          : _saved
+                          ? 'Saved on this phone. Syncs when signed in and online.'
+                          : 'Saving on this phone...',
+                    ),
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ),
+                if (_saveFailed)
+                  TextButton(
+                    onPressed: () => _persist(flush: false),
+                    child: Text(tr('Retry')),
+                  ),
+              ],
+            ),
+          ),
         // Equal-width grid: 3 columns when there is room, else 2, so the six
         // stats always fill whole rows instead of leaving a ragged gap.
         LayoutBuilder(
@@ -269,8 +397,10 @@ class _ResultsState extends ConsumerState<ResultsScreen> {
             ),
             selected: {?_effort},
             emptySelectionAllowed: true,
-            onSelectionChanged: (v) =>
-                setState(() => _effort = v.isEmpty ? null : v.first),
+            onSelectionChanged: (v) {
+              setState(() => _effort = v.isEmpty ? null : v.first);
+              _persist(flush: false);
+            },
           ),
           Padding(
             padding: const EdgeInsets.only(top: 8),
@@ -293,8 +423,8 @@ class _ResultsState extends ConsumerState<ResultsScreen> {
           d.tutorial ? tr('Go to home') : tr('Done'),
           icon: Icons.home,
           onPressed: () async {
-            await _save();
-            if (context.mounted) context.go('/home');
+            final saved = await _save();
+            if (saved && context.mounted) context.go('/home');
           },
         ),
         BigButton(

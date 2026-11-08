@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:game_director/game_director.dart';
 import 'package:motion_core/motion_core.dart';
 import 'package:motionquest/game/forest_game.dart';
+import 'package:motionquest/widgets/frame_view.dart';
+import 'package:motion_core/testing.dart';
 
 LevelConfig _forest() => LevelConfig.decode(
   File('assets/levels/w1-forest-escape.json').readAsStringSync(),
@@ -20,6 +22,118 @@ class _SilentAudio implements GameAudio {
 }
 
 void main() {
+  test('every scene and explorer paints at small phone and guide sizes', () {
+    final engine = RunEngine(_forest(), const RunSettings());
+    for (final scene in SceneKind.values) {
+      for (final look in HeroLook.values) {
+        final rec = PictureRecorder();
+        ForestPainter(
+            size: const Size(320, 568),
+            t: 15,
+            clockMs: 15000,
+            plan: engine.plan,
+            heroLane: 1,
+            ducking: false,
+            armsUp: true,
+            lanes: 3,
+            warningMs: 2000,
+            scene: scene,
+            heroLook: look,
+          )
+          ..missionCharge = 0.7
+          ..paint(Canvas(rec));
+        rec.endRecording().dispose();
+      }
+    }
+    final body = SyntheticBody(noise: 0);
+    final frame = PoseFrame(timestampMs: 0, landmarks: body.pose(arms: 1));
+    for (final size in [const Size(72, 96), const Size(240, 320)]) {
+      for (final mirror in [false, true]) {
+        final rec = PictureRecorder();
+        FramePainter(
+          frame,
+          const FramingAdvice(FramingFix.ok),
+          dimForMirror: mirror,
+        ).paint(Canvas(rec), size);
+        rec.endRecording().dispose();
+      }
+    }
+  });
+
+  if (const bool.fromEnvironment('CAPTURE_GAMEPLAY')) {
+    test(
+      'export original gameplay and body guide previews without camera pixels',
+      () async {
+        final engine = RunEngine(_forest(), const RunSettings());
+        final scenes = [
+          (
+            'river',
+            SceneKind.river,
+            SceneTheme.forest,
+            Atmosphere.rain,
+            HeroLook.otter,
+          ),
+          (
+            'neon',
+            SceneKind.neon,
+            SceneTheme.neon,
+            Atmosphere.stars,
+            HeroLook.robot,
+          ),
+          (
+            'mountain',
+            SceneKind.mountain,
+            SceneTheme.mountain,
+            Atmosphere.snow,
+            HeroLook.fox,
+          ),
+        ];
+        for (final (name, scene, theme, atmosphere, look) in scenes) {
+          final rec = PictureRecorder();
+          ForestPainter(
+              size: const Size(400, 800),
+              t: 15,
+              clockMs: 15000,
+              plan: engine.plan,
+              heroLane: 1,
+              ducking: false,
+              armsUp: true,
+              lanes: 3,
+              warningMs: 2000,
+              scene: scene,
+              theme: theme,
+              atmosphere: atmosphere,
+              heroLook: look,
+            )
+            ..missionCharge = 0.7
+            ..paint(Canvas(rec));
+          final picture = rec.endRecording();
+          final img = await picture.toImage(400, 800);
+          final bytes = await img.toByteData(format: ImageByteFormat.png);
+          await File('../docs/screenshots/gameplay-$name.png')
+              .writeAsBytes(bytes!.buffer.asUint8List());
+          img.dispose();
+          picture.dispose();
+        }
+        final body = SyntheticBody(noise: 0);
+        final rec = PictureRecorder();
+        final canvas = Canvas(rec)
+          ..drawColor(const Color(0xFF0B1611), BlendMode.src);
+        FramePainter(
+          PoseFrame(timestampMs: 0, landmarks: body.pose(arms: 0.8)),
+          const FramingAdvice(FramingFix.ok),
+          showTarget: false,
+        ).paint(canvas, const Size(300, 400));
+        final picture = rec.endRecording();
+        final img = await picture.toImage(300, 400);
+        final bytes = await img.toByteData(format: ImageByteFormat.png);
+        await File('../docs/screenshots/gameplay-body-guide.png')
+            .writeAsBytes(bytes!.buffer.asUint8List());
+        img.dispose();
+        picture.dispose();
+      },
+    );
+  }
   test('ForestPainter paints 600 frames per theme quickly', () {
     final engine = RunEngine(_forest(), const RunSettings());
     const themes = [

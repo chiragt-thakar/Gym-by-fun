@@ -16,6 +16,10 @@ void main() {
           expect(r.allFeasible, isTrue, reason: r.infeasible.join('\n'));
           expect(r.result.completed, isTrue);
           expect(r.result.hit, 0);
+          if (level.gameplay != null) {
+            expect(r.result.missionWon, isTrue);
+            expect(r.result.missionGoal, greaterThan(0));
+          }
         });
 
         test(

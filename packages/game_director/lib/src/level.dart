@@ -38,6 +38,62 @@ extension EncounterMove on EncounterType {
 
 enum Difficulty { beginner, intermediate, advanced }
 
+enum SceneKind { forest, river, ruins, desert, neon, mountain, festival }
+
+enum Atmosphere { fireflies, rain, sand, stars, snow, petals }
+
+enum MissionKind { lights, gates, path }
+
+/// Authored scene identity and an optional, non-punishing replay objective.
+class LevelGameplay {
+  const LevelGameplay(
+      {required this.scene,
+      required this.mission,
+      required this.targetFraction,
+      required this.atmosphere});
+  final SceneKind scene;
+  final MissionKind mission;
+  final double targetFraction;
+  final Atmosphere atmosphere;
+  factory LevelGameplay.fromJson(Map<String, dynamic> j) {
+    final fraction = (j['targetFraction'] as num).toDouble();
+    if (!fraction.isFinite || fraction < 0.25 || fraction > 1) {
+      throw const FormatException('Mission targetFraction must be in 0.25..1');
+    }
+    return LevelGameplay(
+        scene: SceneKind.values.byName(j['scene'] as String),
+        mission: MissionKind.values.byName(j['mission'] as String),
+        targetFraction: fraction,
+        atmosphere: Atmosphere.values.byName(j['atmosphere'] as String));
+  }
+}
+
+/// Optional authored story and completion keepsake. Presentation only: these
+/// never alter scoring, pacing or movement recognition.
+class JourneyStory {
+  const JourneyStory(
+      {required this.mission,
+      required this.completion,
+      required this.keepsake});
+  final String mission;
+  final String completion;
+  final String keepsake;
+  factory JourneyStory.fromJson(Map<String, dynamic> j) {
+    String read(String key) {
+      final value = j[key];
+      if (value is! String || value.trim().isEmpty || value.length > 100) {
+        throw FormatException('Invalid journey $key');
+      }
+      return value;
+    }
+
+    return JourneyStory(
+        mission: read('mission'),
+        completion: read('completion'),
+        keepsake: read('keepsake'));
+  }
+}
+
 enum HintMode { always, firstTime, off }
 
 /// Per-difficulty pacing, read from the level config.
@@ -137,6 +193,8 @@ class LevelConfig {
     required this.encounters,
     required this.difficulty,
     required this.scoring,
+    this.journey,
+    this.gameplay,
   });
 
   static const supportedSchemaVersion = 1;
@@ -153,6 +211,8 @@ class LevelConfig {
   final List<EncounterSpec> encounters;
   final Map<Difficulty, DifficultyProfile> difficulty;
   final Map<EncounterType, int> scoring;
+  final JourneyStory? journey;
+  final LevelGameplay? gameplay;
 
   Segment? segmentAt(int ms) {
     for (final s in segments) {
@@ -183,6 +243,12 @@ class LevelConfig {
       schemaVersion: sv,
       world: (j['world'] as num).toInt(),
       name: j['name'] as String,
+      gameplay: j['gameplay'] == null
+          ? null
+          : LevelGameplay.fromJson(j['gameplay'] as Map<String, dynamic>),
+      journey: j['journey'] == null
+          ? null
+          : JourneyStory.fromJson(j['journey'] as Map<String, dynamic>),
       lanes: lanes,
       durationMs: ((j['durationS'] as num) * 1000).round(),
       hearts: (j['hearts'] as num?)?.toInt() ?? 3,
@@ -212,6 +278,17 @@ class LevelConfig {
       LevelConfig.fromJson(jsonDecode(s) as Map<String, dynamic>);
 
   void _check() {
+    final goal = gameplay?.mission;
+    if (goal != null &&
+        !encounters.any((e) =>
+            e.minDifficulty == Difficulty.beginner &&
+            switch (goal) {
+              MissionKind.lights => e.type == EncounterType.orb,
+              MissionKind.gates => e.type == EncounterType.gate,
+              MissionKind.path => e.type.damages,
+            })) {
+      throw FormatException('$id: mission needs a beginner-level opportunity');
+    }
     for (final d in Difficulty.values) {
       if (!difficulty.containsKey(d)) {
         throw FormatException('$id: missing difficulty "${d.name}"');

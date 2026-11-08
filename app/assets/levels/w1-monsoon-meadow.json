@@ -1,7 +1,7 @@
 {
   "$schema": "../schema/level.schema.json",
   "id": "w1-monsoon-meadow",
-  "version": 1,
+  "version": 3,
   "schemaVersion": 1,
   "world": 1,
   "name": "Monsoon Meadow",
@@ -518,5 +518,16 @@
       ],
       "hint": "Last reach! The meadow sparkles."
     }
-  ]
+  ],
+  "journey": {
+    "mission": "Carry the lantern light through the forest.",
+    "completion": "The forest shines a little brighter.",
+    "keepsake": "Monsoon drop"
+  },
+  "gameplay": {
+    "scene": "river",
+    "mission": "path",
+    "targetFraction": 0.6,
+    "atmosphere": "rain"
+  }
 }

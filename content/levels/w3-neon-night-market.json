@@ -1,7 +1,7 @@
 {
   "$schema": "../schema/level.schema.json",
   "id": "w3-neon-night-market",
-  "version": 1,
+  "version": 3,
   "schemaVersion": 1,
   "world": 3,
   "name": "Neon Night Market",
@@ -491,5 +491,16 @@
       "type": "gate",
       "hint": "Last gate. The market lights up!"
     }
-  ]
+  ],
+  "journey": {
+    "mission": "Bring the city lights back to life.",
+    "completion": "The skyline lights up for your return.",
+    "keepsake": "Rooftop star"
+  },
+  "gameplay": {
+    "scene": "festival",
+    "mission": "lights",
+    "targetFraction": 0.6,
+    "atmosphere": "petals"
+  }
 }

@@ -1,5 +1,60 @@
 # Architecture
 
+## Authored gameplay variants and optional missions (2026-11-09)
+
+`LevelGameplay` decodes scene/atmosphere enums, mission kind and a bounded target
+fraction from the level JSON. `MissionTracker` lives in game_director and consumes
+resolved planned encounters; it never reads the camera or generates motion.
+It deduplicates plan indices across checkpoint retries and protects targets for
+tracking forgiveness. Mission fields are included in `RunResult` for local result
+presentation; the existing server session upload contract remains unchanged.
+
+ForestGame forwards real motion to the existing RunEngine and exposes quantised
+HUD state, including the current cue, authored segment and mission counters.
+ForestPainter draws the authored scene and selected explorer. The painter is
+reused, scratch paths and paints remain cached, and decorative rendering respects
+reduced motion. New scene effects require no texture downloads or new dependency.
+
+`FramePainter` reconstructs a landmark-only body avatar when the native mirror
+is off, and an outlined skeleton over the mirror when it is on. It is presentation
+only: it cannot modify recogniser features, thresholds, camera crop or calibration.
+The native mirror remains the sole renderer of camera pixels. New local settings
+are `heroLook` and `missionLevels`; unknown/old saves fall back to the fox and no
+mission stars. Account changes reset mission progress with completed-stage ids.
+
+## Adventure presentation and local activity (2026-11-09)
+
+`LevelConfig.journey` is optional authored presentation metadata, validated by
+the level JSON Schema and Dart parser. All bundled/current levels include it;
+their immutable content versions were incremented. Encounters and pacing are
+unchanged. `levelCatalogueProvider` loads the bundled metadata once, shared by
+home, stage guide and results. `WorldVista` paints static original cover art
+inside repaint boundaries. The game paints outcome-driven effects separately
+and suppresses particles when reduced motion is requested.
+
+`ReadyGate` in the app service layer confirms foreground pause/checkpoint menu
+intent from the real recogniser state and fresh, good frames. It never emits
+sensor events. ForestGame blocks gameplay input while manually paused, and
+MotionSession excludes menu movements from workout telemetry. The camera is
+always stopped on background lifecycle transitions. QuestScreen caches Voice
+before disposal rather than accessing Riverpod's widget ref during unmount.
+Preparation runs after the first frame so inherited asset bundles can be read
+safely. Native capture stop starts concurrently with subscription cancellation,
+so a slow event-channel acknowledgement cannot keep the camera running. A
+camera re-entry failure offers Retry while preserving the paused engine and
+checkpoint; retry still requires readiness confirmation.
+
+The bounded coach history (20 run summaries) supplies recent move/minute totals.
+A separate bounded set of 14 local activity dates preserves the weekly calendar
+when many runs trim that history. Both clear on sign-out/account change and
+local deletion. Completed-level ids supply persistent cosmetic keepsakes; no
+second reward ledger can drift from stage completion.
+
+Gentle today is a route-level one-run override using existing motion profiles
+and director settings. Results capture the actual run's assist and heart count.
+Stage access is checked inside QuestScreen before loading a playable run, as
+well as at navigation entry points. Settings remain unchanged by the override.
+
 Everything that touches video runs on the phone; the cloud stores only
 results, gyms and payments.
 

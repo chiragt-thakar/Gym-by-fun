@@ -10,7 +10,9 @@ const localDataKeys = [
   'settings.v1',
   'auth.access',
   'auth.refresh',
+  'auth.account',
   CoachHistoryNotifier.key,
+  CoachHistoryNotifier.activityDaysKey,
   'pendingGymCode', // pendingGymCodeKey in app/router.dart
 ];
 
@@ -27,6 +29,9 @@ Future<void> wipeLocalData(
   try {
     final d = await (dir ?? getApplicationSupportDirectory)();
     final f = File('${d.path}/session_queue.json');
-    if (await f.exists()) await f.delete();
+    for (final path in [f.path, '${f.path}.tmp', '${f.path}.rejected']) {
+      final file = File(path);
+      if (await file.exists()) await file.delete();
+    }
   } catch (_) {}
 }

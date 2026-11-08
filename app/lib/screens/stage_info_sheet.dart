@@ -7,6 +7,8 @@ import '../l10n/tr.dart';
 import '../services/premium.dart';
 import '../services/settings.dart';
 import '../widgets/body_map.dart';
+import '../widgets/forest_backdrop.dart';
+import 'home_screen.dart' show levelCatalogueProvider, questTimeLabel;
 
 const stageInfoDisclaimer =
     'General fitness information, not medical advice. Stop if anything hurts.';
@@ -45,6 +47,7 @@ class StageInfoSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final info = infoFor(stage);
+    final level = ref.watch(levelCatalogueProvider).value?[stage.levelId];
     final style = ref.watch(settingsProvider.select((s) => s.bodyStyle));
     final premium = ref.watch(premiumProvider).value ?? const PremiumState();
     final locked = paymentsEnabled && info.premium && !premium.premium;
@@ -64,6 +67,14 @@ class StageInfoSheet extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: SizedBox(
+                height: 130,
+                child: WorldVista(theme: stage.theme),
+              ),
+            ),
+            const SizedBox(height: 16),
             Text(
               tr(stage.title),
               style: theme.textTheme.headlineSmall?.copyWith(
@@ -71,6 +82,26 @@ class StageInfoSheet extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 8),
+            if (level != null) ...[
+              Text(
+                tr(level.journey?.mission ?? stage.description),
+                style: const TextStyle(fontSize: 17),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${questTimeLabel(level)} ${tr('total')}',
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                tr(
+                  'Includes warm-up and cool-down. Tracking breaks may add time.',
+                ),
+                style: const TextStyle(fontSize: 13),
+              ),
+            ],
             Wrap(
               spacing: 8,
               runSpacing: 4,
@@ -96,6 +127,16 @@ class StageInfoSheet extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 12),
+            if (level?.gameplay != null)
+              ListTile(
+                leading: const Icon(Icons.auto_awesome),
+                title: Text(tr(missionName(level!.gameplay!.mission))),
+                subtitle: Text(
+                  tr(
+                    'An optional mission star. Tracking issues never cost your stage progress.',
+                  ),
+                ),
+              ),
             Center(
               child: BodyMap(
                 style: style,

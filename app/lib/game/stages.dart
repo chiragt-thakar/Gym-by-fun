@@ -237,6 +237,15 @@ Stage? stageById(String id) {
   return null;
 }
 
+/// All entry points, including direct quest routes, use the same access rule.
+bool canPlayStage(
+  Stage stage,
+  Set<String> completed, {
+  bool premiumLocked = false,
+}) =>
+    (devUnlockAll || !premiumLocked || !infoFor(stage).premium) &&
+    isUnlocked(stage, completed, premiumLocked: premiumLocked);
+
 /// The first stage is always open; each later one opens when the stage
 /// before it is completed. With [premiumLocked] (payments on and the player
 /// not Premium) Premium stages are skipped in the chain: a stage opens when

@@ -1,7 +1,7 @@
 {
   "$schema": "../schema/level.schema.json",
   "id": "w4-glacier-pass",
-  "version": 1,
+  "version": 3,
   "schemaVersion": 1,
   "world": 4,
   "name": "Glacier Pass",
@@ -387,5 +387,16 @@
       "type": "gate",
       "hint": "Final gate. You crossed the glacier!"
     }
-  ]
+  ],
+  "journey": {
+    "mission": "Carry the summit beacon through the mountains.",
+    "completion": "Your beacon shines above the clouds.",
+    "keepsake": "Glacier shard"
+  },
+  "gameplay": {
+    "scene": "mountain",
+    "mission": "path",
+    "targetFraction": 0.6,
+    "atmosphere": "snow"
+  }
 }

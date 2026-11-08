@@ -16,6 +16,33 @@ class _SilentAudio implements GameAudio {
 }
 
 void main() {
+  test(
+    'paused menu gestures cannot move the hero or add workout reps',
+    () async {
+      final engine = RunEngine(
+        LevelConfig.decode(
+          File('assets/levels/w1-forest-escape.json').readAsStringSync(),
+        ),
+        const RunSettings(),
+      );
+      final events = StreamController<MotionEvent>();
+      final game = ForestGame(
+        engine: engine,
+        motionEvents: events.stream,
+        audio: _SilentAudio(),
+      );
+      await game.onLoad();
+      game.pauseEngine();
+      events.add(const MoveStarted(Move.leanLeft, 100));
+      events.add(const MoveStarted(Move.raiseArms, 200));
+      await Future<void>.delayed(Duration.zero);
+      expect(engine.lane, 1);
+      expect(engine.reps.values.fold<int>(0, (a, b) => a + b), 0);
+      expect(engine.score, 0);
+      game.dispose();
+      await events.close();
+    },
+  );
   test('dispose releases the HUD notifier and is idempotent', () {
     final engine = RunEngine(
       LevelConfig.decode(

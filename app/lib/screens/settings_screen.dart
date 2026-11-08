@@ -11,9 +11,13 @@ import '../l10n/tr.dart';
 import '../services/api_client.dart';
 import '../services/coach_service.dart';
 import '../services/local_data.dart';
+import '../services/session_queue.dart';
+import '../services/premium.dart';
 import '../services/settings.dart';
+import '../game/forest_game.dart' show HeroLook;
 import '../app/theme.dart';
 import '../widgets/common.dart';
+import 'home_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -28,6 +32,55 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _pendingConsent = <String>{};
   bool _exporting = false;
   bool _deleting = false;
+  bool _signingOut = false;
+
+  Future<void> _signOut() async {
+    if (_signingOut) return;
+    setState(() => _signingOut = true);
+    try {
+      final queue = ref.read(sessionQueueProvider);
+      if ((await queue.pending()).isNotEmpty && mounted) {
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (c) => AlertDialog(
+            title: Text(tr('Unsynced runs on this phone')),
+            content: Text(
+              tr(
+                'Sign out removes unsynced runs. Stay signed in to sync them later.',
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(c, false),
+                child: Text(tr('Cancel')),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(c, true),
+                child: Text(tr('Sign out')),
+              ),
+            ],
+          ),
+        );
+        if (confirmed != true) return;
+      }
+      await queue.clear();
+      if (!mounted) return;
+      ref.read(coachHistoryProvider.notifier).clear();
+      await ref.read(sharedPrefsProvider).remove('pendingGymCode');
+      await ref.read(tokenStoreProvider).clear();
+      if (!mounted) return;
+      ref
+          .read(settingsProvider.notifier)
+          .update((x) => x.copyWith(signedIn: false));
+      ref.invalidate(homeDataProvider);
+      ref.invalidate(premiumProvider);
+      _snack(tr('Signed out. Your progress stays on this phone.'));
+    } catch (_) {
+      _snack(tr('Could not clear local activity. Please try again.'));
+    } finally {
+      if (mounted) setState(() => _signingOut = false);
+    }
+  }
 
   @override
   void initState() {
@@ -134,23 +187,56 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final signedIn = s.signedIn && ref.read(tokenStoreProvider).hasSession;
 
     return ScreenScaffold(
-      title: 'Settings',
+      title: tr('Settings'),
       children: [
         const _H('Play'),
-        const Text('Difficulty', style: TextStyle(fontSize: 18)),
+        Text(tr('Difficulty'), style: const TextStyle(fontSize: 18)),
         const SizedBox(height: 6),
         SegmentedButton<Difficulty>(
-          segments: const [
-            ButtonSegment(value: Difficulty.beginner, label: Text('Beginner')),
+          segments: [
+            ButtonSegment(
+              value: Difficulty.beginner,
+              label: Text(tr('Beginner')),
+            ),
             ButtonSegment(
               value: Difficulty.intermediate,
-              label: Text('Medium'),
+              label: Text(tr('Medium')),
             ),
-            ButtonSegment(value: Difficulty.advanced, label: Text('Advanced')),
+            ButtonSegment(
+              value: Difficulty.advanced,
+              label: Text(tr('Advanced')),
+            ),
           ],
           selected: {s.difficulty},
           onSelectionChanged: (v) =>
               n.update((x) => x.copyWith(difficulty: v.first)),
+        ),
+        const _H('Your explorer'),
+        Center(child: ExplorerPortrait(look: s.heroLook)),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          alignment: WrapAlignment.center,
+          children: [
+            for (final look in HeroLook.values)
+              ChoiceChip(
+                key: ValueKey('explorer-${look.name}'),
+                selected: s.heroLook == look,
+                label: Text(
+                  tr(switch (look) {
+                    HeroLook.fox => 'Kavi the fox',
+                    HeroLook.otter => 'Neela the otter',
+                    HeroLook.robot => 'Tara the starbot',
+                  }),
+                ),
+                onSelected: (_) => n.update((x) => x.copyWith(heroLook: look)),
+              ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Text(
+          tr('Same moves, same rules. Pick the explorer you love.'),
+          textAlign: TextAlign.center,
         ),
         ListTile(
           title: Text(tr('Play style'), style: const TextStyle(fontSize: 18)),
@@ -171,16 +257,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           child: Text(tr(_bandBlurb[s.ageBand]!)),
         ),
         SwitchListTile(
-          title: const Text('Low-impact mode', style: TextStyle(fontSize: 18)),
-          subtitle: const Text(
-            'Half squats count, one arm is enough, no jumps.',
+          title: Text(
+            tr('Low-impact mode'),
+            style: const TextStyle(fontSize: 18),
           ),
+          subtitle: Text(tr('Half squats count, one arm is enough, no jumps.')),
           value: s.lowImpact,
           onChanged: (v) => n.update((x) => x.copyWith(lowImpact: v)),
         ),
         SwitchListTile(
-          title: const Text('Assist mode', style: TextStyle(fontSize: 18)),
-          subtitle: const Text('More warning time and wider timing windows.'),
+          title: Text(tr('Assist mode'), style: const TextStyle(fontSize: 18)),
+          subtitle: Text(tr('More warning time and wider timing windows.')),
           value: s.assist,
           onChanged: (v) => n.update((x) => x.copyWith(assist: v)),
         ),
@@ -191,14 +278,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           subtitle: Text(
             tr(
-              'See yourself while lining up. Shown only on this phone, never saved. Off: body outline only.',
+              'Mirror on: see yourself with an outline. Mirror off: a live body avatar. Video is never saved.',
             ),
           ),
           value: s.cameraMirror,
           onChanged: (v) => n.update((x) => x.copyWith(cameraMirror: v)),
         ),
         ListTile(
-          title: const Text('Language', style: TextStyle(fontSize: 18)),
+          title: Text(tr('Language'), style: const TextStyle(fontSize: 18)),
           trailing: DropdownButton<AppLanguage>(
             value: s.language,
             items: [
@@ -228,7 +315,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
         const SizedBox(height: 8),
         BigButton(
-          'Recalibrate',
+          tr('Recalibrate'),
           icon: Icons.accessibility_new,
           secondary: true,
           onPressed: () {
@@ -237,7 +324,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           },
         ),
         BigButton(
-          'Redo space setup',
+          tr('Redo space setup'),
           icon: Icons.crop_free,
           secondary: true,
           onPressed: () {
@@ -290,19 +377,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             key: const ValueKey('sign-out'),
             icon: Icons.logout,
             secondary: true,
-            onPressed: () async {
-              await ref.read(tokenStoreProvider).clear();
-              n.update((x) => x.copyWith(signedIn: false));
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      tr('Signed out. Your progress stays on this phone.'),
-                    ),
-                  ),
-                );
-              }
-            },
+            onPressed: _signingOut ? null : _signOut,
           ),
         ] else
           BigButton(
@@ -318,18 +393,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         const _H('About'),
         Text(s.s.t('not_medical')),
         const SizedBox(height: 8),
-        const Text(
-          'Grievances and data requests: grievance@motionquest.app — we respond within 30 days.',
+        Text(
+          tr(
+            'Grievances and data requests: grievance@motionquest.app — we respond within 30 days.',
+          ),
         ),
         const _H('Developer'),
         BigButton(
-          'Tracking debug screen',
+          tr('Tracking debug screen'),
           icon: Icons.bug_report,
           secondary: true,
           onPressed: () => context.push('/debug'),
         ),
         BigButton(
-          'Landmark recorder',
+          tr('Landmark recorder'),
           icon: Icons.fiber_manual_record,
           secondary: true,
           onPressed: () => context.push('/recorder'),
@@ -362,7 +439,9 @@ class _H extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
-        Text(text, style: Theme.of(context).textTheme.titleLarge),
+        Flexible(
+          child: Text(tr(text), style: Theme.of(context).textTheme.titleLarge),
+        ),
         const SizedBox(width: 12),
         const Expanded(child: Divider()),
       ],

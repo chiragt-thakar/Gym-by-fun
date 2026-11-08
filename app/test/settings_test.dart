@@ -9,9 +9,41 @@ import 'package:motionquest/services/api_client.dart';
 import 'package:motionquest/services/coach_service.dart';
 import 'package:motionquest/services/local_data.dart';
 import 'package:motionquest/services/settings.dart';
+import 'package:motionquest/game/forest_game.dart';
+import 'package:motionquest/services/session_queue.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+class _EmptyQueue extends SessionQueue {
+  _EmptyQueue(super.api);
+  bool cleared = false;
+  @override
+  Future<List<Map<String, Object?>>> pending() async => [];
+  @override
+  Future<void> clear() async {
+    cleared = true;
+  }
+}
+
 void main() {
+  test(
+    'explorer and optional mission stars persist, older settings stay valid',
+    () {
+      for (final look in HeroLook.values) {
+        final original = Settings(
+          heroLook: look,
+          missionLevels: {'w1-forest-escape'},
+        );
+        final saved = Settings.fromJson(
+          jsonDecode(jsonEncode(original.toJson())) as Map<String, dynamic>,
+        );
+        expect(saved.heroLook, look);
+        expect(saved.missionLevels, original.missionLevels);
+      }
+      expect(Settings.fromJson({}).heroLook, HeroLook.fox);
+      expect(Settings.fromJson({'heroLook': 'future'}).heroLook, HeroLook.fox);
+      expect(Settings.fromJson({}).missionLevels, isEmpty);
+    },
+  );
   group('age band', () {
     test('defaults to gentle with a 1.2 warning multiplier', () {
       const s = Settings();
@@ -105,7 +137,12 @@ void main() {
       t.view.devicePixelRatio = 2.6;
       addTearDown(t.view.reset);
       final c = ProviderContainer(
-        overrides: [sharedPrefsProvider.overrideWithValue(prefs)],
+        overrides: [
+          sharedPrefsProvider.overrideWithValue(prefs),
+          sessionQueueProvider.overrideWithValue(
+            _EmptyQueue(ApiClient(TokenStore(prefs))),
+          ),
+        ],
       );
       addTearDown(c.dispose);
       await t.pumpWidget(

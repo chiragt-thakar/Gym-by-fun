@@ -1,7 +1,7 @@
 {
   "$schema": "../schema/level.schema.json",
   "id": "w1-guardian-grove",
-  "version": 1,
+  "version": 3,
   "schemaVersion": 1,
   "world": 1,
   "name": "Guardian Grove",
@@ -583,5 +583,16 @@
       "type": "gate",
       "hint": "One last gate. The guardian rests."
     }
-  ]
+  ],
+  "journey": {
+    "mission": "Carry the lantern light through the forest.",
+    "completion": "The forest shines a little brighter.",
+    "keepsake": "Grove leaf"
+  },
+  "gameplay": {
+    "scene": "ruins",
+    "mission": "gates",
+    "targetFraction": 0.6,
+    "atmosphere": "fireflies"
+  }
 }

@@ -297,7 +297,18 @@ Clean areas (none found):
 ### Round 3 fix status
 - ✅ Fixed R3-1: session queue access is serialised; after an upload only the uploaded versions are removed (re-read), so concurrent adds/updates are never lost.
 - ✅ Fixed R3-2: 429 and 408 are retried later like 5xx instead of dropping the batch.
-- ⏳ Open: R3-3 (sign out should clear queue/coach history/pending code — use wipeLocalData minus settings), R3-4 (server logout endpoint to revoke refresh token), R3-5 (QuestScreen must reject locked Premium levelId), R3-6 (show an error when account deletion fails), R3-7 (side-step confirm reset on direction flip), R3-8 (update comment/docs for Gentle+assist 1.5x).
+- Fixed 2026-11-09: R3-3 (locked queue clearing, coach/activity-day clearing,
+  pending-code clearing, account ownership and in-flight request isolation),
+  R3-5 (direct quest route checks progression and Premium before starting),
+  R3-8 (warning multiplier comment and combined 1.5x lead documented).
+- Reverified R3-6: the current deletion handler already shows an error snack;
+  this review did not introduce that earlier fix.
+- R3-2 is now fully addressed: validation failures isolate individual records;
+  valid neighbours sync and rejected records stay local for review. Other
+  permission/service errors keep the queue for retry.
+- Open: R3-4 (server logout endpoint to revoke refresh token), R3-7 (side-step
+  confirm reset on direction flip). These were outside the six UX assessment
+  findings addressed by the adventure experience update.
 
 ## Round 4 checks (verification agents)
 - motion_core 57 and game_director 346 tests green; all breathers orbs-only, all hints ≤ 80 chars, checkpoints present, no gap > 60 s.

@@ -1,11 +1,19 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:game_director/game_director.dart';
 import 'package:motion_core/motion_core.dart';
 import 'package:motionquest/game/stages.dart';
+import 'package:motionquest/app/theme.dart';
+import 'package:motionquest/services/coach_service.dart';
+import 'package:motionquest/services/api_client.dart';
+import 'package:motionquest/services/session_queue.dart';
 import 'package:motionquest/l10n/strings.dart';
 import 'package:motionquest/l10n/tr.dart';
 import 'package:motionquest/screens/crew_screen.dart';
@@ -18,6 +26,14 @@ import 'package:motionquest/screens/stage_info_sheet.dart';
 import 'package:motionquest/services/premium.dart';
 import 'package:motionquest/services/settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+class _PreviewQueue extends SessionQueue {
+  _PreviewQueue(super.api);
+  @override
+  Future<void> add(Map<String, Object?> session) async {}
+  @override
+  Future<int> flush() async => 0;
+}
 
 final _result = RunResult(
   levelId: 'w1-forest',
@@ -33,6 +49,9 @@ final _result = RunResult(
   activeMs: 170000,
   difficulty: Difficulty.beginner,
   lowImpact: true,
+  missionWon: true,
+  missionCount: 12,
+  missionGoal: 10,
 );
 
 final Map<String, Widget Function()> _screens = {
@@ -103,10 +122,119 @@ Future<void> _pump(
 }
 
 void main() {
+  // Opt-in, reproducible UI previews; these trees contain no camera view.
+  if (const bool.fromEnvironment('CAPTURE_UX')) {
+    for (final name in ['home', 'map', 'results']) {
+      testWidgets('capture adventure $name', (t) async {
+        final font = File('C:/Windows/Fonts/segoeui.ttf');
+        final loader = FontLoader('Preview');
+        loader.addFont(
+          Future.value(ByteData.sublistView(font.readAsBytesSync())),
+        );
+        await loader.load();
+        final icons = FontLoader('MaterialIcons');
+        icons.addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'));
+        await icons.load();
+        final catalog = {
+          for (final stage in stages)
+            stage.levelId: LevelConfig.decode(
+              File(stage.asset).readAsStringSync(),
+            ),
+        };
+        final now = DateTime.now();
+        SharedPreferences.setMockInitialValues({
+          'settings.v1': jsonEncode(
+            const Settings(
+              completedLevels: {'w1-forest-escape'},
+              sessionsPlayed: 3,
+            ).toJson(),
+          ),
+          CoachHistoryNotifier.key: jsonEncode([
+            for (final d in [4, 2, 0])
+              SessionSummary.fromResult(
+                _result,
+                date: now.subtract(Duration(days: d)),
+                clientId: 'preview$d',
+              ).toJson(),
+          ]),
+        });
+        final prefs = await SharedPreferences.getInstance();
+        t.view.devicePixelRatio = 1;
+        t.view.physicalSize = const Size(390, 844);
+        addTearDown(t.view.reset);
+        final theme = buildTheme();
+        final boundaryKey = GlobalKey();
+        await t.pumpWidget(
+          ProviderScope(
+            overrides: [
+              sharedPrefsProvider.overrideWithValue(prefs),
+              sessionQueueProvider.overrideWithValue(
+                _PreviewQueue(ApiClient(TokenStore(prefs))),
+              ),
+              levelCatalogueProvider.overrideWith((_) async => catalog),
+              homeDataProvider.overrideWith((_) async => null),
+              syncStatusProvider.overrideWith(
+                (_) async => (pending: 3, rejected: 0),
+              ),
+              premiumProvider.overrideWith((_) async => const PremiumState()),
+            ],
+            child: RepaintBoundary(
+              key: boundaryKey,
+              child: MaterialApp(
+                debugShowCheckedModeBanner: false,
+                theme: theme.copyWith(
+                  textTheme: theme.textTheme.apply(fontFamily: 'Preview'),
+                  appBarTheme: theme.appBarTheme.copyWith(
+                    titleTextStyle: theme.appBarTheme.titleTextStyle!.copyWith(
+                      fontFamily: 'Preview',
+                    ),
+                  ),
+                  segmentedButtonTheme: SegmentedButtonThemeData(
+                    style: theme.segmentedButtonTheme.style!.copyWith(
+                      textStyle: const WidgetStatePropertyAll(
+                        TextStyle(fontFamily: 'Preview', fontSize: 18),
+                      ),
+                    ),
+                  ),
+                ),
+                home: name != 'results'
+                    ? const HomeScreen()
+                    : ResultsScreen(
+                        data: ResultsData(
+                          result: _result,
+                          levelId: 'w1-forest-escape',
+                          clientId: 'preview-result',
+                          startedAt: now,
+                          durationS: 180,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+        );
+        await t.pumpAndSettle();
+        if (name == 'map') {
+          await t.drag(find.byType(ListView).first, const Offset(0, -700));
+          await t.pumpAndSettle();
+        }
+        final render =
+            boundaryKey.currentContext!.findRenderObject()!
+                as RenderRepaintBoundary;
+        await t.runAsync(() async {
+          final img = await render.toImage(pixelRatio: 3);
+          final png = await img.toByteData(format: ui.ImageByteFormat.png);
+          File('../docs/screenshots/next-$name.png')
+              .writeAsBytesSync(png!.buffer.asUint8List());
+          img.dispose();
+        });
+        expect(t.takeException(), isNull);
+      });
+    }
+  }
   for (final MapEntry(key: name, value: screen) in _screens.entries) {
     for (final size in _sizes) {
       for (final scale in _scales) {
-        for (final lang in [AppLanguage.en, AppLanguage.hi]) {
+        for (final lang in AppLanguage.values) {
           testWidgets('$name fits ${size.width.toInt()}x${size.height.toInt()} '
               'at text ${scale}x in ${lang.name}', (t) async {
             await _pump(t, screen, size, scale, lang);

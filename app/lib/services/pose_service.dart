@@ -158,6 +158,9 @@ class MotionSession {
   final _events = StreamController<MotionEvent>.broadcast();
   final _frames = StreamController<PoseFrame>.broadcast();
   final perf = PerfStats();
+
+  /// Menu confirmation movements are real poses, but are not workout attempts.
+  bool collectStats = true;
   PoseFrame? lastFrame;
   String delegate = '';
 
@@ -282,9 +285,9 @@ class MotionSession {
     // Counter maps are created once per session; per-frame work only
     // updates existing entries (and only when an event happened).
     for (final e in out) {
-      if (e is MoveStarted) {
+      if (collectStats && e is MoveStarted) {
         started[e.move] = started[e.move]! + 1;
-      } else if (e is MoveRejected) {
+      } else if (collectStats && e is MoveRejected) {
         rejected[e.move] = rejected[e.move]! + 1;
         final byReason = rejectedBy[e.move]!;
         byReason[e.reason] = byReason[e.reason]! + 1;
@@ -318,14 +321,72 @@ class MotionSession {
     _sinceFrame.stop();
     if (_stalled || (_engine?.paused ?? false)) _resumeOnStart = true;
     _stalled = false;
-    await _sub?.cancel();
+    final subscription = _sub;
     _sub = null;
-    await source.stop();
+    // Native capture must stop immediately, even if event-channel
+    // cancellation takes time to acknowledge. Await both cleanups together.
+    await Future.wait<void>([
+      source.stop(),
+      if (subscription != null) subscription.cancel(),
+    ]);
   }
 
   Future<void> dispose() async {
     await stop();
     await _events.close();
     await _frames.close();
+  }
+}
+
+/// Menu confirmation only. Uses real recogniser state; never emits motion
+/// events. A fresh neutral pose prevents an already-held reach selecting a
+/// menu. Missing/poor frames reset the countdown, so stale camera data cannot
+/// resume a run. No motion_core recognition thresholds are changed.
+class ReadyGate {
+  bool _neutralSeen = false;
+  bool confirmed = false;
+  bool _fired = false;
+  int? _heldAt;
+  int? _readyAt;
+  int? _lastAt;
+  double get progress => confirmed ? 1 : _holdProgress;
+  double _holdProgress = 0;
+  int get countdown => _readyAt == null || _lastAt == null
+      ? 3
+      : (3 - ((_lastAt! - _readyAt!) ~/ 1000)).clamp(1, 3);
+
+  void request() => confirmed = true;
+
+  bool update(int ts, {required bool good, required bool raised}) {
+    if (_fired) return false;
+    final gap = _lastAt != null && (ts <= _lastAt! || ts - _lastAt! > 250);
+    _lastAt = ts;
+    if (!good || gap) {
+      _heldAt = null;
+      _holdProgress = 0;
+      _readyAt = null;
+      _neutralSeen = false;
+      return false;
+    }
+    if (!raised) _neutralSeen = true;
+    if (!confirmed) {
+      if (raised && _neutralSeen) {
+        _heldAt ??= ts;
+        _holdProgress = ((ts - _heldAt!) / 1200).clamp(0, 1).toDouble();
+        if (ts - _heldAt! >= 1200) confirmed = true;
+      } else {
+        _heldAt = null;
+        _holdProgress = 0;
+      }
+      return false;
+    }
+    if (raised) {
+      _readyAt = null;
+      return false;
+    }
+    _readyAt ??= ts;
+    if (ts - _readyAt! < 3000) return false;
+    _fired = true;
+    return true;
   }
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -70,7 +71,9 @@ class SessionQueue {
           Map<String, Object?>.from(e as Map),
       ];
     } catch (_) {
-      return [];
+      // Preserve the original file rather than overwriting unreadable
+      // activity on the next add. The UI can report a local save problem.
+      throw const FormatException('Local activity could not be read');
     }
   }
 
@@ -80,7 +83,7 @@ class SessionQueue {
   Future<void> add(Map<String, Object?> session) => _locked(() async {
     final all = await pending()
       ..removeWhere((s) => s['clientId'] == session['clientId'])
-      ..add(session);
+      ..add({...session, '_accountId': _api.tokens.accountId});
     await _write(all);
   });
 
@@ -92,31 +95,102 @@ class SessionQueue {
   Future<int> flush() => _locked(() async {
     if (!_api.tokens.hasSession) return 0;
     var synced = 0;
-    while (true) {
-      final batch = (await pending()).take(50).toList();
-      if (batch.isEmpty) break;
+    final account = _api.tokens.accountId;
+    final retryToken = _api.tokens.refresh;
+    // Snapshot work once. Entries owned by another account never leave
+    // this device under the current player's credentials.
+    final work = (await pending())
+        .where((s) => s['_accountId'] == null || s['_accountId'] == account)
+        .toList();
+    Future<bool> send(List<Map<String, Object?>> batch) async {
+      if (!_api.tokens.hasSession ||
+          _api.tokens.accountId != account ||
+          (account == null && _api.tokens.refresh != retryToken)) {
+        return false;
+      }
+      var accepted = false;
       try {
-        await _api.uploadSessions(batch);
+        await _api.uploadSessions([
+          for (final s in batch) {...s}..remove('_accountId'),
+        ]);
+        accepted = true;
       } on SocketException {
-        break;
+        return false;
+      } on TimeoutException {
+        return false;
       } on ApiException catch (e) {
-        // Retry later on server errors, auth, rate limits and timeouts.
-        if (e.status >= 500 ||
-            e.status == 401 ||
-            e.status == 429 ||
-            e.status == 408) {
-          break;
+        // Only validation errors isolate a bad record. Permissions, missing
+        // routes, rate limits and service errors must never discard activity.
+        if (e.status != 400 && e.status != 422) return false;
+        if (batch.length > 1) {
+          final mid = batch.length ~/ 2;
+          if (!await send(batch.sublist(0, mid))) return false;
+          return send(batch.sublist(mid));
         }
-        // Other 4xx: permanently invalid; drop the batch so it can't block the queue.
+        final rejected = await _rejected();
+        rejected.removeWhere((s) => s['clientId'] == batch.single['clientId']);
+        rejected.add(batch.single);
+        final f = await _file;
+        await File('${f.path}.rejected').writeAsString(jsonEncode(rejected));
       }
       final sent = {for (final s in batch) '${s['clientId']}': jsonEncode(s)};
       final rest = (await pending())
           .where((s) => sent['${s['clientId']}'] != jsonEncode(s))
           .toList();
       await _write(rest);
-      synced += batch.length;
+      if (accepted) synced += batch.length;
+      return true;
+    }
+
+    for (var i = 0; i < work.length; i += 50) {
+      final batch = work.sublist(i, min(i + 50, work.length));
+      if (batch.isEmpty) break;
+      if (!await send(batch)) break;
     }
     return synced;
+  });
+
+  Future<List<Map<String, Object?>>> _rejected() async {
+    final f = File('${(await _file).path}.rejected');
+    if (!await f.exists()) return [];
+    return [
+      for (final s in jsonDecode(await f.readAsString()) as List)
+        Map<String, Object?>.from(s as Map),
+    ];
+  }
+
+  Future<int> rejectedCount() async => (await _rejected())
+      .where(
+        (s) =>
+            s['_accountId'] == null || s['_accountId'] == _api.tokens.accountId,
+      )
+      .length;
+
+  Future<List<Map<String, Object?>>> pendingForCurrentAccount() async =>
+      (await pending())
+          .where(
+            (s) =>
+                s['_accountId'] == null ||
+                s['_accountId'] == _api.tokens.accountId,
+          )
+          .toList();
+
+  /// Stamp pre-upgrade entries before replacing an existing account's tokens.
+  Future<void> claimLegacy(String owner) => _locked(() async {
+    final all = await pending();
+    for (final s in all) {
+      s.putIfAbsent('_accountId', () => owner);
+    }
+    await _write(all);
+  });
+
+  /// Uses the same lock as uploads: sign-out cannot race an in-flight flush.
+  Future<void> clear() => _locked(() async {
+    final f = await _file;
+    for (final path in [f.path, '${f.path}.tmp', '${f.path}.rejected']) {
+      final file = File(path);
+      if (await file.exists()) await file.delete();
+    }
   });
 
   static Future<void> _tail = Future.value();

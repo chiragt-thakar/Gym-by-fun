@@ -13,10 +13,12 @@ import '../l10n/tr.dart';
 
 import '../game/forest_game.dart';
 import '../game/stages.dart';
+import '../game/stage_info.dart' show missionName;
 import '../l10n/strings.dart';
 import '../services/pose_service.dart';
 import '../services/session_queue.dart';
 import '../services/settings.dart';
+import '../services/premium.dart';
 import '../services/voice.dart';
 import '../widgets/common.dart';
 import '../widgets/frame_view.dart';
@@ -80,8 +82,16 @@ const cooldown = [
 enum _Phase { loading, warmup, run, cooldown }
 
 class QuestScreen extends ConsumerStatefulWidget {
-  const QuestScreen({super.key, this.tutorial = false, this.levelId});
+  const QuestScreen({
+    super.key,
+    this.tutorial = false,
+    this.levelId,
+    this.gentle = false,
+  });
   final bool tutorial;
+
+  /// A player-chosen, one-run override. Never rewrites saved preferences.
+  final bool gentle;
 
   /// Stage to play (see game/stages.dart). Null plays Forest Escape.
   final String? levelId;
@@ -99,6 +109,13 @@ class _QuestState extends ConsumerState<QuestScreen>
   RunResult? _result;
   Map<String, Map<String, int>>? _stats;
   late DateTime _startedAt;
+  final _runTime = Stopwatch();
+  Future<void>? _cameraStop;
+  StreamSubscription<MotionEvent>? _menuSub;
+  ReadyGate _readyGate = ReadyGate();
+  bool _menuRaised = false;
+  int _readyDisplay = -1;
+  int _spokenCount = 0;
   final _clientId = SessionQueue.newClientId();
   String? _error;
   DeviceTier _tier = DeviceTier.mid;
@@ -118,7 +135,7 @@ class _QuestState extends ConsumerState<QuestScreen>
   bool _resuming = false;
   bool _finishing = false;
 
-  Voice get _voice => ref.read(voiceProvider);
+  late final Voice _voice;
 
   // Framing guide: the latest smoothed frame + debounced advice, for the
   // in-game frame finder and edge glow. Display only; the run's pause and
@@ -139,6 +156,41 @@ class _QuestState extends ConsumerState<QuestScreen>
     _rawAdvice = raw;
     final shown = _framingFilter.update(raw, ts);
     _framed.value = FramedView(_smoother.smooth(f), shown);
+    if ((_paused || _checkpointOffer != null) && _phase == _Phase.run) {
+      final good =
+          raw.ok &&
+          const QualityGate().check(f).ok &&
+          _session?.light == TrackingLight.green;
+      if (!shown.ok && ts - _spokenAt >= 6000) {
+        _spokenAt = ts;
+        _voice.sayKey(framingKey(shown.fix), force: true);
+      }
+      final go = _readyGate.update(ts, good: good, raised: _menuRaised);
+      final display =
+          (_readyGate.progress * 10).floor() * 10 + _readyGate.countdown;
+      if (display != _readyDisplay) {
+        _readyDisplay = display;
+        if (mounted) setState(() {});
+      }
+      if (_readyGate.confirmed &&
+          !_menuRaised &&
+          good &&
+          _readyGate.countdown != _spokenCount) {
+        _spokenCount = _readyGate.countdown;
+        _voice.say('$_spokenCount', force: true);
+      }
+      if (!good || _menuRaised) _spokenCount = 0;
+      if (go) {
+        if (_checkpointOffer != null) _continueFromCheckpoint();
+        if (_paused) {
+          _resume();
+        } else {
+          _session?.collectStats = true;
+          _runTime.start();
+        }
+      }
+      return;
+    }
     // While the run waits, repeat the direction when it changes or every 8 s.
     final waiting = _game?.hud.value.trackingIssue != null;
     if (waiting &&
@@ -163,8 +215,13 @@ class _QuestState extends ConsumerState<QuestScreen>
   @override
   void initState() {
     super.initState();
+    _voice = ref.read(voiceProvider);
     WidgetsBinding.instance.addObserver(this);
-    _prepare();
+    // Asset bundles and inherited presentation settings are available only
+    // after initState. A route can legitimately supply its own asset bundle.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _prepare();
+    });
   }
 
   Future<void> _prepare() async {
@@ -181,30 +238,62 @@ class _QuestState extends ConsumerState<QuestScreen>
       _stage = widget.tutorial
           ? stages.first
           : (stageById(widget.levelId ?? forestEscapeId) ?? stages.first);
+      final premium = PaywallPolicy.paymentsEnabled
+          ? await ref.read(premiumProvider.future)
+          : const PremiumState(premium: true);
+      if (!mounted) return;
+      if (!widget.tutorial &&
+          !canPlayStage(
+            _stage,
+            s.completedLevels,
+            premiumLocked: PaywallPolicy.paymentsEnabled && !premium.premium,
+          )) {
+        setState(
+          () => _error = tr(
+            'This stage is locked. Choose an available stage on the world map.',
+          ),
+        );
+        return;
+      }
       final level = widget.tutorial
           ? tutorialFrom(await loadForest(bundle))
           : LevelConfig.decode(await bundle.loadString(_stage.asset));
       if (!mounted) return;
-      final runSettings = widget.tutorial
+      final runSettings = widget.tutorial || widget.gentle
           ? RunSettings(
               difficulty: Difficulty.beginner,
-              lowImpact: s.lowImpact,
+              lowImpact: widget.gentle || s.lowImpact,
               assist: true,
-              warningMultiplier: s.warningMultiplier,
+              warningMultiplier: widget.gentle ? 1.2 : s.warningMultiplier,
             )
           : s.runSettings;
       _tier = s.deviceTier ?? DeviceTier.mid;
       final session = MotionSession(
         ref.read(poseSourceProvider),
         initialCalibration: cal,
-        thresholds: s.thresholds,
+        thresholds: widget.gentle
+            ? const MotionThresholds.lowImpact()
+            : s.thresholds,
       );
       _session = session;
+      _menuSub = session.events.listen((event) {
+        if (!_paused && _checkpointOffer == null) return;
+        if (event is MoveStarted && event.move == Move.raiseArms ||
+            event is MoveHeld && event.move == Move.raiseArms) {
+          _menuRaised = true;
+        }
+        if (event is MoveEnded && event.move == Move.raiseArms ||
+            event is TrackingPaused) {
+          _menuRaised = false;
+        }
+      });
       _game = ForestGame(
         engine: RunEngine(level, runSettings),
         motionEvents: session.events,
         audio: this,
         theme: _stage.theme,
+        heroLook: s.heroLook,
+        reduceMotion: MediaQuery.maybeDisableAnimationsOf(context) ?? false,
         lightOf: () => session.light,
         issueKeyOf: _issueKey,
         onFinished: (r) => WidgetsBinding.instance.addPostFrameCallback(
@@ -225,6 +314,8 @@ class _QuestState extends ConsumerState<QuestScreen>
 
   /// Starts the camera session and the run. Returns false on failure.
   Future<bool> _startCamera() async {
+    await _cameraStop;
+    if (!mounted || _disposed) return false;
     final session = _session;
     if (session == null) return false;
     bool ok;
@@ -266,11 +357,17 @@ class _QuestState extends ConsumerState<QuestScreen>
     setState(() => _phase = _Phase.loading);
     if (!await _startCamera()) return;
     _startedAt = DateTime.now();
+    _runTime
+      ..reset()
+      ..start();
     setState(() => _phase = _Phase.run);
     // The app may have gone to the background while the camera was starting
     // (pause is ignored during loading): freeze the run straight away.
     final life = WidgetsBinding.instance.lifecycleState;
-    if (life != null && life != AppLifecycleState.resumed) _pause();
+    if (life != null && life != AppLifecycleState.resumed) {
+      _pause();
+      _cameraStop = _session?.stop();
+    }
   }
 
   void _onRunFinished(RunResult r) {
@@ -281,6 +378,9 @@ class _QuestState extends ConsumerState<QuestScreen>
         game != null &&
         game.engine.atCheckpoint) {
       game.pauseEngine();
+      _runTime.stop();
+      _session?.collectStats = false;
+      _resetReady();
       setState(() => _checkpointOffer = r);
       return;
     }
@@ -291,6 +391,7 @@ class _QuestState extends ConsumerState<QuestScreen>
     // Double-tap or Finish + Continue in one frame: finish only once (Q2-9).
     if (r == null || _finishing) return;
     _finishing = true;
+    _runTime.stop();
     _result = r;
     _checkpointOffer = null;
     _stats = _session?.moveStats();
@@ -325,15 +426,22 @@ class _QuestState extends ConsumerState<QuestScreen>
           AppLifecycleState.hidden ||
           AppLifecycleState.paused:
         _pause();
-      case AppLifecycleState.resumed || AppLifecycleState.detached:
+        _resetReady();
+        if (_phase == _Phase.run) _cameraStop = _session?.stop();
+      case AppLifecycleState.resumed:
+        if (_paused && _phase == _Phase.run) _rearmCamera();
+      case AppLifecycleState.detached:
         break;
     }
   }
 
-  /// Freezes the run: game loop, camera and voice. Resume needs the player.
+  /// Freezes gameplay and voice. Foreground tracking remains available for
+  /// menu confirmation; lifecycle transitions stop the camera separately.
   void _pause() {
     if (_paused || _error != null || _phase == _Phase.loading) return;
     _paused = true;
+    _runTime.stop();
+    _resetReady();
     _voice.stop();
     if (_phase == _Phase.run) {
       final game = _game;
@@ -349,9 +457,49 @@ class _QuestState extends ConsumerState<QuestScreen>
           ),
         );
       }
-      _session?.stop();
+      _session?.collectStats = false;
+      // On an explicit in-app pause the camera stays native and active for
+      // menu confirmation. Lifecycle pauses above always stop the camera.
     }
     if (mounted) setState(() {});
+  }
+
+  void _resetReady() {
+    _readyGate = ReadyGate();
+    _menuRaised = false;
+    _readyDisplay = -1;
+    _spokenCount = 0;
+  }
+
+  Future<void> _rearmCamera() async {
+    if (!await _startCamera()) return;
+    final life = WidgetsBinding.instance.lifecycleState;
+    if (life != null && life != AppLifecycleState.resumed) {
+      _cameraStop = _session?.stop();
+    }
+  }
+
+  void _requestReady() {
+    if (_phase != _Phase.run) {
+      _resume();
+      return;
+    }
+    _readyGate.request();
+    _rearmCamera();
+    setState(() {});
+  }
+
+  Future<void> _retryCamera() async {
+    setState(() => _error = null);
+    _resetReady();
+    if (_phase == _Phase.loading && _runBegun) {
+      _runBegun = false;
+      await _beginRun();
+    } else {
+      // Keep the existing engine/checkpoint while a camera owned by another
+      // app becomes available again. Confirmation is still required.
+      await _rearmCamera();
+    }
   }
 
   Future<void> _resume() async {
@@ -377,6 +525,10 @@ class _QuestState extends ConsumerState<QuestScreen>
         }
       }
       if (mounted) setState(() => _paused = false);
+      if (_phase == _Phase.run) {
+        _session?.collectStats = true;
+        _runTime.start();
+      }
     } finally {
       _resuming = false;
     }
@@ -413,10 +565,7 @@ class _QuestState extends ConsumerState<QuestScreen>
     await session?.dispose();
     if (r == null || !mounted) return;
     final s = ref.read(settingsProvider);
-    final durationS = DateTime.now()
-        .difference(_startedAt)
-        .inSeconds
-        .clamp(1, 3600);
+    final durationS = _runTime.elapsed.inSeconds.clamp(1, 3600);
     final data = ResultsData(
       result: r,
       levelId: _stage.levelId,
@@ -425,6 +574,8 @@ class _QuestState extends ConsumerState<QuestScreen>
       durationS: durationS,
       moveStats: stats,
       tutorial: widget.tutorial,
+      maxHearts: _game?.engine.level.hearts ?? 3,
+      assist: _game?.engine.settings.assist ?? false,
     );
     final engine = _game?.engine;
     final seen = <EncounterType>{
@@ -445,6 +596,9 @@ class _QuestState extends ConsumerState<QuestScreen>
             completedLevels: !widget.tutorial && r.completed
                 ? {...s.completedLevels, _stage.levelId}
                 : null,
+            missionLevels: !widget.tutorial && r.completed && r.missionWon
+                ? {...s.missionLevels, _stage.levelId}
+                : null,
           ),
         );
     context.go('/results', extra: data);
@@ -462,6 +616,7 @@ class _QuestState extends ConsumerState<QuestScreen>
     _game?.dispose();
     _game = null;
     _frameSub?.cancel();
+    _menuSub?.cancel();
     _framed.dispose();
     _voice.stop();
     super.dispose();
@@ -471,7 +626,7 @@ class _QuestState extends ConsumerState<QuestScreen>
   @override
   void cue(String name) => _voice.cue(name);
   @override
-  void say(String text) => _voice.say(text);
+  void say(String text) => _voice.say(tr(text));
   @override
   void sayKey(String key) => _voice.sayKey(key, force: true);
 
@@ -479,10 +634,14 @@ class _QuestState extends ConsumerState<QuestScreen>
   Widget build(BuildContext context) {
     if (_error != null) {
       return ScreenScaffold(
-        title: 'Daily Quest',
+        title: tr('Daily Quest'),
         children: [
           Text(_error!, style: const TextStyle(fontSize: 19)),
-          BigButton('Back', onPressed: () => context.go('/home')),
+          if (_session != null) BigButton(tr('Retry'), onPressed: _retryCamera),
+          BigButton(
+            tr(_phase == _Phase.run ? 'Quit (this run is not saved)' : 'Back'),
+            onPressed: _quit,
+          ),
         ],
       );
     }
@@ -525,10 +684,11 @@ class _QuestState extends ConsumerState<QuestScreen>
             _Overlay(
               title: tr('Out of hearts'),
               text: tr('Your checkpoint is saved.'),
+              detail: _readyHelp(),
               actions: [
                 BigButton(
                   tr('Continue from checkpoint'),
-                  onPressed: _continueFromCheckpoint,
+                  onPressed: _requestReady,
                 ),
                 BigButton(
                   tr('Finish run'),
@@ -540,9 +700,12 @@ class _QuestState extends ConsumerState<QuestScreen>
           else if (_paused)
             _Overlay(
               title: tr('Paused'),
-              text: tr('Ready? Step back into view and tap Resume.'),
+              text: _phase == _Phase.run
+                  ? tr('Camera on for hands-free resume.')
+                  : tr('Take your time.'),
+              detail: _phase == _Phase.run ? _readyHelp() : null,
               actions: [
-                BigButton(tr('Resume'), onPressed: _resume),
+                BigButton(tr('Resume'), onPressed: _requestReady),
                 BigButton(
                   tr('Quit (this run is not saved)'),
                   secondary: true,
@@ -554,6 +717,40 @@ class _QuestState extends ConsumerState<QuestScreen>
       ),
     );
   }
+
+  Widget _readyHelp() => Column(
+    children: [
+      ValueListenableBuilder<FramedView>(
+        valueListenable: _framed,
+        builder: (context, v, _) => SizedBox(
+          width: 72,
+          height: 96,
+          child: FrameView(
+            frame: v.frame,
+            advice: v.advice ?? const FramingAdvice(FramingFix.findMe),
+            mirror: false,
+            showCue: false,
+            showTarget: true,
+          ),
+        ),
+      ),
+      const SizedBox(height: 12),
+      Text(
+        _readyGate.confirmed
+            ? tr('Lower your arms. Stand in frame for the countdown.')
+            : tr('Raise your arms and hold to continue. Then lower them.'),
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontSize: 20),
+      ),
+      const SizedBox(height: 10),
+      LinearProgressIndicator(value: _readyGate.progress, minHeight: 6),
+      if (_readyGate.confirmed)
+        Text(
+          '${_readyGate.countdown}',
+          style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w900),
+        ),
+    ],
+  );
 }
 
 /// Full-screen modal card used for pause and checkpoint choices.
@@ -562,17 +759,19 @@ class _Overlay extends StatelessWidget {
     required this.title,
     required this.text,
     required this.actions,
+    this.detail,
   });
   final String title;
   final String text;
   final List<Widget> actions;
+  final Widget? detail;
 
   @override
   Widget build(BuildContext context) => Positioned.fill(
     child: Material(
       color: Colors.black87,
       child: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -594,6 +793,7 @@ class _Overlay extends StatelessWidget {
                 style: const TextStyle(fontSize: 20, color: Colors.white),
               ),
               const SizedBox(height: 24),
+              if (detail != null) ...[detail!, const SizedBox(height: 16)],
               ...actions,
             ],
           ),
@@ -654,31 +854,24 @@ class _RunView extends StatelessWidget {
                                 ? Icons.favorite
                                 : Icons.favorite_border,
                             color: Colors.redAccent,
-                            size: 40,
+                            size: 30,
                           ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
                         const Icon(
                           Icons.bolt,
                           color: Colors.cyanAccent,
-                          size: 36,
+                          size: 20,
                         ),
                         Text(
                           '${h.energy}',
                           style: const TextStyle(
-                            fontSize: 28,
+                            fontSize: 20,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
                         const Spacer(),
-                        Text(
-                          '${h.score}',
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
                         const SizedBox(width: 12),
-                        TrackingDot(h.light, size: 36),
+                        TrackingDot(h.light, size: 28),
                         IconButton(
                           tooltip: tr('Pause'),
                           iconSize: 36,
@@ -689,17 +882,161 @@ class _RunView extends StatelessWidget {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    padding: EdgeInsets.fromLTRB(
+                      12,
+                      0,
+                      (MediaQuery.sizeOf(context).width * 0.26)
+                              .clamp(72.0, 140.0)
+                              .toDouble() +
+                          24,
+                      10,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${tr('Score')}  ${h.score}',
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(
+                      left: 12,
+                      right:
+                          (MediaQuery.sizeOf(context).width * 0.26)
+                              .clamp(72.0, 140.0)
+                              .toDouble() +
+                          24,
+                    ),
                     child: LinearProgressIndicator(
                       value: h.progress,
                       minHeight: 10,
                       borderRadius: BorderRadius.circular(5),
                     ),
                   ),
+                  if (h.missionKind != null)
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        12,
+                        10,
+                        (MediaQuery.sizeOf(context).width * 0.26)
+                                .clamp(72.0, 140.0)
+                                .toDouble() +
+                            24,
+                        0,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xE60B1611),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              tr(
+                                h.missionGoal == 0
+                                    ? 'Mission protected'
+                                    : missionName(h.missionKind!),
+                              ),
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: LinearProgressIndicator(
+                                    value: h.missionGoal == 0
+                                        ? 0
+                                        : (h.missionCount / h.missionGoal)
+                                              .clamp(0, 1)
+                                              .toDouble(),
+                                    minHeight: 4,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                if (h.missionWon)
+                                  const Icon(
+                                    Icons.check_rounded,
+                                    color: Color(0xFF3FD0C0),
+                                    size: 18,
+                                  )
+                                else
+                                  Text(
+                                    '${h.missionCount.clamp(0, h.missionGoal)}/${h.missionGoal}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF3FD0C0),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   const Spacer(),
+                  if (h.feedback != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Semantics(
+                        liveRegion: true,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xEE0B1611),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(color: const Color(0xFF3FD0C0)),
+                          ),
+                          child: Text(
+                            '${tr(h.feedback!)}${h.combo >= 3 ? '  ·  ${tr('Flow')} ${h.combo}' : ''}',
+                            style: const TextStyle(
+                              color: Color(0xFFF6EEDC),
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   // A tracking pause is explained by the frame finder.
-                  if (h.trackingIssue == null && h.hint != null)
-                    _Banner(text: h.hint!, color: Colors.black54),
+                  if (h.trackingIssue == null &&
+                      (h.hint != null || h.action != null))
+                    _Banner(
+                      text: tr(switch (h.action) {
+                        EncounterType.beam => 'Duck under',
+                        EncounterType.laneBlock => 'Find a free lane',
+                        EncounterType.orb => 'Reach for the light',
+                        EncounterType.gate => 'Raise to open',
+                        null => switch (h.segment) {
+                          SegmentKind.practice => 'Practise your moves',
+                          SegmentKind.breather => 'Breather time',
+                          SegmentKind.combo => 'Flow section',
+                          SegmentKind.checkpoint => 'Checkpoint reached',
+                          SegmentKind.finale => 'Final stretch',
+                          _ => 'Follow the trail',
+                        },
+                      }),
+                      color: Colors.black54,
+                    ),
                   const SizedBox(height: 40),
                 ],
               ),
@@ -755,11 +1092,12 @@ class _FrameFinder extends StatelessWidget {
         final smallW = (w * 0.26).clamp(72.0, 140.0).toDouble();
         final fw = waiting ? bigW : smallW;
         final left = waiting ? (w - bigW) / 2 : w - smallW - 12;
-        final top = waiting ? h * 0.15 : pad.top + 100;
+        final top = waiting ? h * 0.15 : pad.top + 72;
         final duration = MediaQuery.maybeDisableAnimationsOf(context) == true
             ? Duration.zero
             : const Duration(milliseconds: 350);
-        final visible = waiting || mirror;
+        // With the mirror off, retain the landmark-only avatar as body feedback.
+        const visible = true;
         return Stack(
           children: [
             IgnorePointer(
@@ -858,7 +1196,7 @@ class _Banner extends StatelessWidget {
       text,
       textAlign: TextAlign.center,
       style: const TextStyle(
-        fontSize: 30,
+        fontSize: 24,
         fontWeight: FontWeight.w800,
         color: Colors.white,
       ),
@@ -934,39 +1272,53 @@ class _ExerciseFlowState extends State<_ExerciseFlow> {
     final e = widget.exercises[_i];
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            children: [
-              Text(widget.title, style: Theme.of(context).textTheme.titleLarge),
-              const Spacer(),
-              Text(
-                tr(e.name),
-                style: Theme.of(context).textTheme.displaySmall,
-                textAlign: TextAlign.center,
+        child: LayoutBuilder(
+          builder: (context, box) => SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: (box.maxHeight - 48)
+                    .clamp(0.0, double.infinity)
+                    .toDouble(),
               ),
-              const SizedBox(height: 16),
-              Text(
-                tr(e.cue),
-                style: Theme.of(context).textTheme.bodyLarge,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
-              Text(
-                '$_left',
-                style: const TextStyle(
-                  fontSize: 96,
-                  fontWeight: FontWeight.w900,
+              child: IntrinsicHeight(
+                child: Column(
+                  children: [
+                    Text(
+                      widget.title,
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const Spacer(),
+                    Text(
+                      tr(e.name),
+                      style: Theme.of(context).textTheme.displaySmall,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      tr(e.cue),
+                      style: Theme.of(context).textTheme.bodyLarge,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 32),
+                    Text(
+                      '$_left',
+                      style: const TextStyle(
+                        fontSize: 96,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text('${_i + 1} / ${widget.exercises.length}'),
+                    BigButton(
+                      tr('Skip'),
+                      secondary: true,
+                      onPressed: () => _begin(_i + 1),
+                    ),
+                  ],
                 ),
               ),
-              const Spacer(),
-              Text('${_i + 1} / ${widget.exercises.length}'),
-              BigButton(
-                tr('Skip'),
-                secondary: true,
-                onPressed: () => _begin(_i + 1),
-              ),
-            ],
+            ),
           ),
         ),
       ),

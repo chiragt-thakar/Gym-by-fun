@@ -27,14 +27,35 @@ class TokenStore {
   final SharedPreferences _prefs;
   String? get access => _prefs.getString('auth.access');
   String? get refresh => _prefs.getString('auth.refresh');
-  Future<void> save(String access, String refresh) async {
+  String? get accountId {
+    final saved = _prefs.getString('auth.account');
+    if (saved != null) return saved;
+    // Migration for existing installs. This is only a local ownership label;
+    // the server still verifies the token before accepting any request.
+    try {
+      final part = access!.split('.')[1];
+      final claims = jsonDecode(
+        utf8.decode(base64Url.decode(base64Url.normalize(part))),
+      ) as Map;
+      return claims['sub'] as String?;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> save(String access, String refresh, {String? accountId}) async {
+    if (accountId != null) await _prefs.setString('auth.account', accountId);
     await _prefs.setString('auth.access', access);
     await _prefs.setString('auth.refresh', refresh);
   }
 
   Future<void> clear() async {
+    final owner = accountId;
+    if (owner != null) await _prefs.setString('auth.account', owner);
     await _prefs.remove('auth.access');
     await _prefs.remove('auth.refresh');
+    // Keep the last account identity so a later sign-in can distinguish a
+    // returning player from somebody else using this phone.
   }
 
   bool get hasSession => refresh != null;
@@ -67,6 +88,7 @@ class ApiClient {
     bool auth = true,
     bool retried = false,
   }) async {
+    final requestAccount = tokens.accountId;
     final headers = {'content-type': 'application/json'};
     if (auth && tokens.access != null) {
       headers['authorization'] = 'Bearer ${tokens.access}';
@@ -76,6 +98,11 @@ class ApiClient {
     final res = await http.Response.fromStream(
       await _http.send(req).timeout(const Duration(seconds: 15)),
     );
+    if (auth && tokens.accountId != requestAccount) {
+      // Never refresh and retry a previous player's request using a newly
+      // signed-in player's credentials.
+      throw ApiException(401, 'session_changed');
+    }
     if (res.statusCode == 401 && auth && !retried && tokens.refresh != null) {
       if (await _refresh()) {
         return _send(method, path, body: body, auth: auth, retried: true);
@@ -100,20 +127,24 @@ class ApiClient {
   }
 
   Future<bool> _doRefresh() async {
+    final refresh = tokens.refresh;
+    final owner = tokens.accountId;
     try {
       final r = await _send(
         'POST',
         '/auth/refresh',
-        body: {'refreshToken': tokens.refresh},
+        body: {'refreshToken': refresh},
         auth: false,
         retried: true,
       );
+      if (tokens.refresh != refresh || tokens.accountId != owner) return false;
       await tokens.save(
         r['accessToken'] as String,
         r['refreshToken'] as String,
       );
       return true;
     } on ApiException {
+      if (tokens.refresh != refresh || tokens.accountId != owner) return false;
       await tokens.clear();
       onSessionExpired?.call();
       return false;
@@ -140,7 +171,11 @@ class ApiClient {
       },
       auth: false,
     );
-    await tokens.save(r['accessToken'] as String, r['refreshToken'] as String);
+    await tokens.save(
+      r['accessToken'] as String,
+      r['refreshToken'] as String,
+      accountId: (r['user'] as Map?)?['id'] as String?,
+    );
     return r;
   }
 

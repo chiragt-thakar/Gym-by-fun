@@ -14,6 +14,43 @@ enum Outcome {
   forgiven,
 }
 
+/// Counts outcomes, never raw moves. Checkpoint replays cannot farm progress;
+/// camera-forgiven opportunities reduce the target rather than penalising it.
+class MissionTracker {
+  MissionTracker(this.config, List<PlannedEncounter> plan) {
+    if (config != null) {
+      for (final p in plan) {
+        if (_matches(p.type)) _eligible.add(p.index);
+      }
+    }
+  }
+  final LevelGameplay? config;
+  final _eligible = <int>{}, _cleared = <int>{}, _forgiven = <int>{};
+  bool complete = false;
+  bool get enabled => config != null;
+  int get count => _cleared.length;
+  int get goal => config == null
+      ? 0
+      : ((_eligible.length - _forgiven.length) * config!.targetFraction).ceil();
+  double get progress => goal == 0 ? 0 : (count / goal).clamp(0, 1).toDouble();
+  bool _matches(EncounterType type) => switch (config!.mission) {
+        MissionKind.lights => type == EncounterType.orb,
+        MissionKind.gates => type == EncounterType.gate,
+        MissionKind.path => type.damages,
+      };
+  void resolve(PlannedEncounter encounter, Outcome outcome) {
+    if (!_eligible.contains(encounter.index)) return;
+    if (outcome == Outcome.cleared) {
+      _cleared.add(encounter.index);
+      _forgiven.remove(encounter.index);
+    } else if (outcome == Outcome.forgiven &&
+        !_cleared.contains(encounter.index)) {
+      _forgiven.add(encounter.index);
+    }
+    if (goal > 0 && count >= goal) complete = true;
+  }
+}
+
 /// Things the renderer, audio and HUD react to.
 sealed class RunEvent {
   const RunEvent(this.atMs);
@@ -85,6 +122,9 @@ class RunResult {
     required this.activeMs,
     required this.difficulty,
     required this.lowImpact,
+    this.missionWon = false,
+    this.missionCount = 0,
+    this.missionGoal = 0,
   });
 
   final String levelId;
@@ -102,6 +142,8 @@ class RunResult {
   final int activeMs;
   final Difficulty difficulty;
   final bool lowImpact;
+  final bool missionWon;
+  final int missionCount, missionGoal;
 
   int get movesDone => reps.values.fold(0, (a, b) => a + b);
 
@@ -119,6 +161,9 @@ class RunResult {
         'activeMs': activeMs,
         'difficulty': difficulty.name,
         'lowImpact': lowImpact,
+        'missionWon': missionWon,
+        'missionCount': missionCount,
+        'missionGoal': missionGoal,
       };
 }
 
@@ -132,6 +177,7 @@ class RunEngine {
       : director = Director(level, settings),
         hearts = level.hearts {
     plan = director.plan();
+    mission = MissionTracker(level.gameplay, plan);
     lane = level.lanes ~/ 2;
   }
 
@@ -139,6 +185,7 @@ class RunEngine {
   final RunSettings settings;
   final Director director;
   late final List<PlannedEncounter> plan;
+  late final MissionTracker mission;
 
   final Pacer pacer = Pacer();
 
@@ -343,6 +390,7 @@ class RunEngine {
         forgiven++;
     }
     out.add(EncounterResolved(now, p, outcome, points));
+    mission.resolve(p, outcome);
     if (hearts <= 0) out.add(_finish(now, completed: false));
     return out;
   }
@@ -404,5 +452,8 @@ class RunEngine {
         activeMs: activeMs,
         difficulty: settings.difficulty,
         lowImpact: director.lowImpact,
+        missionWon: mission.complete,
+        missionCount: mission.count,
+        missionGoal: mission.goal,
       );
 }

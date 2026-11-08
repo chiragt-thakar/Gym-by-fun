@@ -1,7 +1,7 @@
 {
   "$schema": "../schema/level.schema.json",
   "id": "w4-sunrise-summit",
-  "version": 1,
+  "version": 3,
   "schemaVersion": 1,
   "world": 4,
   "name": "Sunrise Summit",
@@ -292,5 +292,16 @@
       ],
       "hint": "You reached the summit at sunrise. Well done!"
     }
-  ]
+  ],
+  "journey": {
+    "mission": "Carry the summit beacon through the mountains.",
+    "completion": "Your beacon shines above the clouds.",
+    "keepsake": "Summit beacon"
+  },
+  "gameplay": {
+    "scene": "mountain",
+    "mission": "path",
+    "targetFraction": 0.6,
+    "atmosphere": "snow"
+  }
 }

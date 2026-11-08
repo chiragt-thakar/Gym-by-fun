@@ -1,5 +1,160 @@
 # Game design: rules and thresholds
 
+## Gameplay, explorers and live body guide (2026-11-09)
+
+The runner now has seven authored scene profiles: forest, river, ruins, desert,
+neon rooftops, mountain bridges and festival streets. These are visual and
+objective variants of the existing runner, not seven separate game engines.
+River stages put the explorer on a raft; ruins use broken columns; neon stages
+have a window-lit skyline and lane rails; mountain stages have peaks, snowy
+pines and bridge boards. Rain, fireflies, sand, stars, snow or petals are chosen
+by level data. Reduced-motion mode freezes decorative weather, scarf flutter
+and companion orbit; required movement/game-state feedback remains visible.
+
+### Optional missions and replay stars
+
+Every current level contains schema-validated `gameplay` metadata:
+`scene`, `atmosphere`, `mission` and `targetFraction` (0.25..1). Current authored
+targets use 0.6. Immutable content versions were incremented to 3, and bundled
+copies match canonical content. Levels without this optional metadata still
+load with their previous game rules and no mission UI.
+
+- **Gather the lights:** clear orb encounters in the correct lane with a reach.
+- **Awaken the beacons:** answer gate encounters with a reach at the right time.
+- **Clear the trail:** clear damaging encounters with the appropriate move/lane.
+
+The target is `ceil(eligible planned encounters * targetFraction)`, calculated
+after the director selects that difficulty's actual encounters. Server/Dart
+validation also requires at least one beginner-level opportunity. A raw move
+never counts; only resolved matching encounters count, once per plan index.
+Mission progress survives a checkpoint retry without counting its encounters
+again. If an unresolved opportunity is forgiven because of tracking, it is
+removed from the target denominator. It awards no invented clear or points.
+All-forgiven opportunities produce a protected neutral state, not a free star.
+Earned mission completion never regresses. Existing scoring, hearts, pacing,
+unlock order and movement thresholds are unchanged.
+
+The destination ring fills with mission progress, and Jugnu, a small original
+firefly companion, accompanies earned progress. A mission star is saved in
+`Settings.missionLevels` only when a non-tutorial stage is completed with its
+mission achieved. Stars are cosmetic, appear on the world map, have no payment
+requirement and never gate stage progress. Existing stage completions remain
+valid; replaying for a star is optional.
+
+### Three original explorers
+
+Settings -> Your explorer offers **Kavi the fox**, **Neela the otter**, and
+**Tara the starbot**. They share identical rules and recognition; this is an
+explicit cosmetic choice, never inferred from the player. The actual game art
+is reused for the selection preview. Bent limbs, capes/scarves, boots and
+recogniser-driven easing make ducking, reaching and lane changes readable.
+No character has a recognition or scoring advantage.
+
+### Body guide and readable cues
+
+The native camera mirror retains a high-contrast skeleton with outlined limbs,
+joint centres and amber low-confidence segments. With the mirror off, the same
+real visible landmarks draw a capsule-limb body avatar with a torso and neutral
+visor. No segmentation or camera pixels enter Dart. Invisible/non-finite joints
+are omitted rather than invented; the standing outline is only a framing target.
+Display visibility cutoffs (0.4 to draw; below 0.65 highlighted amber) do not alter
+the quality gate or any movement recogniser. The guide stays available under the
+HUD during play, and still expands for framing recovery.
+
+The mission and body guide occupy the header, leaving the approaching obstacles
+and explorer visible. Visual cues use short localised actions (duck, find a free
+lane, reach, open) and short segment labels rather than paragraphs at 2 m.
+Existing authored hints remain available to the voice path. The warm-up/cool-down
+layout now scrolls when a small phone or large text cannot fit the full exercise.
+
+The rendering previews in `docs/screenshots/gameplay-*.png` are produced by
+opt-in tests with authored scenes and synthetic landmark fixtures. They contain
+no camera image and are not evidence of physical movement accuracy or real-phone
+frame rate. Those still need a consenting person in front of the camera.
+
+## Adventure experience update (2026-11-09)
+
+Product focus: a welcoming, private adventure that makes it easy to start,
+understand a successful move, and come back. Competitive retention is a
+hypothesis, not a measured result of this update.
+
+### Research and decisions
+
+- [FitXR: Your Journey](https://fitxr.com/blogs/fitxr-platform/new-your-journey-workouts-built-around-you)
+  describes a curated path based on preferences and previous classes. Our
+  interpretation: recommend a clear next chapter instead of making the player
+  browse a large catalogue. MotionQuest keeps its deterministic unlock chain;
+  this update does not introduce a learned recommendation model.
+- [Nintendo: Ring Fit game modes](https://www.nintendo.com/en-gb/Support/Purchases-Subscriptions/Games/How-to-Choose-a-Game-Mode-Ring-Fit-Adventure--1664661.html)
+  distinguishes adventure, quick play and custom exercise. Our interpretation:
+  preserve the adventure while allowing an explicit easier choice. The new
+  **Gentle today** button applies beginner difficulty, low-impact recognition,
+  assist and 1.2x base warnings to one run, without overwriting preferences.
+- [BodyArcade](https://bodyarcade.com/) describes short camera-controlled games
+  and on-device video processing. This is a company description, not an
+  independent performance assessment. Our interpretation: camera control and
+  privacy alone will not distinguish MotionQuest; continuity, feedback and a
+  coherent original world need to carry the experience.
+
+These are product-design inputs, not proof that a feature improves adherence,
+fitness outcomes or willingness to pay. No competitor assets or game content
+were copied.
+
+### Shipped behaviour
+
+- The next-adventure card shows the mission from level JSON, chosen difficulty,
+  movement mode, and a total time estimate computed from that level plus the
+  actual 75 s warm-up and 60 s cool-down lists. Tracking breaks can extend it.
+- Each of 18 levels has schema-validated `journey.mission`, `completion` and
+  `keepsake` text. World-specific cover art is original procedural vector art.
+  Completing a chapter earns its unique keepsake via `completedLevels`, once;
+  replaying cannot duplicate it. Keepsakes are cosmetic and do not affect
+  scoring or gate free content. Existing completions receive their keepsakes.
+- Results show the authored completion scene on success; only a completed
+  non-tutorial run earns a keepsake. Unfinished runs receive encouragement
+  without a reward.
+- Cleared encounters show contextual feedback: Clean duck / Smooth dodge /
+  Light collected / Gate opened. A flow count appears at three or more
+  consecutive clears, using the engine's existing streak. Forgiven and missed
+  encounters do not produce success effects. Decorative particles honour the
+  system reduced-motion setting; the feedback text remains available.
+- The recent activity calendar remembers the last 14 distinct local activity
+  dates independently of the last 20 coach summaries. Rest days cause no
+  keepsake loss. Move/minute totals are explicitly recent-run totals, not
+  fabricated lifetime or server statistics.
+- The HUD separates hearts/tracking/pause from score/energy to fit a 320px
+  phone. Later world cards collapse, with the current world open by default.
+
+### Hands-free menus
+
+During an in-app run pause or checkpoint choice, the game stops accepting
+motion input but the foreground camera can continue to recognise a menu
+confirmation. A neutral pose must be observed first, then a recognised arms-up
+pose held for 1.2 s. The player lowers their arms and stays well framed for a
+spoken 3 s countdown. A tap on Resume / Continue can replace the gesture, but
+cannot bypass framing or the countdown. Poor framing or a frame gap over
+250 ms restarts the countdown. Gesture confirmation never chooses Quit or
+Finish run, so an accidental menu movement cannot discard a session.
+
+Menu movements are excluded from workout attempt/rejection counts and do not
+reach RunEngine. Backgrounding stops the camera; foregrounding re-arms the
+menu, and never resumes the game by itself. No recogniser thresholds changed.
+Manual pauses and cool-down time no longer inflate the uploaded run duration.
+
+Gentle's 1.2 warning multiplier combines with assist's existing 1.25 multiplier
+to give 1.5x base warning lead, subject to the director's encounter-spacing
+limits. Low-impact remains the default and jumps are never enabled by this UI.
+
+### Evidence still needed
+
+Widget previews in `docs/screenshots/next-*.png` use test fixture activity and
+locally loaded preview fonts; they are not Android camera playtests. Validate
+gesture intent, voice availability, readability from 2 m, native preview
+alignment, latency and battery use on three phone tiers. Run first-session
+playtests before claiming a competitive advantage. Measure time to first
+successful move, framing interruptions, first-run completion and voluntary
+return over a week; do not infer these from automated test counts.
+
 Thresholds are starting values. Change them only with recorded data, and only
 while `packages/motion_core/test/replay_accuracy_test.dart` still passes.
 

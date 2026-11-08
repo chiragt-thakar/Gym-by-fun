@@ -45,6 +45,30 @@ Future<ProviderContainer> container([
 }
 
 void main() {
+  test(
+    'activity calendar survives history trimming and clears with history',
+    () async {
+      final c = await container();
+      final history = c.read(coachHistoryProvider.notifier);
+      final earlier = DateTime(2026, 11, 4);
+      history.record(
+        SessionSummary.fromResult(result(), date: earlier, clientId: 'earlier'),
+      );
+      for (var i = 0; i < 25; i++) {
+        history.record(
+          SessionSummary.fromResult(
+            result(),
+            date: DateTime(2026, 11, 9),
+            clientId: 'run$i',
+          ),
+        );
+      }
+      expect(c.read(coachHistoryProvider).length, 20);
+      expect(c.read(activityDaysProvider), contains(localActivityDay(earlier)));
+      history.clear();
+      expect(c.read(activityDaysProvider), isEmpty);
+    },
+  );
   test('history is kept to the last 20 and survives a restart', () async {
     final c = await container();
     for (var i = 0; i < 25; i++) {

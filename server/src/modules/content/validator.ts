@@ -15,8 +15,9 @@ export interface LevelJson {
   version: number;
   schemaVersion: number;
   durationS: number;
+  gameplay?: { scene: string; mission: 'lights' | 'gates' | 'path'; targetFraction: number; atmosphere: string };
   segments: { id: string; startS: number; endS: number; kind: string }[];
-  encounters: { atS: number; type: string; lanes?: number[] }[];
+  encounters: { atS: number; type: string; lanes?: number[]; minDifficulty?: string }[];
   [k: string]: unknown;
 }
 
@@ -27,6 +28,12 @@ export function validateLevel(level: unknown): string[] {
   }
   const l = level as LevelJson;
   const errors: string[] = [];
+  if (l.gameplay && !l.encounters.some((e) =>
+    (!e.minDifficulty || e.minDifficulty === 'beginner') &&
+    (l.gameplay!.mission === 'lights' ? e.type === 'orb' :
+      l.gameplay!.mission === 'gates' ? e.type === 'gate' : e.type !== 'orb'))) {
+    errors.push('mission needs a beginner-level opportunity');
+  }
   for (const s of l.segments) {
     if (s.endS <= s.startS) errors.push(`segment ${s.id} is empty`);
     if (s.endS > l.durationS) errors.push(`segment ${s.id} ends after the level`);

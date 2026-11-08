@@ -1,7 +1,7 @@
 {
   "$schema": "../schema/level.schema.json",
   "id": "w3-neon-city-chase",
-  "version": 1,
+  "version": 3,
   "schemaVersion": 1,
   "world": 3,
   "name": "Neon City Chase",
@@ -495,5 +495,16 @@
       "type": "gate",
       "hint": "Last gate. Break free!"
     }
-  ]
+  ],
+  "journey": {
+    "mission": "Bring the city lights back to life.",
+    "completion": "The skyline lights up for your return.",
+    "keepsake": "City spark"
+  },
+  "gameplay": {
+    "scene": "neon",
+    "mission": "path",
+    "targetFraction": 0.6,
+    "atmosphere": "stars"
+  }
 }

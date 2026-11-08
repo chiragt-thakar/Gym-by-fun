@@ -1,5 +1,13 @@
 import 'stages.dart';
 
+import 'package:game_director/game_director.dart';
+
+String missionName(MissionKind kind) => switch (kind) {
+  MissionKind.lights => 'Gather the lights',
+  MissionKind.gates => 'Awaken the beacons',
+  MissionKind.path => 'Clear the trail',
+};
+
 /// Body areas the body map can highlight.
 enum BodyRegion {
   quads,

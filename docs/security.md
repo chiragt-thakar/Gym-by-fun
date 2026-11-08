@@ -1,5 +1,49 @@
 # Security, privacy and safety controls
 
+## Gameplay/body-avatar update (2026-11-09)
+
+The live body avatar is drawn exclusively from the latest visible landmarks;
+it is not a segmentation mask, a camera image or a fabricated motion source.
+Mirror-off still leaves native Preview unbound. No camera captures were used
+for `gameplay-*.png`: these are opt-in test renders with synthetic fixtures.
+Recognition thresholds, frame lifetime, on-device processing and native secure
+preview handling are unchanged. New `heroLook` and `missionLevels` values are
+local cosmetic preferences/progress in the existing settings record; account
+switch reset and local deletion cover them. Mission progress derives only from
+resolved encounters and never penalises camera-forgiven opportunities.
+
+## Account isolation and honest save status (2026-11-09)
+
+- Offline queue entries carry a local account owner, stripped before upload.
+  Another account's entries are not submitted or shown as that player's pending
+  activity. Legacy records are stamped before a known account's tokens change.
+  Existing access-token subjects can supply a migration label; this is not
+  authentication and never replaces the server's JWT verification.
+- Authenticated requests detect account changes across awaits and cannot retry
+  an old player's upload using a new player's token. Refresh responses also
+  cannot overwrite or clear a newer sign-in. Queue clearing shares the upload
+  lock, preventing a sign-out/flush race.
+- Explicit sign-out clears pending/rejected queue files, coach history, activity
+  dates and pending gym code. If unsynced runs exist, the app explains that they
+  will be removed and offers Cancel. Stage progress stays on the phone; switching
+  to a different known account resets that progress and requires that player's
+  own calibration/tutorial. Full local deletion also removes ownership metadata.
+- Validation failures are split to individual records; valid neighbours sync,
+  while rejected activity remains in a local review file. Auth, permission,
+  throttle, timeout and service errors keep the queue for retry. Rejected runs
+  are not counted as synced. Unreadable activity files are preserved and report
+  a save error instead of being silently overwritten.
+- Results distinguish a completed local write from a failed write, allow Retry,
+  and save changed effort ratings locally as they are selected. Counts and date
+  labels are the only added activity data; no video or camera pixels are stored.
+- Foreground pause keeps native tracking available for an explicitly described
+  gesture confirmation. Gameplay and workout counters ignore menu movements.
+  Backgrounding stops the camera. No camera data is used in the widget-preview
+  exports, which are generated only by opt-in test code with fixture activity.
+
+Server refresh-token revocation on explicit logout remains the separate R3-4
+review item; local account isolation does not implement server token revocation.
+
 ## Privacy (India DPDP)
 
 | Control | Where |

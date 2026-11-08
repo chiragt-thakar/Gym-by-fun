@@ -11,6 +11,30 @@ import 'package:motionquest/screens/home_screen.dart';
 import 'package:motionquest/services/settings.dart';
 
 void main() {
+  test('direct routes cannot bypass progression or premium access', () {
+    final paid = stageById('w2-desert-dunes')!;
+    expect(canPlayStage(stages[1], {}), isFalse);
+    expect(
+      canPlayStage(paid, {'w1-monsoon-meadow'}, premiumLocked: true),
+      isFalse,
+    );
+    expect(canPlayStage(paid, {'w1-monsoon-meadow'}), isTrue);
+  });
+
+  test('all authored stories are complete with unique keepsakes', () {
+    final keepsakes = <String>{};
+    for (final stage in stages) {
+      final level = LevelConfig.decode(File(stage.asset).readAsStringSync());
+      expect(level.journey, isNotNull);
+      expect(level.journey!.mission, isNotEmpty);
+      expect(keepsakes.add(level.journey!.keepsake), isTrue);
+      final total = level.durationMs ~/ 1000 + 135;
+      expect(
+        questTimeLabel(level),
+        '${total ~/ 60}:${(total % 60).toString().padLeft(2, '0')}',
+      );
+    }
+  });
   test('every stage loads its bundled level and the ids match', () {
     for (final st in stages) {
       final level = LevelConfig.decode(File(st.asset).readAsStringSync());

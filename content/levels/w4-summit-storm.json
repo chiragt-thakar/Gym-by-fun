@@ -1,7 +1,7 @@
 {
   "$schema": "../schema/level.schema.json",
   "id": "w4-summit-storm",
-  "version": 1,
+  "version": 3,
   "schemaVersion": 1,
   "world": 4,
   "name": "Summit Storm",
@@ -468,5 +468,16 @@
       "type": "gate",
       "hint": "The summit! Open the final gate."
     }
-  ]
+  ],
+  "journey": {
+    "mission": "Carry the summit beacon through the mountains.",
+    "completion": "Your beacon shines above the clouds.",
+    "keepsake": "Storm crystal"
+  },
+  "gameplay": {
+    "scene": "mountain",
+    "mission": "gates",
+    "targetFraction": 0.6,
+    "atmosphere": "snow"
+  }
 }

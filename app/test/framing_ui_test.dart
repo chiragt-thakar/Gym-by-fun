@@ -1,6 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Action;
+import 'package:flutter/services.dart';
+import 'package:flame/game.dart';
+import 'package:game_director/game_director.dart';
+import 'package:motionquest/game/forest_game.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -10,6 +15,7 @@ import 'package:motionquest/l10n/strings.dart';
 import 'package:motionquest/l10n/tr.dart';
 import 'package:motionquest/screens/calibration_screen.dart';
 import 'package:motionquest/screens/setup_screen.dart';
+import 'package:motionquest/screens/quest_screen.dart';
 import 'package:motionquest/services/pose_service.dart';
 import 'package:motionquest/services/settings.dart';
 import 'package:motionquest/services/voice.dart';
@@ -17,6 +23,15 @@ import 'package:motionquest/widgets/frame_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'fakes.dart';
+
+class _LevelBundle extends CachingAssetBundle {
+  @override
+  Future<String> loadString(String key, {bool cache = true}) async =>
+      File(key).readAsStringSync();
+  @override
+  Future<ByteData> load(String key) async =>
+      ByteData.sublistView(File(key).readAsBytesSync());
+}
 
 /// Records what would be spoken; never touches TTS or audio.
 class RecordingVoice extends Voice {
@@ -55,6 +70,228 @@ Future<int> play(
 void main() {
   late ReplayPoseSource src;
   late RecordingVoice voice;
+
+  Future<void> pumpQuest(
+    WidgetTester t,
+    SyntheticSession recording, {
+    bool locked = false,
+    bool gentle = false,
+    bool fullRun = false,
+    Settings preferences = const Settings(),
+    double textScale = 1,
+  }) async {
+    t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    SharedPreferences.setMockInitialValues({
+      'settings.v1': jsonEncode(
+        preferences.copyWith(calibration: recording.calibrate()).toJson(),
+      ),
+    });
+    final prefs = await SharedPreferences.getInstance();
+    src = ReplayPoseSource(const []);
+    voice = RecordingVoice();
+    await t.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPrefsProvider.overrideWithValue(prefs),
+          poseSourceProvider.overrideWithValue(src),
+          voiceProvider.overrideWithValue(voice),
+        ],
+        child: MaterialApp(
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: TextScaler.linear(textScale)),
+            child: child!,
+          ),
+          home: DefaultAssetBundle(
+            bundle: _LevelBundle(),
+            child: QuestScreen(
+              tutorial: !locked && !gentle && !fullRun,
+              gentle: gentle,
+              levelId: locked ? 'w1-river-crossing' : null,
+            ),
+          ),
+        ),
+      ),
+    );
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 100));
+    for (var i = 0; i < 20; i++) {
+      final ready = locked
+          ? find.textContaining('This stage is locked.')
+          : gentle || fullRun
+          ? find.text('Skip')
+          : find.byTooltip('Pause');
+      if (ready.evaluate().isNotEmpty) break;
+      await t.pump(const Duration(milliseconds: 50));
+    }
+    if (!locked && !gentle && !fullRun) {
+      expect(
+        find.byTooltip('Pause'),
+        findsOneWidget,
+        reason: t
+            .widgetList<Text>(find.byType(Text))
+            .map((w) => w.data)
+            .join(' | '),
+      );
+    }
+  }
+
+  testWidgets('direct locked quest route fails before starting the camera', (
+    t,
+  ) async {
+    await pumpQuest(t, SyntheticSession(SyntheticBody(noise: 0)), locked: true);
+    expect(find.textContaining('This stage is locked.'), findsOneWidget);
+    expect(src.started, isFalse);
+    await t.pumpWidget(const SizedBox());
+  });
+
+  testWidgets(
+    'Gentle today changes this run without changing saved preferences',
+    (t) async {
+      await pumpQuest(
+        t,
+        SyntheticSession(SyntheticBody(noise: 0)),
+        gentle: true,
+        preferences: const Settings(
+          difficulty: Difficulty.advanced,
+          lowImpact: false,
+          assist: false,
+        ),
+      );
+      for (var i = 0; i < warmup.length; i++) {
+        await t.tap(find.text('Skip'));
+        await t.pump(const Duration(milliseconds: 50));
+      }
+      await t.pump();
+      final widget = t.widget(
+        find.byWidgetPredicate((w) => w is GameWidget),
+      ) as GameWidget;
+      final settings = (widget.game as ForestGame).engine.settings;
+      expect(settings.difficulty, Difficulty.beginner);
+      expect(
+        settings.lowImpactFor(
+          (widget.game as ForestGame).engine.level.difficulty[settings
+              .difficulty]!,
+        ),
+        isTrue,
+      );
+      expect(settings.assist, isTrue);
+      final saved = ProviderScope.containerOf(
+        t.element(find.byType(QuestScreen)),
+      ).read(settingsProvider);
+      expect(saved.difficulty, Difficulty.advanced);
+      expect(saved.lowImpact, isFalse);
+      expect(saved.assist, isFalse);
+      await t.pumpWidget(const SizedBox());
+      await t.pump();
+    },
+  );
+
+  testWidgets(
+    'live quest HUD fits a 320px phone and background stops the camera',
+    (t) async {
+      addTearDown(
+        () =>
+            t.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed),
+      );
+      t.view.devicePixelRatio = 1;
+      t.view.physicalSize = const Size(320, 568);
+      addTearDown(t.view.reset);
+      await pumpQuest(
+        t,
+        SyntheticSession(SyntheticBody(noise: 0)),
+        textScale: 1.3,
+        fullRun: true,
+      );
+      for (var i = 0; i < warmup.length; i++) {
+        await t.ensureVisible(find.text('Skip'));
+        await t.tap(find.text('Skip'));
+        await t.pump(const Duration(milliseconds: 50));
+        expect(t.takeException(), isNull, reason: 'warm-up step $i');
+      }
+      for (
+        var i = 0;
+        i < 10 && find.text('Clear the trail').evaluate().isEmpty;
+        i++
+      ) {
+        await t.pump(const Duration(milliseconds: 50));
+      }
+      expect(find.text('Clear the trail'), findsOneWidget);
+      expect(t.takeException(), isNull);
+      // Deliver the lifecycle notification to the screen directly so Flutter's
+      // test scheduler can keep rendering the overlay while "backgrounded".
+      final lifecycle =
+          t.state(find.byType(QuestScreen)) as WidgetsBindingObserver;
+      lifecycle.didChangeAppLifecycleState(AppLifecycleState.paused);
+      for (var i = 0; i < 20 && src.started; i++) {
+        await t.pump(const Duration(milliseconds: 1));
+      }
+      await t.pump();
+      expect(src.started, isFalse, reason: 'camera calls: ${src.calls}');
+      expect(find.text('Paused'), findsOneWidget);
+      await t.runAsync(() => Future<void>.delayed(Duration.zero));
+      lifecycle.didChangeAppLifecycleState(AppLifecycleState.resumed);
+      await t.pump();
+      await t.pump();
+      expect(src.started, isTrue);
+      expect(
+        find.text('Paused'),
+        findsOneWidget,
+        reason: 'foregrounding alone never resumes gameplay',
+      );
+      lifecycle.didChangeAppLifecycleState(AppLifecycleState.paused);
+      await t.pump();
+      await t.runAsync(() => Future<void>.delayed(Duration.zero));
+      src.nextStartError = PlatformException(code: 'camera_unavailable');
+      lifecycle.didChangeAppLifecycleState(AppLifecycleState.resumed);
+      await t.pump();
+      await t.pump();
+      expect(
+        find.text('The camera could not start. Please try again.'),
+        findsOneWidget,
+      );
+      await t.tap(find.text('Retry'));
+      await t.pump();
+      await t.pump();
+      expect(src.started, isTrue);
+      expect(
+        find.text('Paused'),
+        findsOneWidget,
+        reason: 'camera retry preserves the paused run',
+      );
+      await t.pumpWidget(const SizedBox());
+      await t.pump();
+    },
+  );
+
+  testWidgets('paused quest resumes from real replayed poses without a tap', (
+    t,
+  ) async {
+    final recording = SyntheticSession(SyntheticBody(noise: 0));
+    await pumpQuest(t, recording);
+    await t.pump(const Duration(milliseconds: 100));
+    await t.tap(find.byTooltip('Pause'));
+    await t.pump();
+    expect(find.text('Paused'), findsOneWidget);
+    expect(
+      src.started,
+      isTrue,
+      reason: 'foreground pause supports hands-free controls',
+    );
+    final poses = recording.record([
+      const ScriptStep(Action.idle, 1000),
+      const ScriptStep(Action.raiseArms, 2200),
+      const ScriptStep(Action.idle, 4000),
+    ]).frames;
+    for (final f in poses) {
+      src.push(f);
+      await t.pump(const Duration(milliseconds: 33));
+    }
+    expect(find.text('Paused'), findsNothing);
+    expect(voice.spoken, containsAll(['3', '2', '1']));
+    await t.pumpWidget(const SizedBox());
+    await t.pump();
+  });
 
   Future<void> pumpSetup(WidgetTester t) async {
     SharedPreferences.setMockInitialValues({

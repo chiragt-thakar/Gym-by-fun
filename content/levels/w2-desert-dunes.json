@@ -1,7 +1,7 @@
 {
   "$schema": "../schema/level.schema.json",
   "id": "w2-desert-dunes",
-  "version": 1,
+  "version": 3,
   "schemaVersion": 1,
   "world": 2,
   "name": "Desert Dunes",
@@ -506,5 +506,16 @@
       "type": "gate",
       "hint": "Last gate. The oasis!"
     }
-  ]
+  ],
+  "journey": {
+    "mission": "Follow the light across the desert.",
+    "completion": "A new path glows across the dunes.",
+    "keepsake": "Desert compass"
+  },
+  "gameplay": {
+    "scene": "desert",
+    "mission": "path",
+    "targetFraction": 0.6,
+    "atmosphere": "sand"
+  }
 }

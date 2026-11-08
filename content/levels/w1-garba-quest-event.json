@@ -1,7 +1,7 @@
 {
   "$schema": "../schema/level.schema.json",
   "id": "w1-garba-quest-event",
-  "version": 1,
+  "version": 3,
   "schemaVersion": 1,
   "world": 1,
   "name": "Garba Quest",
@@ -590,5 +590,16 @@
       "type": "gate",
       "hint": "Final taali! Arms high!"
     }
-  ]
+  ],
+  "journey": {
+    "mission": "Carry the lantern light through the forest.",
+    "completion": "The forest shines a little brighter.",
+    "keepsake": "Garba spark"
+  },
+  "gameplay": {
+    "scene": "festival",
+    "mission": "lights",
+    "targetFraction": 0.6,
+    "atmosphere": "petals"
+  }
 }

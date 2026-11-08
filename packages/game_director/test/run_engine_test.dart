@@ -2,7 +2,8 @@ import 'package:game_director/game_director.dart';
 import 'package:motion_core/motion_core.dart';
 import 'package:test/test.dart';
 
-LevelConfig tiny(List<Map<String, Object>> encounters, {int durationS = 30}) =>
+LevelConfig tiny(List<Map<String, Object>> encounters,
+        {int durationS = 30, Map<String, Object>? gameplay}) =>
     LevelConfig.fromJson({
       'id': 'w1-tiny',
       'version': 1,
@@ -11,6 +12,7 @@ LevelConfig tiny(List<Map<String, Object>> encounters, {int durationS = 30}) =>
       'name': 'Tiny',
       'lanes': 3,
       'durationS': durationS,
+      if (gameplay != null) 'gameplay': gameplay,
       'difficulty': {
         for (final d in ['beginner', 'intermediate', 'advanced'])
           d: {'warningMs': 1500, 'maxDemandingInRow': 5, 'hints': 'off'}
@@ -28,6 +30,85 @@ List<RunEvent> runFor(RunEngine e, int ms) =>
     [for (var t = 0; t < ms; t += 16) ...e.advance(16)];
 
 void main() {
+  RunEngine missionRun() => RunEngine(
+      tiny([
+        {
+          'atS': 5,
+          'type': 'orb',
+          'lanes': [1]
+        },
+        {
+          'atS': 10,
+          'type': 'orb',
+          'lanes': [1]
+        },
+        {
+          'atS': 15,
+          'type': 'orb',
+          'lanes': [1]
+        },
+      ], gameplay: {
+        'scene': 'river',
+        'mission': 'lights',
+        'targetFraction': 0.6,
+        'atmosphere': 'fireflies'
+      }),
+      const RunSettings());
+
+  test('mission only counts resolved matching encounters, once per encounter',
+      () {
+    final e = missionRun();
+    e.input(const MoveStarted(Move.raiseArms, 0));
+    expect(e.mission.count, 0);
+    e.mission.resolve(e.plan[0], Outcome.cleared);
+    e.mission.resolve(e.plan[0], Outcome.cleared);
+    expect(e.mission.count, 1);
+    expect(e.mission.goal, 2);
+    expect(e.mission.complete, isFalse);
+    e.mission.resolve(e.plan[1], Outcome.cleared);
+    expect(e.result(completed: true).missionWon, isTrue);
+  });
+
+  test(
+      'tracking forgiveness protects mission target without awarding fake clears',
+      () {
+    final e = missionRun();
+    e.mission.resolve(e.plan[0], Outcome.cleared);
+    e.mission.resolve(e.plan[1], Outcome.forgiven);
+    e.mission.resolve(e.plan[2], Outcome.forgiven);
+    expect(e.mission.count, 1);
+    expect(e.mission.goal, 1);
+    expect(e.mission.complete, isTrue);
+    final other = missionRun();
+    for (final p in other.plan) {
+      other.mission.resolve(p, Outcome.forgiven);
+    }
+    expect(other.mission.complete, isFalse);
+    expect(other.mission.goal, 0);
+    expect(other.hearts, other.level.hearts);
+  });
+
+  test('mission metadata stays optional for old levels', () {
+    final e = RunEngine(
+        tiny([
+          {'atS': 5, 'type': 'gate'}
+        ]),
+        const RunSettings());
+    expect(e.mission.enabled, isFalse);
+    expect(e.result(completed: true).missionWon, isFalse);
+  });
+  test('a mission with no beginner opportunity is rejected', () {
+    expect(
+        () => tiny([
+              {'atS': 5, 'type': 'gate'}
+            ], gameplay: {
+              'scene': 'forest',
+              'mission': 'lights',
+              'targetFraction': 0.6,
+              'atmosphere': 'fireflies',
+            }),
+        throwsFormatException);
+  });
   test('a squat with no beam coming does nothing', () {
     final e = RunEngine(
         tiny([

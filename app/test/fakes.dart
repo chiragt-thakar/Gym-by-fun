@@ -12,6 +12,8 @@ class ReplayPoseSource implements PoseSource {
   final bool permission;
   final _c = StreamController<PoseFrame>.broadcast();
   bool started = false;
+  final calls = <String>[];
+  Object? nextStartError;
 
   @override
   Future<bool> ensurePermission() async => permission;
@@ -24,7 +26,11 @@ class ReplayPoseSource implements PoseSource {
     DeviceTier tier = DeviceTier.mid,
     bool selfView = false,
   }) async {
+    final error = nextStartError;
+    nextStartError = null;
+    if (error != null) throw error;
     started = true;
+    calls.add('start');
     // Tests never show the native mirror.
     selfViewActive = false;
     return 'cpu';
@@ -47,5 +53,8 @@ class ReplayPoseSource implements PoseSource {
   Stream<PoseFrame> get frames => _c.stream;
 
   @override
-  Future<void> stop() async => started = false;
+  Future<void> stop() async {
+    calls.add('stop');
+    started = false;
+  }
 }

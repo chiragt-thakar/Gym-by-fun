@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../l10n/strings.dart';
 import '../l10n/tr.dart';
+import '../game/forest_game.dart' show HeroLook;
 
 enum DeviceTier { upperMid, mid, budget }
 
@@ -36,6 +37,8 @@ class Settings {
     this.bodyStyle = BodyStyle.neutral,
     this.ageBand = AgeBand.gentle,
     this.cameraMirror = true,
+    this.heroLook = HeroLook.fox,
+    this.missionLevels = const {},
   });
 
   final AppLanguage language;
@@ -69,8 +72,13 @@ class Settings {
   /// in-game frame guide). Drawn natively, never saved. Off = body outline
   /// only, and the camera preview is never bound.
   final bool cameraMirror;
+  final HeroLook heroLook;
 
-  /// Extra warning time for the band (for future director use).
+  /// Optional mission stars: only earned by a completed real run.
+  final Set<String> missionLevels;
+
+  /// Extra warning time used by the director. Gentle + assist gives 1.5x
+  /// base warning time (1.2 x 1.25), before encounter-spacing limits.
   double get warningMultiplier => ageBand == AgeBand.gentle ? 1.2 : 1.0;
 
   /// Picks a play style and applies its safe defaults: Gentle turns on
@@ -117,6 +125,8 @@ class Settings {
     BodyStyle? bodyStyle,
     AgeBand? ageBand,
     bool? cameraMirror,
+    HeroLook? heroLook,
+    Set<String>? missionLevels,
   }) => Settings(
     language: language ?? this.language,
     difficulty: difficulty ?? this.difficulty,
@@ -135,6 +145,8 @@ class Settings {
     bodyStyle: bodyStyle ?? this.bodyStyle,
     ageBand: ageBand ?? this.ageBand,
     cameraMirror: cameraMirror ?? this.cameraMirror,
+    heroLook: heroLook ?? this.heroLook,
+    missionLevels: missionLevels ?? this.missionLevels,
   );
 
   Map<String, Object?> toJson() => {
@@ -155,6 +167,8 @@ class Settings {
     'bodyStyle': bodyStyle.name,
     'ageBand': ageBand.name,
     'cameraMirror': cameraMirror,
+    'heroLook': heroLook.name,
+    'missionLevels': [...missionLevels],
   };
 
   factory Settings.fromJson(Map<String, dynamic> j) => Settings(
@@ -187,6 +201,11 @@ class Settings {
         BodyStyle.values.asNameMap()[j['bodyStyle']] ?? BodyStyle.neutral,
     ageBand: AgeBand.values.asNameMap()[j['ageBand']] ?? AgeBand.gentle,
     cameraMirror: j['cameraMirror'] as bool? ?? true,
+    heroLook: HeroLook.values.asNameMap()[j['heroLook']] ?? HeroLook.fox,
+    missionLevels: {
+      for (final id in j['missionLevels'] as List<dynamic>? ?? [])
+        if (id is String) id,
+    },
   );
 }
 

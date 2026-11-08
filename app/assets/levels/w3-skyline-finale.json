@@ -1,7 +1,7 @@
 {
   "$schema": "../schema/level.schema.json",
   "id": "w3-skyline-finale",
-  "version": 1,
+  "version": 3,
   "schemaVersion": 1,
   "world": 3,
   "name": "Skyline Finale",
@@ -465,5 +465,16 @@
       "type": "gate",
       "hint": "Final gate. The skyline is yours!"
     }
-  ]
+  ],
+  "journey": {
+    "mission": "Bring the city lights back to life.",
+    "completion": "The skyline lights up for your return.",
+    "keepsake": "Skyline prism"
+  },
+  "gameplay": {
+    "scene": "neon",
+    "mission": "gates",
+    "targetFraction": 0.6,
+    "atmosphere": "stars"
+  }
 }

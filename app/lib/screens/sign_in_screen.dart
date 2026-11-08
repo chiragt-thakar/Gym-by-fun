@@ -9,6 +9,10 @@ import '../l10n/tr.dart';
 import '../app/router.dart';
 import '../services/api_client.dart';
 import '../services/settings.dart';
+import '../services/coach_service.dart';
+import '../services/premium.dart';
+import '../services/session_queue.dart';
+import 'home_screen.dart';
 import '../app/theme.dart';
 import '../widgets/common.dart';
 
@@ -177,15 +181,40 @@ class _SignInState extends ConsumerState<SignInScreen> {
             onPressed: _busy
                 ? null
                 : () => _run(() async {
-                    await api.verifyOtp(
+                    final previousAccount = api.tokens.accountId;
+                    if (previousAccount != null) {
+                      await ref
+                          .read(sessionQueueProvider)
+                          .claimLegacy(previousAccount);
+                    }
+                    final result = await api.verifyOtp(
                       _e164,
                       _code.text.trim(),
                       ageConfirmed: s.ageConfirmed,
                       language: s.language.name,
                     );
+                    if (!mounted) return;
+                    final account = (result['user'] as Map?)?['id'];
+                    if (previousAccount != null && account != previousAccount) {
+                      ref.read(coachHistoryProvider.notifier).clear();
+                      ref
+                          .read(settingsProvider.notifier)
+                          .update(
+                            (x) => x.copyWith(
+                              completedLevels: {},
+                              missionLevels: {},
+                              sessionsPlayed: 0,
+                              seenTypes: {},
+                              clearCalibration: true,
+                              tutorialDone: false,
+                            ),
+                          );
+                    }
                     ref
                         .read(settingsProvider.notifier)
                         .update((x) => x.copyWith(signedIn: true));
+                    ref.invalidate(homeDataProvider);
+                    ref.invalidate(premiumProvider);
                     _next();
                   }),
           ),

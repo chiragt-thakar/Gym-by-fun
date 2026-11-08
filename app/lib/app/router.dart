@@ -76,8 +76,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/home', builder: (_, _) => const HomeScreen()),
       GoRoute(
         path: '/quest',
-        builder: (_, st) =>
-            QuestScreen(levelId: st.uri.queryParameters['level']),
+        builder: (_, st) => QuestScreen(
+          levelId: st.uri.queryParameters['level'],
+          gentle: st.uri.queryParameters['pace'] == 'gentle',
+        ),
       ),
       GoRoute(
         path: '/results',
