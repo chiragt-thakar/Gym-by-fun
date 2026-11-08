@@ -6,6 +6,8 @@
 |---|---|
 | Video processed on device only; frames never stored or uploaded | `native/pose_bridge` (pixels released after inference); only landmarks reach Dart |
 | Camera permission screen says video never leaves the phone | `app/lib/screens/setup_screen.dart` |
+| Camera mirror (self-view) is drawn natively: camera → `PreviewView` → screen. No pixel or texture handle reaches Dart; nothing is recorded or stored. The CameraX `Preview` is not even bound when Settings → "Show camera mirror" is off | `native/pose_bridge/.../SelfView.kt`, `PosePipeline.kt` (`selfView`) |
+| `FLAG_SECURE` while any mirror is on screen: no screenshots, screen recordings or recents thumbnails of the camera image | `PoseBridgePlugin.updateSecure()` |
 | Landmark recordings contain no images | `motion_core/lib/src/recording.dart`, recorder screen |
 | Consent per purpose (account, gym_sharing, analytics, calibration_backup), versioned, withdrawable | `server/src/modules/identity/routes.ts` |
 | Calibration (body measurements) stays on device unless backup consent is on; withdrawing deletes the backup | `PUT /me/calibration`, `PUT /me/consents` |

@@ -35,6 +35,7 @@ class Settings {
     this.completedLevels = const {},
     this.bodyStyle = BodyStyle.neutral,
     this.ageBand = AgeBand.gentle,
+    this.cameraMirror = true,
   });
 
   final AppLanguage language;
@@ -63,6 +64,11 @@ class Settings {
 
   /// Play style. Gentle by default; the player can change it in Settings.
   final AgeBand ageBand;
+
+  /// Show the live camera mirror while framing (setup, calibration, the
+  /// in-game frame guide). Drawn natively, never saved. Off = body outline
+  /// only, and the camera preview is never bound.
+  final bool cameraMirror;
 
   /// Extra warning time for the band (for future director use).
   double get warningMultiplier => ageBand == AgeBand.gentle ? 1.2 : 1.0;
@@ -110,6 +116,7 @@ class Settings {
     Set<String>? completedLevels,
     BodyStyle? bodyStyle,
     AgeBand? ageBand,
+    bool? cameraMirror,
   }) => Settings(
     language: language ?? this.language,
     difficulty: difficulty ?? this.difficulty,
@@ -127,6 +134,7 @@ class Settings {
     completedLevels: completedLevels ?? this.completedLevels,
     bodyStyle: bodyStyle ?? this.bodyStyle,
     ageBand: ageBand ?? this.ageBand,
+    cameraMirror: cameraMirror ?? this.cameraMirror,
   );
 
   Map<String, Object?> toJson() => {
@@ -146,6 +154,7 @@ class Settings {
     'completedLevels': [...completedLevels],
     'bodyStyle': bodyStyle.name,
     'ageBand': ageBand.name,
+    'cameraMirror': cameraMirror,
   };
 
   factory Settings.fromJson(Map<String, dynamic> j) => Settings(
@@ -177,6 +186,7 @@ class Settings {
     bodyStyle:
         BodyStyle.values.asNameMap()[j['bodyStyle']] ?? BodyStyle.neutral,
     ageBand: AgeBand.values.asNameMap()[j['ageBand']] ?? AgeBand.gentle,
+    cameraMirror: j['cameraMirror'] as bool? ?? true,
   );
 }
 

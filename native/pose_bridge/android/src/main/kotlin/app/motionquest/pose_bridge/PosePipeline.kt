@@ -4,10 +4,16 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Matrix
 import android.os.SystemClock
+import android.util.Rational
 import android.util.Size
+import android.view.Surface
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
+import androidx.camera.core.Preview
+import androidx.camera.core.UseCaseGroup
+import androidx.camera.core.ViewPort
+import androidx.camera.core.resolutionselector.AspectRatioStrategy
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -24,11 +30,17 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * CameraX front camera → MediaPipe Pose Landmarker (lite, live-stream mode).
+ * CameraX front camera → MediaPipe Pose Landmarker (lite or full,
+ * live-stream mode).
  *
  * Latest frame only (rule 3): CameraX keeps only the newest image, and while
  * the landmarker is busy any new frame is closed unprocessed — there is
  * never a queue. Pixels are released as soon as inference has read them.
+ *
+ * Self-view: when [selfView] is true a CameraX Preview is bound too. Its
+ * frames go straight to a native PreviewView surface (GPU), never to Dart
+ * and never to storage. Analysis and Preview share one 3:4 portrait
+ * ViewPort, so landmark (0..1) coordinates line up with the preview.
  */
 internal class PosePipeline(
     private val context: Context,
@@ -36,6 +48,8 @@ internal class PosePipeline(
     private val targetWidth: Int,
     private val targetHeight: Int,
     private val preferGpu: Boolean,
+    private val fullModel: Boolean,
+    private val selfView: Boolean,
     private val onFrame: (DoubleArray) -> Unit,
     private val onError: (String) -> Unit,
 ) {
@@ -56,6 +70,20 @@ internal class PosePipeline(
     // Set once by stop(); every async step checks it so a late callback never
     // binds the camera or touches a closed landmarker after stop.
     @Volatile private var stopped = false
+
+    // Main thread only. Bound only when the player allows the self-view.
+    private var preview: Preview? = null
+    private var previewSurface: Preview.SurfaceProvider? = null
+    @Volatile private var modelUsed = "lite"
+
+    /**
+     * Shows the preview on [surface] (a PreviewView), or stops feeding it
+     * when null. Main thread. The analysis keeps running either way.
+     */
+    fun setPreviewSurface(surface: Preview.SurfaceProvider?) {
+        previewSurface = surface
+        preview?.setSurfaceProvider(surface)
+    }
 
     /**
      * Starts model + camera. Exactly one of [onStarted] / [onFailed] is
@@ -90,9 +118,12 @@ internal class PosePipeline(
                     }
                     val p = future.get()
                     provider = p
+                    // 4:3 sensor output = 3:4 portrait, the full field of view.
+                    val ratio43 = AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY
                     val analysis = ImageAnalysis.Builder()
                         .setResolutionSelector(
                             ResolutionSelector.Builder()
+                                .setAspectRatioStrategy(ratio43)
                                 .setResolutionStrategy(
                                     ResolutionStrategy(
                                         Size(targetHeight, targetWidth),
@@ -105,9 +136,37 @@ internal class PosePipeline(
                         .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
                         .build()
                     analysis.setAnalyzer(executor, ::analyze)
+                    val group = UseCaseGroup.Builder()
+                        .setViewPort(ViewPort.Builder(Rational(3, 4), Surface.ROTATION_0).build())
+                        .addUseCase(analysis)
+                    if (selfView) {
+                        // Small preview: it is only a mirror for framing.
+                        val pv = Preview.Builder()
+                            .setResolutionSelector(
+                                ResolutionSelector.Builder()
+                                    .setAspectRatioStrategy(ratio43)
+                                    .setResolutionStrategy(
+                                        ResolutionStrategy(
+                                            Size(640, 480),
+                                            ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER,
+                                        ),
+                                    )
+                                    .build(),
+                            )
+                            .build()
+                        pv.setSurfaceProvider(previewSurface)
+                        preview = pv
+                        group.addUseCase(pv)
+                    }
                     p.unbindAll()
-                    p.bindToLifecycle(owner, CameraSelector.DEFAULT_FRONT_CAMERA, analysis)
-                    onStarted(mapOf("delegate" to delegateUsed))
+                    p.bindToLifecycle(owner, CameraSelector.DEFAULT_FRONT_CAMERA, group.build())
+                    onStarted(
+                        mapOf(
+                            "delegate" to delegateUsed,
+                            "model" to modelUsed,
+                            "selfView" to selfView,
+                        ),
+                    )
                 } catch (e: Exception) {
                     onFailed("Camera failed to start: ${e.message}")
                 }
@@ -118,9 +177,9 @@ internal class PosePipeline(
     }
 
     private fun createLandmarker(gpu: Boolean): PoseLandmarker {
-        fun build(delegate: Delegate): PoseLandmarker {
+        fun build(delegate: Delegate, model: String): PoseLandmarker {
             val base = BaseOptions.builder()
-                .setModelAssetPath(MODEL_ASSET)
+                .setModelAssetPath("pose_landmarker_$model.task")
                 .setDelegate(delegate)
                 .build()
             val options = PoseLandmarker.PoseLandmarkerOptions.builder()
@@ -135,14 +194,25 @@ internal class PosePipeline(
                 .build()
             return PoseLandmarker.createFromOptions(context, options)
         }
+        // Full is only tried on fast phones and only on the GPU; any failure
+        // falls back to Lite, then to the CPU.
+        val models = if (fullModel) listOf("full", "lite") else listOf("lite")
         if (gpu) {
-            try {
-                return build(Delegate.GPU).also { delegateUsed = "gpu" }
-            } catch (_: Exception) {
-                // Some budget GPUs can't run the model: fall back to CPU.
+            for (model in models) {
+                try {
+                    return build(Delegate.GPU, model).also {
+                        delegateUsed = "gpu"
+                        modelUsed = model
+                    }
+                } catch (_: Exception) {
+                    // Some budget GPUs can't run the model: try the next one.
+                }
             }
         }
-        return build(Delegate.CPU).also { delegateUsed = "cpu" }
+        return build(Delegate.CPU, "lite").also {
+            delegateUsed = "cpu"
+            modelUsed = "lite"
+        }
     }
 
     private fun analyze(image: ImageProxy) {
@@ -154,6 +224,9 @@ internal class PosePipeline(
         var upright: Bitmap? = null
         try {
             val rotation = image.imageInfo.rotationDegrees
+            // The shared ViewPort's crop (usually the whole 4:3 frame), so
+            // landmarks are normalised to exactly what the preview shows.
+            val crop = image.cropRect
             val raw = image.toBitmap()
             image.close()
             // Upright + mirrored, so landmarks read like a selfie: the
@@ -162,7 +235,11 @@ internal class PosePipeline(
                 postRotate(rotation.toFloat())
                 postScale(-1f, 1f)
             }
-            val rotated = Bitmap.createBitmap(raw, 0, 0, raw.width, raw.height, m, true)
+            val cx = crop.left.coerceIn(0, raw.width - 1)
+            val cy = crop.top.coerceIn(0, raw.height - 1)
+            val cw = crop.width().coerceIn(1, raw.width - cx)
+            val ch = crop.height().coerceIn(1, raw.height - cy)
+            val rotated = Bitmap.createBitmap(raw, cx, cy, cw, ch, m, true)
             if (rotated !== raw) raw.recycle()
             upright = rotated
             frameW = rotated.width
@@ -220,7 +297,11 @@ internal class PosePipeline(
         if (stopped) return
         stopped = true
         try {
-            ContextCompat.getMainExecutor(context).execute { provider?.unbindAll() }
+            ContextCompat.getMainExecutor(context).execute {
+                preview?.setSurfaceProvider(null)
+                preview = null
+                provider?.unbindAll()
+            }
         } catch (_: Exception) {
         }
         try {
@@ -233,9 +314,5 @@ internal class PosePipeline(
         } catch (_: Exception) {
         }
         executor.shutdown()
-    }
-
-    private companion object {
-        const val MODEL_ASSET = "pose_landmarker_lite.task"
     }
 }

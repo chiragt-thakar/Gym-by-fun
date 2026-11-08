@@ -7,7 +7,7 @@ results, gyms and payments.
  PHONE                                                     SERVER (one TypeScript service)
  ┌──────────────────────────────────────────────┐          ┌──────────────────────────────────┐
  │ native/pose_bridge (Kotlin)                  │          │ Fastify /v1                      │
- │  CameraX front cam ─▶ MediaPipe Pose (lite)  │          │  identity  OTP, Google, tokens,  │
+ │  CameraX front cam ─▶ MediaPipe Pose (L/F)   │          │  identity  OTP, Google, tokens,  │
  │  latest frame only, mirrored, pixels freed   │          │            consent, export, delete│
  │        │ 33 landmarks (EventChannel)         │          │  progress  sessions, XP, streaks │
  │        ▼                                     │          │  gyms      codes, crew, quests   │
@@ -34,6 +34,11 @@ results, gyms and payments.
 | Only landmarks cross into Dart | Frames through Flutter cap Android near 24 fps; privacy. |
 | Latest frame only | `STRATEGY_KEEP_ONLY_LATEST` + drop while busy; no queue, bounded latency. |
 | Selfie coordinates | Bridge rotates upright and mirrors, so player's left = smaller x everywhere. |
+| One 3:4 portrait `ViewPort` for analysis and preview | Analysis is cropped to the shared viewport, so landmark 0..1 coordinates are exactly the preview's box; Dart draws the outline over a 3:4 `FrameView` with no mapping maths. |
+| Camera mirror = native `PreviewView` platform view (`motionquest/self_view`) | Opt-out setting (on by default). CameraX `Preview` is bound only when the setting is on; the image goes camera → `PreviewView` (TextureView) → screen. Dart holds no pixels and no texture id. `PreviewView` handles rotation and front-camera mirroring on every device, which a raw texture would not. |
+| Analysis 480×640 on every tier | The landmark model runs on a fixed-size crop either way; at 360×480 a player at 2–2.5 m was under the 256 px gate ("too far") on budget phones. |
+| Full model on upper-mid phones, Lite elsewhere | Full is steadier at distance; it is tried on the GPU only and falls back to Lite, then to CPU Lite. The tier comes from the setup benchmark (run with Lite). |
+| Framing advice + debounce in motion_core (`Framing`, `FramingFilter`) | One tested place turns a gate failure into one direction ("move to your left", "step back"); the 400 ms display debounce keeps text and voice from flickering. The engine's pause/resume timing is unchanged. |
 | motion_core and game_director are pure Dart | Deterministic, replay-testable on every commit; engine-agnostic (TV/console later). |
 | Recognisers are state machines with hysteresis | Separate start/end thresholds, confirm frames, cooldowns; no flicker. |
 | Leg span (hip→ankle) measures squat depth | Unaffected by phone tilt; a forward bend does not change it. |

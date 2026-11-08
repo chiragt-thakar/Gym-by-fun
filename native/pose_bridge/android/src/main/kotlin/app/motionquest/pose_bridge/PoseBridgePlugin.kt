@@ -5,6 +5,8 @@ import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Looper
+import android.view.WindowManager
+import androidx.camera.view.PreviewView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
@@ -24,8 +26,10 @@ import java.util.concurrent.atomic.AtomicBoolean
  * (rule 2). Only 33 landmarks + visibility + timestamp cross into Dart, as a
  * flat DoubleArray: [t, w, h, inferenceMs, x0, y0, z0, v0, x1, ...].
  *
- * Methods: hasPermission, requestPermission, start {width, height, delegate},
- * stop. Event channel: landmark frames.
+ * Methods: hasPermission, requestPermission,
+ * start {width, height, delegate, model, selfView}, stop.
+ * Event channel: landmark frames. Platform view "motionquest/self_view": the
+ * optional camera mirror (native surface; FLAG_SECURE while it is shown).
  */
 class PoseBridgePlugin :
     FlutterPlugin,
@@ -43,11 +47,42 @@ class PoseBridgePlugin :
     private var pendingPermission: MethodChannel.Result? = null
     private val main = Handler(Looper.getMainLooper())
 
+    // Self-view mirrors currently on screen (main thread). The newest one
+    // receives the preview.
+    private val shownViews = mutableListOf<PreviewView>()
+
     override fun onAttachedToEngine(b: FlutterPlugin.FlutterPluginBinding) {
         methods = MethodChannel(b.binaryMessenger, "motionquest/pose_bridge")
         methods.setMethodCallHandler(this)
         events = EventChannel(b.binaryMessenger, "motionquest/pose_bridge/landmarks")
         events.setStreamHandler(this)
+        b.platformViewRegistry.registerViewFactory(
+            SELF_VIEW_TYPE,
+            SelfViewFactory(onShown = ::showSelfView, onHidden = ::hideSelfView),
+        )
+    }
+
+    private fun showSelfView(v: PreviewView) {
+        shownViews.remove(v)
+        shownViews.add(v)
+        pipeline?.setPreviewSurface(v.surfaceProvider)
+        updateSecure()
+    }
+
+    private fun hideSelfView(v: PreviewView) {
+        shownViews.remove(v)
+        pipeline?.setPreviewSurface(shownViews.lastOrNull()?.surfaceProvider)
+        updateSecure()
+    }
+
+    /** No screenshots or recents thumbnails while a camera image is shown. */
+    private fun updateSecure() {
+        val w = activity?.window ?: return
+        if (shownViews.isNotEmpty()) {
+            w.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        } else {
+            w.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        }
     }
 
     override fun onDetachedFromEngine(b: FlutterPlugin.FlutterPluginBinding) {
@@ -107,16 +142,22 @@ class PoseBridgePlugin :
         val width = call.argument<Int>("width") ?: 480
         val height = call.argument<Int>("height") ?: 640
         val preferGpu = (call.argument<String>("delegate") ?: "gpu") == "gpu"
+        val fullModel = call.argument<String>("model") == "full"
+        val selfView = call.argument<Boolean>("selfView") ?: false
         val p = PosePipeline(
             context = a.applicationContext,
             owner = owner,
             targetWidth = width,
             targetHeight = height,
             preferGpu = preferGpu,
+            fullModel = fullModel,
+            selfView = selfView,
             onFrame = { frame -> main.post { sink?.success(frame) } },
             onError = { msg -> main.post { sink?.error("pose_error", msg, null) } },
         )
         pipeline = p
+        // A mirror already on screen gets the preview as soon as it binds.
+        p.setPreviewSurface(shownViews.lastOrNull()?.surfaceProvider)
         // The Dart future must be answered exactly once, success or error.
         val answered = AtomicBoolean(false)
         p.start(
@@ -157,6 +198,7 @@ class PoseBridgePlugin :
 
     override fun onDetachedFromActivity() {
         stopPipeline()
+        activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
         pendingPermission?.success(false)
         pendingPermission = null
         binding?.removeRequestPermissionsResultListener(this)
@@ -166,5 +208,6 @@ class PoseBridgePlugin :
 
     private companion object {
         const val REQUEST_CODE = 4317
+        const val SELF_VIEW_TYPE = "motionquest/self_view"
     }
 }

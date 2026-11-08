@@ -11,9 +11,18 @@ import 'settings.dart';
 /// on-device pose estimator (rule 1); tests substitute a recorded source.
 abstract class PoseSource {
   Future<bool> ensurePermission();
-  Future<String> start({DeviceTier tier = DeviceTier.mid});
+
+  /// Starts the camera. [selfView] also binds the native camera preview for
+  /// the mirror (the image never reaches Dart). Returns the delegate used.
+  Future<String> start({
+    DeviceTier tier = DeviceTier.mid,
+    bool selfView = false,
+  });
   Stream<PoseFrame> get frames;
   Future<void> stop();
+
+  /// True when the last [start] bound the native mirror preview.
+  bool get selfViewActive;
 }
 
 class NativePoseSource implements PoseSource {
@@ -21,14 +30,32 @@ class NativePoseSource implements PoseSource {
   final PoseBridge _bridge;
 
   @override
+  bool selfViewActive = false;
+
+  /// `lite` or `full`, for the debug screen.
+  String model = 'lite';
+
+  @override
   Future<bool> ensurePermission() async =>
       await _bridge.hasPermission() || await _bridge.requestPermission();
 
   @override
-  Future<String> start({DeviceTier tier = DeviceTier.mid}) async {
-    // Budget phones analyse a smaller image to hold 15–24 fps.
-    final (w, h) = tier == DeviceTier.budget ? (360, 480) : (480, 640);
-    final r = await _bridge.start(width: w, height: h);
+  Future<String> start({
+    DeviceTier tier = DeviceTier.mid,
+    bool selfView = false,
+  }) async {
+    // Every tier analyses 480×640: the landmark model runs on a fixed-size
+    // crop either way, and at 360×480 a player at 2–2.5 m is under the
+    // 256 px body size the quality gate needs ("too far" on budget phones).
+    // Full is steadier at distance; only phones with headroom run it.
+    final r = await _bridge.start(
+      width: 480,
+      height: 640,
+      fullModel: tier == DeviceTier.upperMid,
+      selfView: selfView,
+    );
+    selfViewActive = r.selfView;
+    model = r.model;
     return r.delegate;
   }
 
@@ -36,7 +63,10 @@ class NativePoseSource implements PoseSource {
   Stream<PoseFrame> get frames => _bridge.frames.map(PoseFrame.fromFlat);
 
   @override
-  Future<void> stop() => _bridge.stop();
+  Future<void> stop() {
+    selfViewActive = false;
+    return _bridge.stop();
+  }
 }
 
 final poseSourceProvider = Provider<PoseSource>((_) => NativePoseSource());
@@ -168,17 +198,26 @@ class MotionSession {
   /// Starts the camera and frame stream. Idempotent: a second call while
   /// running returns true, and one while a start is in flight shares it, so
   /// there is only ever one frame subscription and one watchdog (Q2-1).
-  Future<bool> start({DeviceTier tier = DeviceTier.mid}) {
+  Future<bool> start({
+    DeviceTier tier = DeviceTier.mid,
+    bool selfView = false,
+  }) {
     if (_sub != null) return Future.value(true);
-    return _starting ??= _start(tier).whenComplete(() => _starting = null);
+    return _starting ??= _start(
+      tier,
+      selfView,
+    ).whenComplete(() => _starting = null);
   }
+
+  /// True while the native mirror preview is bound (see `PoseMirror`).
+  bool get selfView => running && source.selfViewActive;
 
   void _cancelTimers() {
     _watchdog?.cancel();
     _watchdog = null;
   }
 
-  Future<bool> _start(DeviceTier tier) async {
+  Future<bool> _start(DeviceTier tier, bool selfView) async {
     if (!await source.ensurePermission()) return false;
     final c = initialCalibration;
     if (c != null) {
@@ -194,7 +233,7 @@ class MotionSession {
         _events.add(TrackingResumed(lastFrame?.timestampMs ?? 0));
       }
     }
-    delegate = await source.start(tier: tier);
+    delegate = await source.start(tier: tier, selfView: selfView);
     _cancelTimers();
     await _sub?.cancel();
     _sub = source.frames.listen(_onFrame, onError: _onStreamError);

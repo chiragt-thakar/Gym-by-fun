@@ -184,6 +184,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           value: s.assist,
           onChanged: (v) => n.update((x) => x.copyWith(assist: v)),
         ),
+        SwitchListTile(
+          title: Text(
+            tr('Show camera mirror'),
+            style: const TextStyle(fontSize: 18),
+          ),
+          subtitle: Text(
+            tr(
+              'See yourself while lining up. Shown only on this phone, never saved. Off: body outline only.',
+            ),
+          ),
+          value: s.cameraMirror,
+          onChanged: (v) => n.update((x) => x.copyWith(cameraMirror: v)),
+        ),
         ListTile(
           title: const Text('Language', style: TextStyle(fontSize: 18)),
           trailing: DropdownButton<AppLanguage>(

@@ -23,6 +23,12 @@ class _DebugState extends ConsumerState<DebugScreen> {
   PoseFrame? _frame;
   String _status = 'Starting camera…';
 
+  /// Which pose model the bridge is running (lite or full).
+  String _model() => switch (ref.read(poseSourceProvider)) {
+    NativePoseSource(:final model) => model,
+    _ => '?',
+  };
+
   @override
   void initState() {
     super.initState();
@@ -113,7 +119,7 @@ class _DebugState extends ConsumerState<DebugScreen> {
                   if (p != null)
                     Text(
                       'fps ${f(p.fps)} · inference ${f(p.inferenceMs)} ms · dart ${f(p.dartMs)} ms · '
-                      'capture→event ${f(p.pipelineMs)} ms · ${s!.delegate} · tier ${p.tier.name}',
+                      'capture→event ${f(p.pipelineMs)} ms · ${s!.delegate} · ${_model()} · tier ${p.tier.name}',
                       style: const TextStyle(fontFamily: 'monospace'),
                     ),
                   if (snap != null) ...[

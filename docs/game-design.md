@@ -21,7 +21,36 @@ start threshold), not visible, too early.
 Full-body key points visible (each ≥ 0.5, mean ≥ 0.65), inside the frame,
 body height ≥ 35 % of the image and ≥ 256 px (size uses max(bbox, 3.3 × torso)
 so squats don't read as "too far"), bbox ≤ 98 %. Failing for 250 ms pauses
-tracking; 300 ms of good frames resumes.
+tracking; 300 ms of good frames resumes. Analysis is 480×640 on every tier.
+
+## Framing guidance (setup, calibration, in game)
+
+`Framing.advise` turns the gate's verdict into one fix. Selfie space: screen
+left is the player's left.
+
+| Gate result | Fix shown and spoken |
+|---|---|
+| no person | "Step into the frame" |
+| out of frame, head or feet cut (or both sides) | "Step back" |
+| out of frame, right edge only | "Move a little to your left" (arrow left) |
+| out of frame, left edge only | "Move a little to your right" (arrow right) |
+| too close | "Step back" |
+| too far | "Come a little closer" |
+| low visibility | "Add light in front of you" |
+
+- Cut edges glow red in the frame view; edges within 6 % of the image glow
+  amber while tracking is still good (early warning, also on the game screen).
+- `FramingFilter`: a new advice must last 400 ms before the text, icon or
+  voice changes (display only).
+- Spoken hints repeat on change or every 6 s (setup, calibration) / 8 s (game
+  waiting), never more than once per 2.5 s in game.
+- Setup is hands-free: 3 s benchmark, then 1.5 s in a good frame starts a
+  spoken 3 s countdown and calibration opens by itself; leaving the frame
+  cancels the countdown. The "Next" button is only a shortcut.
+- In game: with the mirror on, a small 3:4 picture-in-picture sits under the
+  HUD. When tracking pauses it grows into the frame finder (outline, cut
+  edges, arrow, one line, "The game waits for you"). It shrinks back by
+  itself when tracking resumes.
 
 ## Calibration (~30 s)
 
@@ -29,6 +58,16 @@ Still 2 s (hip wander < 8 % torso vs running mean) → arms up held 0.5 s → tw
 squats → lean left held 0.5 s → lean right held 0.5 s. Minimums: squat depth
 15 % torso, lean range 10 % torso. Drift check: torso length ±15 %, or the
 hips moved more than one torso sideways.
+
+- A squat counts once the drop is back under half the minimum depth (7.5 %
+  torso; was 4.5 %): players rarely return to the exact standing span.
+- Hands-free: every step is spoken and advances by itself.
+- If a step (not the standing baseline) is not finished after 20 s **in
+  frame** (`Calibrator.stepActiveMs`; gaps count at most 100 ms, so time out
+  of frame never counts), it is skipped with "No problem, we will use a
+  gentle setting". What was measured is kept; anything missing uses the
+  population defaults (squat 45 % torso, lean 30 % torso, reach 0.6 torso
+  above the nose).
 
 ## Forest Escape (≈3 min)
 

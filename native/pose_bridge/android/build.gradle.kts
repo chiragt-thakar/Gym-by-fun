@@ -76,6 +76,8 @@ dependencies {
     implementation("androidx.camera:camera-core:$camerax")
     implementation("androidx.camera:camera-camera2:$camerax")
     implementation("androidx.camera:camera-lifecycle:$camerax")
+    // PreviewView for the opt-out self-view mirror (pixels stay native).
+    implementation("androidx.camera:camera-view:$camerax")
     implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("com.google.mediapipe:tasks-vision:0.10.20")
@@ -84,21 +86,25 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
 }
 
-// MediaPipe Pose Landmarker (lite), Apache-2.0. Downloaded at build time,
-// never committed. Pinned to model version 1.
-val poseModelUrl =
-    "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task"
-val poseModelFile = layout.projectDirectory.file("src/main/assets/pose_landmarker_lite.task")
+// MediaPipe Pose Landmarker models, Apache-2.0. Downloaded at build time,
+// never committed. Pinned to model version 1. Lite runs on every phone; Full
+// (steadier at 2-2.5 m) is used on phones fast enough to keep 24+ fps.
+val poseModels = listOf("lite", "full").map { v ->
+    "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_$v/float16/1/pose_landmarker_$v.task" to
+        layout.projectDirectory.file("src/main/assets/pose_landmarker_$v.task")
+}
 
 val downloadPoseModel by tasks.registering {
-    val url = poseModelUrl
-    outputs.file(poseModelFile)
+    val models = poseModels
+    models.forEach { (_, file) -> outputs.file(file) }
     doLast {
-        val f = poseModelFile.asFile
-        if (!f.exists()) {
-            f.parentFile.mkdirs()
-            URI(url).toURL().openStream().use { input ->
-                f.outputStream().use { input.copyTo(it) }
+        for ((url, file) in models) {
+            val f = file.asFile
+            if (!f.exists()) {
+                f.parentFile.mkdirs()
+                URI(url).toURL().openStream().use { input ->
+                    f.outputStream().use { input.copyTo(it) }
+                }
             }
         }
     }

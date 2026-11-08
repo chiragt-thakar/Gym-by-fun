@@ -17,8 +17,16 @@ class ReplayPoseSource implements PoseSource {
   Future<bool> ensurePermission() async => permission;
 
   @override
-  Future<String> start({DeviceTier tier = DeviceTier.mid}) async {
+  bool selfViewActive = false;
+
+  @override
+  Future<String> start({
+    DeviceTier tier = DeviceTier.mid,
+    bool selfView = false,
+  }) async {
     started = true;
+    // Tests never show the native mirror.
+    selfViewActive = false;
     return 'cpu';
   }
 

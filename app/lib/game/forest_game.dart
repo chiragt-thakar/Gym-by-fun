@@ -72,6 +72,7 @@ class ForestGame extends FlameGame {
     required this.motionEvents,
     required this.audio,
     this.lightOf,
+    this.issueKeyOf,
     this.onFinished,
     this.theme = SceneTheme.forest,
   }) : hud = ValueNotifier(
@@ -87,6 +88,10 @@ class ForestGame extends FlameGame {
 
   /// Live tracking light from the motion engine (amber slows the world).
   final TrackingLight Function()? lightOf;
+
+  /// A more specific spoken line for a tracking issue (for example "move a
+  /// little to your left"), or null to use [issueKey].
+  final String? Function(TrackingIssue)? issueKeyOf;
   final void Function(RunResult)? onFinished;
 
   final ValueNotifier<HudState> hud;
@@ -207,7 +212,7 @@ class ForestGame extends FlameGame {
           } else {
             hud.value = hud.value.copyWith(trackingIssue: issue);
             audio.cue('tracking');
-            audio.sayKey(issueKey(issue));
+            audio.sayKey(issueKeyOf?.call(issue) ?? issueKey(issue));
           }
         case RunFinished(:final result):
           onFinished?.call(result);

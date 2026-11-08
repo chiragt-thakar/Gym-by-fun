@@ -48,6 +48,12 @@ class CalibrationProfile {
   static const minSquatDepthTorso = 0.15;
   static const minLeanRangeTorso = 0.10;
 
+  /// Population defaults (torso fractions), used for "quick start" and for
+  /// any calibration step the player could not finish.
+  static const defaultSquatDepthTorso = 0.45;
+  static const defaultLeanRangeTorso = 0.30;
+  static const defaultReachAboveNoseTorso = 0.6;
+
   /// Population defaults from a single standing frame. Used for the tutorial
   /// "quick start" and tests; the real calibration replaces it.
   factory CalibrationProfile.fromStanding(PoseFrame f) {
@@ -59,10 +65,10 @@ class CalibrationProfile {
       standingHipX: b.hipCenter.x,
       standingHipY: b.hipCenter.y,
       standingLeanOffset: b.leanOffset,
-      squatDepth: t * 0.45,
-      leanRangeLeft: t * 0.30,
-      leanRangeRight: t * 0.30,
-      reachY: b.nose.y - t * 0.6,
+      squatDepth: t * defaultSquatDepthTorso,
+      leanRangeLeft: t * defaultLeanRangeTorso,
+      leanRangeRight: t * defaultLeanRangeTorso,
+      reachY: b.nose.y - t * defaultReachAboveNoseTorso,
     );
   }
 
@@ -131,20 +137,63 @@ class Calibrator {
   CalibrationStep get step => _step;
 
   final List<BodyFeatures> _neutral = [];
-  double? _legSpan, _torso, _hipX, _hipY, _leanOffset, _reach;
+  double? _legSpan, _torso, _hipX, _hipY, _leanOffset, _reach, _noseY;
   double _minLegSpan = double.infinity;
   int _squats = 0;
   bool _inSquat = false;
   double _leanLeft = 0, _leanRight = 0;
   int? _holdStart;
+  int _stepActiveMs = 0;
+  int? _lastTs;
+
+  /// A gap between fed frames counts for at most this much step time.
+  static const maxGapMs = 100;
+  final Set<CalibrationStep> _skipped = {};
 
   int get squatsDone => _squats;
+
+  /// Steps that used population defaults because the player could not
+  /// finish them (tracking trouble, mobility). Never a failure.
+  Set<CalibrationStep> get skipped => Set.unmodifiable(_skipped);
 
   /// 0..1 progress within the current step, for the UI ring.
   double progress = 0;
 
+  /// Time spent in the current step with the player in frame (gaps
+  /// between fed frames count for at most [maxGapMs]). The UI uses this to
+  /// offer a gentle default instead of leaving the player stuck; time out
+  /// of frame never counts against them.
+  int get stepActiveMs => _stepActiveMs;
+
+  /// Moves past the current step using population defaults for whatever
+  /// was not measured. The standing baseline cannot be skipped: every
+  /// other value is relative to it. Returns false if nothing was skipped.
+  bool skip() {
+    switch (_step) {
+      case CalibrationStep.neutral || CalibrationStep.done:
+        return false;
+      case CalibrationStep.armsUp:
+        _skipped.add(_step);
+        _next(CalibrationStep.squats);
+      case CalibrationStep.squats:
+        _skipped.add(_step);
+        _next(CalibrationStep.leanLeft);
+      case CalibrationStep.leanLeft:
+        _skipped.add(_step);
+        _next(CalibrationStep.leanRight);
+      case CalibrationStep.leanRight:
+        _skipped.add(_step);
+        _next(CalibrationStep.done);
+    }
+    return true;
+  }
+
   void add(PoseFrame frame) {
     if (!frame.hasPerson || _step == CalibrationStep.done) return;
+    final ts = frame.timestampMs;
+    final last = _lastTs;
+    if (last != null) _stepActiveMs += (ts - last).clamp(0, maxGapMs);
+    _lastTs = ts;
     final b = BodyFeatures.from(frame);
     switch (_step) {
       case CalibrationStep.neutral:
@@ -182,6 +231,7 @@ class Calibrator {
       _hipX = avg((x) => x.hipCenter.x);
       _hipY = avg((x) => x.hipCenter.y);
       _leanOffset = avg((x) => x.leanOffset);
+      _noseY = avg((x) => x.nose.y);
       _next(CalibrationStep.armsUp);
     }
   }
@@ -205,7 +255,9 @@ class Calibrator {
     final minDrop = CalibrationProfile.minSquatDepthTorso * _torso!;
     if (!_inSquat && drop > minDrop) _inSquat = true;
     if (_inSquat) _minLegSpan = math.min(_minLegSpan, b.legSpan);
-    if (_inSquat && drop < minDrop * 0.3) {
+    // "Back up" is half the minimum depth: players rarely return to the
+    // exact standing span, and distance adds landmark noise.
+    if (_inSquat && drop < minDrop * 0.5) {
       _inSquat = false;
       _squats++;
     }
@@ -238,6 +290,8 @@ class Calibrator {
   void _next(CalibrationStep s) {
     _step = s;
     _holdStart = null;
+    _stepActiveMs = 0;
+    _inSquat = false;
     progress = 0;
   }
 
@@ -247,19 +301,28 @@ class Calibrator {
       throw StateError('Calibration not finished (at $_step)');
     }
     final t = _torso!;
+    // Measured values win; a skipped step with nothing measured uses the
+    // population default for that value.
+    double lean(double measured, CalibrationStep s) => measured > 0
+        ? math.max(measured, CalibrationProfile.minLeanRangeTorso * t)
+        : (_skipped.contains(s)
+            ? CalibrationProfile.defaultLeanRangeTorso * t
+            : CalibrationProfile.minLeanRangeTorso * t);
+    final squat = _minLegSpan.isFinite
+        ? math.max(
+            _legSpan! - _minLegSpan, CalibrationProfile.minSquatDepthTorso * t)
+        : CalibrationProfile.defaultSquatDepthTorso * t;
     return CalibrationProfile(
       standingLegSpan: _legSpan!,
       standingTorso: t,
       standingHipX: _hipX!,
       standingHipY: _hipY!,
       standingLeanOffset: _leanOffset!,
-      squatDepth: math.max(
-          _legSpan! - _minLegSpan, CalibrationProfile.minSquatDepthTorso * t),
-      leanRangeLeft:
-          math.max(_leanLeft, CalibrationProfile.minLeanRangeTorso * t),
-      leanRangeRight:
-          math.max(_leanRight, CalibrationProfile.minLeanRangeTorso * t),
-      reachY: _reach!,
+      squatDepth: squat,
+      leanRangeLeft: lean(_leanLeft, CalibrationStep.leanLeft),
+      leanRangeRight: lean(_leanRight, CalibrationStep.leanRight),
+      reachY:
+          _reach ?? _noseY! - CalibrationProfile.defaultReachAboveNoseTorso * t,
     );
   }
 }

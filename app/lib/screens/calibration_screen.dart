@@ -11,9 +11,15 @@ import '../services/settings.dart';
 import '../services/voice.dart';
 import '../app/theme.dart';
 import '../widgets/common.dart';
+import '../widgets/frame_view.dart';
 
 /// About 30 seconds: stand still, arms up, two squats, lean left, lean right.
 /// Stores the player's own range on this device.
+///
+/// Fully hands-free (the phone is 2–2.5 m away): every step is spoken, it
+/// advances by itself, framing problems are spoken with a direction, and a
+/// step the player cannot finish within [_skipAfterMs] of in-frame time
+/// falls back to a gentle default instead of leaving them stuck.
 class CalibrationScreen extends ConsumerStatefulWidget {
   const CalibrationScreen({super.key});
   @override
@@ -21,13 +27,23 @@ class CalibrationScreen extends ConsumerStatefulWidget {
 }
 
 class _CalibrationState extends ConsumerState<CalibrationScreen> {
+  static const _framing = Framing();
+  static const _skipAfterMs = 20000;
+  static const _repeatHintMs = 6000;
+
   final _cal = Calibrator();
   final _smoother = LandmarkSmoother();
+  final _filter = FramingFilter();
   MotionSession? _session;
   StreamSubscription<PoseFrame>? _sub;
   PoseFrame? _frame;
+  FramingAdvice _advice = const FramingAdvice(FramingFix.findMe);
   CalibrationStep _announced = CalibrationStep.done;
-  bool _paused = false;
+  FramingFix? _spokenFix;
+  int _spokenAt = 0;
+  int _skipNoticeUntil = 0;
+  int _now = 0;
+  bool _mirror = false;
   bool _finishing = false;
 
   static const _instructions = {
@@ -53,7 +69,10 @@ class _CalibrationState extends ConsumerState<CalibrationScreen> {
       ref.read(poseSourceProvider),
       initialCalibration: null,
     );
-    final started = await session.start(tier: s.deviceTier ?? DeviceTier.mid);
+    final started = await session.start(
+      tier: s.deviceTier ?? DeviceTier.mid,
+      selfView: s.cameraMirror,
+    );
     if (!mounted) {
       await session.dispose();
       return;
@@ -65,19 +84,47 @@ class _CalibrationState extends ConsumerState<CalibrationScreen> {
     }
     _session = session;
     _sub = session.frames.listen(_onFrame);
+    setState(() => _mirror = session.selfView);
   }
 
   void _onFrame(PoseFrame f) {
     if (_finishing || !mounted) return;
-    final ok = const QualityGate().check(f).ok;
-    if (ok) _cal.add(_smoother.smooth(f));
+    final ts = f.timestampMs;
+    _now = ts;
+    final q = const QualityGate().check(f);
+    final shown = _filter.update(_framing.advise(f, q), ts);
+    final smooth = _smoother.smooth(f);
+    // Only trustworthy frames measure the player's range.
+    if (q.ok) _cal.add(smooth);
+    final voice = ref.read(voiceProvider);
+    if (_cal.step != CalibrationStep.done &&
+        _cal.stepActiveMs >= _skipAfterMs &&
+        _cal.skip()) {
+      _skipNoticeUntil = ts + 3000;
+      voice.sayKey('cal_skip', force: true);
+    }
     if (_cal.step != _announced) {
       _announced = _cal.step;
-      ref.read(voiceProvider).say(tr(_instructions[_cal.step]!), force: true);
+      final line = tr(_instructions[_cal.step]!);
+      if (ts < _skipNoticeUntil) {
+        // After a skip, let the reassurance finish before the next step.
+        Future<void>.delayed(
+          const Duration(milliseconds: 2600),
+          () => voice.say(line, force: true),
+        );
+      } else {
+        voice.say(line, force: true);
+      }
+    } else if (!shown.ok &&
+        (shown.fix != _spokenFix || ts - _spokenAt >= _repeatHintMs)) {
+      _spokenFix = shown.fix;
+      _spokenAt = ts;
+      voice.sayKey(framingKey(shown.fix));
     }
+    if (shown.ok) _spokenFix = null;
     setState(() {
-      _frame = f;
-      _paused = !ok;
+      _frame = smooth;
+      _advice = shown;
     });
     if (_cal.step == CalibrationStep.done) _finish();
   }
@@ -110,6 +157,14 @@ class _CalibrationState extends ConsumerState<CalibrationScreen> {
   Widget build(BuildContext context) {
     final step = _cal.step;
     final idx = CalibrationStep.values.indexOf(step);
+    final str = ref.watch(settingsProvider).s;
+    final framed = _advice.ok;
+    // Big type: it is read from 2–2.5 m away. When the frame is wrong the
+    // headline says how to fix it; calibration simply waits meanwhile.
+    final headline = framed
+        ? tr(_instructions[step]!)
+        : str.t(framingKey(_advice.fix));
+    final skipping = _now < _skipNoticeUntil;
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -124,69 +179,71 @@ class _CalibrationState extends ConsumerState<CalibrationScreen> {
                 ),
               ),
             ),
-            Expanded(
-              child: CustomPaint(
-                painter: SkeletonPainter(_frame, ok: !_paused),
-                child: const SizedBox.expand(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: SizedBox(
+                // Fixed height: nothing below moves when the text changes.
+                height: 84,
+                child: Center(
+                  child: Text(
+                    headline,
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: framed ? null : Lantern.warning,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ),
             ),
-            LanternCard(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  Text(
-                    tr(_instructions[step]!),
-                    style: Theme.of(context).textTheme.headlineMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  if (step == CalibrationStep.squats)
-                    Text(
-                      '${_cal.squatsDone} / 2',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                  SizedBox(
-                    width: 64,
-                    height: 64,
-                    child: _cal.progress >= 1
-                        ? const SuccessBadge(size: 64)
-                        : CircularProgressIndicator(
-                            value: _cal.progress,
-                            strokeWidth: 8,
-                            strokeCap: StrokeCap.round,
-                          ),
-                  ),
-                  if (_paused)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.warning_amber_rounded,
-                            color: Lantern.warning,
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              tr('Make sure your whole body is in the frame.'),
-                              style: const TextStyle(
-                                fontSize: 18,
-                                color: Lantern.warning,
-                              ),
-                            ),
-                          ),
-                        ],
+            Expanded(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Stack(
+                    alignment: Alignment.bottomCenter,
+                    children: [
+                      FrameView(
+                        frame: _frame,
+                        advice: _advice,
+                        mirror: _mirror,
                       ),
-                    ),
-                  const SizedBox(height: 8),
-                  Text(
-                    tr(
-                      'Move only as far as feels comfortable. The game uses your range.',
-                    ),
-                    textAlign: TextAlign.center,
+                      if (framed)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: _StepProgress(
+                            progress: _cal.progress,
+                            label: step == CalibrationStep.squats
+                                ? '${_cal.squatsDone} / 2'
+                                : null,
+                          ),
+                        ),
+                    ],
                   ),
-                ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+              child: SizedBox(
+                height: 48,
+                child: Center(
+                  child: Text(
+                    skipping
+                        ? tr('Using a gentle default for this step')
+                        : tr(
+                            'Move only as far as feels comfortable. The game uses your range.',
+                          ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: skipping ? Lantern.scarf : null,
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
@@ -194,4 +251,46 @@ class _CalibrationState extends ConsumerState<CalibrationScreen> {
       ),
     );
   }
+}
+
+/// The step's progress ring (or a tick when done), on a dark disc so it
+/// reads over the camera mirror.
+class _StepProgress extends StatelessWidget {
+  const _StepProgress({required this.progress, this.label});
+  final double progress;
+  final String? label;
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: const BoxDecoration(
+      color: Colors.black54,
+      borderRadius: BorderRadius.all(Radius.circular(48)),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 64,
+            height: 64,
+            child: progress >= 1
+                ? const SuccessBadge(size: 64)
+                : CircularProgressIndicator(
+                    value: progress,
+                    strokeWidth: 8,
+                    strokeCap: StrokeCap.round,
+                  ),
+          ),
+          if (label != null) ...[
+            const SizedBox(width: 12),
+            Text(
+              label!,
+              style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900),
+            ),
+          ],
+        ],
+      ),
+    ),
+  );
 }

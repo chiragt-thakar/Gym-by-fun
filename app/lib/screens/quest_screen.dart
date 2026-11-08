@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flame/game.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,6 +19,7 @@ import '../services/session_queue.dart';
 import '../services/settings.dart';
 import '../services/voice.dart';
 import '../widgets/common.dart';
+import '../widgets/frame_view.dart';
 import 'results_screen.dart';
 
 const forestAsset = 'assets/levels/w1-forest-escape.json';
@@ -118,6 +120,46 @@ class _QuestState extends ConsumerState<QuestScreen>
 
   Voice get _voice => ref.read(voiceProvider);
 
+  // Framing guide: the latest smoothed frame + debounced advice, for the
+  // in-game frame finder and edge glow. Display only; the run's pause and
+  // resume timing stays in MotionEngine.
+  static const _framing = Framing();
+  final _framed = ValueNotifier<FramedView>(const FramedView(null, null));
+  final _framingFilter = FramingFilter();
+  final _smoother = LandmarkSmoother();
+  StreamSubscription<PoseFrame>? _frameSub;
+  FramingAdvice? _rawAdvice;
+  FramingFix? _spokenFix;
+  int _spokenAt = 0;
+  bool _mirror = false;
+
+  void _onFrame(PoseFrame f) {
+    final ts = f.timestampMs;
+    final raw = _framing.advise(f);
+    _rawAdvice = raw;
+    final shown = _framingFilter.update(raw, ts);
+    _framed.value = FramedView(_smoother.smooth(f), shown);
+    // While the run waits, repeat the direction when it changes or every 8 s.
+    final waiting = _game?.hud.value.trackingIssue != null;
+    if (waiting &&
+        !shown.ok &&
+        (shown.fix != _spokenFix || ts - _spokenAt >= 8000) &&
+        ts - _spokenAt >= 2500) {
+      _spokenFix = shown.fix;
+      _spokenAt = ts;
+      _voice.sayKey(framingKey(shown.fix), force: true);
+    }
+  }
+
+  /// Spoken when the run pauses for tracking: the direction to move.
+  String? _issueKey(TrackingIssue _) {
+    final a = _rawAdvice;
+    if (a == null || a.ok) return null;
+    _spokenFix = a.fix;
+    _spokenAt = _session?.lastFrame?.timestampMs ?? 0;
+    return framingKey(a.fix);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -164,6 +206,7 @@ class _QuestState extends ConsumerState<QuestScreen>
         audio: this,
         theme: _stage.theme,
         lightOf: () => session.light,
+        issueKeyOf: _issueKey,
         onFinished: (r) => WidgetsBinding.instance.addPostFrameCallback(
           (_) => _onRunFinished(r),
         ),
@@ -186,7 +229,10 @@ class _QuestState extends ConsumerState<QuestScreen>
     if (session == null) return false;
     bool ok;
     try {
-      ok = await session.start(tier: _tier);
+      ok = await session.start(
+        tier: _tier,
+        selfView: ref.read(settingsProvider).cameraMirror,
+      );
     } on PlatformException catch (e) {
       debugPrint('pose start failed: ${e.code}');
       ok = false;
@@ -209,6 +255,8 @@ class _QuestState extends ConsumerState<QuestScreen>
       setState(() => _error = tr('Camera permission is needed to play.'));
       return false;
     }
+    _frameSub ??= session.frames.listen(_onFrame);
+    if (_mirror != session.selfView) setState(() => _mirror = session.selfView);
     return true;
   }
 
@@ -413,6 +461,8 @@ class _QuestState extends ConsumerState<QuestScreen>
     // from it outlives the results screen.
     _game?.dispose();
     _game = null;
+    _frameSub?.cancel();
+    _framed.dispose();
     _voice.stop();
     super.dispose();
   }
@@ -448,7 +498,13 @@ class _QuestState extends ConsumerState<QuestScreen>
         paused: _paused,
         onDone: _beginRun,
       ),
-      _Phase.run => _RunView(game: _game!, s: s, onPause: _pause),
+      _Phase.run => _RunView(
+        game: _game!,
+        s: s,
+        onPause: _pause,
+        framed: _framed,
+        mirror: _mirror,
+      ),
       _Phase.cooldown => _ExerciseFlow(
         title: s.t('cooldown'),
         exercises: cooldown,
@@ -547,11 +603,27 @@ class _Overlay extends StatelessWidget {
   );
 }
 
+/// The latest smoothed frame and debounced framing advice.
+@immutable
+class FramedView {
+  const FramedView(this.frame, this.advice);
+  final PoseFrame? frame;
+  final FramingAdvice? advice;
+}
+
 class _RunView extends StatelessWidget {
-  const _RunView({required this.game, required this.s, required this.onPause});
+  const _RunView({
+    required this.game,
+    required this.s,
+    required this.onPause,
+    required this.framed,
+    required this.mirror,
+  });
   final ForestGame game;
   final S s;
   final VoidCallback onPause;
+  final ValueListenable<FramedView> framed;
+  final bool mirror;
 
   @override
   Widget build(BuildContext context) {
@@ -561,6 +633,12 @@ class _RunView extends StatelessWidget {
           // Keyed and built once per run: HUD changes rebuild only the
           // ValueListenableBuilder below, never the GameWidget.
           GameWidget(key: const ValueKey('forest-game'), game: game),
+          // Early warning: the screen edge glows on the side the player is
+          // drifting out of, before tracking is lost.
+          ValueListenableBuilder<FramedView>(
+            valueListenable: framed,
+            builder: (context, v, _) => ScreenEdgeGlow(v.advice),
+          ),
           SafeArea(
             child: ValueListenableBuilder<HudState>(
               valueListenable: game.hud,
@@ -619,20 +697,147 @@ class _RunView extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
-                  if (h.trackingIssue != null)
-                    _Banner(
-                      text: s.t(ForestGame.issueKey(h.trackingIssue!)),
-                      color: Colors.black87,
-                    )
-                  else if (h.hint != null)
+                  // A tracking pause is explained by the frame finder.
+                  if (h.trackingIssue == null && h.hint != null)
                     _Banner(text: h.hint!, color: Colors.black54),
                   const SizedBox(height: 40),
                 ],
               ),
             ),
           ),
+          ValueListenableBuilder<HudState>(
+            valueListenable: game.hud,
+            builder: (context, h, _) => _FrameFinder(
+              framed: framed,
+              waiting: h.trackingIssue != null,
+              fallbackIssue: h.trackingIssue,
+              mirror: mirror,
+              s: s,
+            ),
+          ),
         ],
       ),
+    );
+  }
+}
+
+/// Shows the player where they are in the camera's view.
+///
+/// During play (mirror on) it is a small picture-in-picture under the HUD.
+/// When tracking pauses it grows into a big 3:4 frame with the body
+/// outline, red edges where the body is cut off, a direction arrow and one
+/// plain line ("Move a little to your left"). When tracking is back it
+/// shrinks again by itself; no tap is needed.
+///
+/// It is one widget at one place in the tree, so the native mirror is never
+/// re-attached when it changes size.
+class _FrameFinder extends StatelessWidget {
+  const _FrameFinder({
+    required this.framed,
+    required this.waiting,
+    required this.fallbackIssue,
+    required this.mirror,
+    required this.s,
+  });
+  final ValueListenable<FramedView> framed;
+  final bool waiting;
+  final TrackingIssue? fallbackIssue;
+  final bool mirror;
+  final S s;
+
+  @override
+  Widget build(BuildContext context) {
+    final pad = MediaQuery.paddingOf(context);
+    return LayoutBuilder(
+      builder: (context, c) {
+        final w = c.maxWidth, h = c.maxHeight;
+        final bigW = (w - 48).clamp(120.0, (h * 0.56) * 3 / 4).toDouble();
+        final smallW = (w * 0.26).clamp(72.0, 140.0).toDouble();
+        final fw = waiting ? bigW : smallW;
+        final left = waiting ? (w - bigW) / 2 : w - smallW - 12;
+        final top = waiting ? h * 0.15 : pad.top + 100;
+        final duration = MediaQuery.maybeDisableAnimationsOf(context) == true
+            ? Duration.zero
+            : const Duration(milliseconds: 350);
+        final visible = waiting || mirror;
+        return Stack(
+          children: [
+            IgnorePointer(
+              child: AnimatedOpacity(
+                opacity: waiting ? 1 : 0,
+                duration: duration,
+                child: const ColoredBox(
+                  color: Color(0xB3000000),
+                  child: SizedBox.expand(),
+                ),
+              ),
+            ),
+            if (visible)
+              AnimatedPositioned(
+                duration: duration,
+                curve: Curves.easeOutCubic,
+                left: left,
+                top: top,
+                width: fw,
+                height: fw * 4 / 3,
+                child: IgnorePointer(
+                  child: ValueListenableBuilder<FramedView>(
+                    valueListenable: framed,
+                    builder: (context, v, _) => FrameView(
+                      frame: v.frame,
+                      advice:
+                          v.advice ?? const FramingAdvice(FramingFix.findMe),
+                      mirror: mirror,
+                      showCue: waiting,
+                      showTarget: waiting,
+                      radius: waiting ? 24 : 14,
+                    ),
+                  ),
+                ),
+              ),
+            if (waiting)
+              Positioned(
+                left: 16,
+                right: 16,
+                top: top + bigW * 4 / 3 + 12,
+                child: ValueListenableBuilder<FramedView>(
+                  valueListenable: framed,
+                  builder: (context, v, _) {
+                    final a = v.advice;
+                    final line = a == null || a.ok
+                        ? (a?.ok ?? false)
+                              ? tr('Back in the frame!')
+                              : s.t(ForestGame.issueKey(fallbackIssue!))
+                        : s.t(framingKey(a.fix));
+                    return Column(
+                      children: [
+                        Text(
+                          line,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          tr('The game waits for you.'),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            color: Colors.white70,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

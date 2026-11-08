@@ -130,6 +130,33 @@ const Map<String, (String, String)> _t = {
   ),
   'Great — hold still…': ('बढ़िया — स्थिर रहें…', 'સરસ — સ્થિર રહો…'),
   'Next: calibrate': ('आगे: कैलिब्रेट करें', 'આગળ: કેલિબ્રેટ કરો'),
+  'Show camera mirror': ('कैमरा दर्पण दिखाएं', 'કેમેરા અરીસો બતાવો'),
+  'See yourself while lining up. Shown only on this phone, never saved. Off: body outline only.':
+      (
+        'सही जगह खड़े होते समय खुद को देखें। सिर्फ़ इसी फ़ोन पर दिखता है, कभी सेव नहीं होता। बंद: सिर्फ़ शरीर की रेखा।',
+        'ગોઠવાતી વખતે પોતાને જુઓ. ફક્ત આ ફોન પર દેખાય છે, ક્યારેય સેવ થતું નથી. બંધ: ફક્ત શરીરની રેખા.',
+      ),
+  'Starting calibration…': (
+    'कैलिब्रेशन शुरू हो रहा है…',
+    'કેલિબ્રેશન શરૂ થઈ રહ્યું છે…',
+  ),
+  'No tap needed. It starts by itself.': (
+    'टैप की ज़रूरत नहीं। यह अपने आप शुरू होगा।',
+    'ટૅપ કરવાની જરૂર નથી. તે જાતે શરૂ થશે.',
+  ),
+  'Fit your body inside the outline': (
+    'अपने शरीर को रेखा के अंदर लाएं',
+    'તમારું શરીર રેખાની અંદર લાવો',
+  ),
+  'Using a gentle default for this step': (
+    'इस कदम के लिए हल्की सेटिंग',
+    'આ પગલા માટે હળવી સેટિંગ',
+  ),
+  'Back in the frame!': ('फ्रेम में वापस!', 'ફ્રેમમાં પાછા!'),
+  'The game waits for you.': (
+    'गेम आपका इंतज़ार कर रहा है।',
+    'ગેમ તમારી રાહ જુએ છે.',
+  ),
   // Calibration
   'Stand tall and still': ('सीधे और स्थिर खड़े रहें', 'સીધા અને સ્થિર ઊભા રહો'),
   'Raise both arms above your head': (

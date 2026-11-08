@@ -97,6 +97,56 @@ class S {
       AppLanguage.hi: 'मिल गए! चलिए आगे।',
       AppLanguage.gu: 'મળી ગયા! ચાલો આગળ.',
     },
+    'frame_ok': {
+      AppLanguage.en: 'Perfect, you are in the frame!',
+      AppLanguage.hi: 'बढ़िया, आप फ्रेम में हैं!',
+      AppLanguage.gu: 'સરસ, તમે ફ્રેમમાં છો!',
+    },
+    'frame_find_me': {
+      AppLanguage.en: 'Step into the frame so I can see you.',
+      AppLanguage.hi: 'फ्रेम में आइए ताकि मैं आपको देख सकूँ।',
+      AppLanguage.gu: 'ફ્રેમમાં આવો જેથી હું તમને જોઈ શકું.',
+    },
+    'frame_step_back': {
+      AppLanguage.en: 'Step back so your head and feet fit.',
+      AppLanguage.hi: 'थोड़ा पीछे जाइए ताकि सिर से पैर तक दिखें।',
+      AppLanguage.gu: 'થોડા પાછળ જાઓ જેથી માથાથી પગ સુધી દેખાઓ.',
+    },
+    'frame_step_closer': {
+      AppLanguage.en: 'Come a little closer.',
+      AppLanguage.hi: 'थोड़ा पास आइए।',
+      AppLanguage.gu: 'થોડા નજીક આવો.',
+    },
+    'frame_move_left': {
+      AppLanguage.en: 'Move a little to your left.',
+      AppLanguage.hi: 'थोड़ा अपनी बाईं ओर जाइए।',
+      AppLanguage.gu: 'થોડા તમારી ડાબી બાજુ ખસો.',
+    },
+    'frame_move_right': {
+      AppLanguage.en: 'Move a little to your right.',
+      AppLanguage.hi: 'थोड़ा अपनी दाईं ओर जाइए।',
+      AppLanguage.gu: 'થોડા તમારી જમણી બાજુ ખસો.',
+    },
+    'frame_more_light': {
+      AppLanguage.en: 'I cannot see you clearly. Add light in front of you.',
+      AppLanguage.hi: 'आप साफ़ नहीं दिख रहे। सामने रोशनी बढ़ाएं।',
+      AppLanguage.gu: 'તમે સ્પષ્ટ દેખાતા નથી. સામે પ્રકાશ વધારો.',
+    },
+    'setup_auto': {
+      AppLanguage.en: 'Perfect! Hold still. Calibration starts in 3 seconds.',
+      AppLanguage.hi: 'बढ़िया! स्थिर रहें। 3 सेकंड में कैलिब्रेशन शुरू होगा।',
+      AppLanguage.gu: 'સરસ! સ્થિર રહો. 3 સેકન્ડમાં કેલિબ્રેશન શરૂ થશે.',
+    },
+    'cal_skip': {
+      AppLanguage.en: 'No problem. We will use a gentle setting for that one.',
+      AppLanguage.hi: 'कोई बात नहीं। इसके लिए हम हल्की सेटिंग रखेंगे।',
+      AppLanguage.gu: 'કોઈ વાંધો નહીં. આ માટે અમે હળવી સેટિંગ રાખીશું.',
+    },
+    'cal_paused': {
+      AppLanguage.en: 'Calibration waits. Get back into the frame.',
+      AppLanguage.hi: 'कैलिब्रेशन रुका है। फ्रेम में वापस आइए।',
+      AppLanguage.gu: 'કેલિબ્રેશન અટક્યું છે. ફ્રેમમાં પાછા આવો.',
+    },
     'warmup': {
       AppLanguage.en: 'Warm-up',
       AppLanguage.hi: 'वार्म-अप',

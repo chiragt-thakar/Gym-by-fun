@@ -11,6 +11,7 @@ library;
 export 'src/landmarks.dart';
 export 'src/one_euro_filter.dart';
 export 'src/quality_gate.dart';
+export 'src/framing.dart';
 export 'src/calibration.dart';
 export 'src/features.dart';
 export 'src/events.dart';
