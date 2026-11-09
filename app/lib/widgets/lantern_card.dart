@@ -24,16 +24,20 @@ class LanternCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (bg, border, iconColor) = switch (tone) {
-      LanternTone.plain => (Lantern.canopy, Lantern.ridge, Lantern.glow),
-      LanternTone.glow => (const Color(0xFF3A2410), Lantern.glow, Lantern.glow),
+      LanternTone.plain => (Lantern.canopy, Lantern.line, Lantern.glow),
+      LanternTone.glow => (
+        const Color(0xFF2A1C10),
+        const Color(0xFF5A3A1C),
+        Lantern.glow,
+      ),
       LanternTone.scarf => (
-        const Color(0xFF0E2F2B),
-        Lantern.scarf,
+        const Color(0xFF0D2622),
+        const Color(0xFF1E4A43),
         Lantern.scarf,
       ),
       LanternTone.warning => (
-        const Color(0xFF4A2A06),
-        Lantern.warning,
+        const Color(0xFF2E2208),
+        const Color(0xFF5C4614),
         Lantern.warning,
       ),
     };
@@ -44,14 +48,14 @@ class LanternCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(Lantern.radius),
-        border: Border.all(color: border, width: 2.5),
+        border: Border.all(color: border, width: 1),
       ),
       child: ic == null
           ? child
           : Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(ic, size: 34, color: iconColor),
+                Icon(ic, size: 26, color: iconColor),
                 const SizedBox(width: 14),
                 Expanded(child: child),
               ],

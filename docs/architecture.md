@@ -1,5 +1,36 @@
 # Architecture
 
+## App shell v2 and the arcade layer (2026-11-09)
+- **Navigation.** `StatefulShellRoute.indexedStack` with four tabs: Home
+  (`/home`), Games (`/games`), Progress (`/progress`), Profile (`/profile`),
+  in `MainShell`. Full-screen routes sit on the root navigator: game page
+  `/game/:id`, play `/play/:game?stage=…`, `/arcade-results`, the runner's
+  `/quest`, onboarding and settings. Android back: a pushed page pops; a
+  non-Home tab returns to Home; on Home the first press warns and a second press
+  within 2 s exits. Pages opened with `go` are wrapped in `BackToHome`, so back
+  never leaves the app from a deep page. `/play/*` joins `/quest` behind the
+  explore-first `playGate` (calibration at Play).
+- **Arcade layer.** `motion_core` adds `BodyPose` (body-relative geometry and
+  joint angles from landmarks), `BodyAnchor`, `PoseMatcher` and
+  `SwingRecogniser` (all pure Dart, tested with the test-only `stickFrame`).
+  `game_director` adds `ArcadeEngine` and six deterministic engines
+  (`MelaEngine`, `PatakaEngine`, `DuelEngine`, `TaalEngine`, `CricketEngine`,
+  `LumenEngine`) driven by `advance(dt, tracked)`, `pose(BodyPose)` and
+  `motion(MotionEvent)`. Content is JSON in `content/arcade/` (copied to
+  `app/assets/arcade/`, equality tested).
+- **App.** `app/lib/arcade/`: catalogue (presentation only), content loader,
+  local progress (`arcade.progress.v1`: bests, stars, plays, restored habitat
+  modules, last 60 session counts), one `ArcadeScreen` (camera lifecycle,
+  framing check, countdown, ticker, events → sound/voice/effects, pause, results)
+  and original vector art per game (`art/*.dart`) shared by gameplay and the
+  library previews. Rendering is `CustomPainter` over a 3:4 viewport that lines
+  up with the native mirror; the camera image itself stays native (rule 4).
+- **Design system.** Tokens in `app/theme.dart` (`Lantern`, `Space`, `Txt`), one
+  card/section/pill/stat/badge kit in `widgets/ui_kit.dart`. Hand-held shell type
+  is 13–32 sp; in-game HUD text stays large.
+- Arcade sessions are stored locally only; they are not uploaded to the server
+  yet (the server's session schema is runner-specific).
+
 ## Authored gameplay variants and optional missions (2026-11-09)
 
 `LevelGameplay` decodes scene/atmosphere enums, mission kind and a bounded target

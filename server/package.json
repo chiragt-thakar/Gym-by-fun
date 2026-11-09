@@ -14,7 +14,7 @@
     "worker": "node dist/worker.js",
     "migrate": "tsx src/db/migrate.ts",
     "migrate:prod": "node dist/db/migrate.js",
-    "content:validate": "tsx src/modules/content/validate-cli.ts ../content/levels",
+    "content:validate": "tsx src/modules/content/validate-cli.ts ../content/levels && tsx src/modules/content/validate-arcade-cli.ts ../content/arcade",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"

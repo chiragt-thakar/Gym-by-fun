@@ -1,5 +1,7 @@
 # New games plan 2 — three self-view games (Mirror Mela, Tapeball Tamasha, Pataka Pose)
 
+> **Implementation note (2026-11-09):** a first playable version of the games in this document now ships in the app (v2). See [progress.md](progress.md) for what was built, what deliberately differs, and what is still open; rules live in [game-design.md](game-design.md#arcade-games-v2-2026-11-09).
+
 Status: **plan / proposal, 2026-11-05.** Nothing here is implemented. Owner decisions are collected in §10.
 Inputs: `AGENTS.md`, `docs/architecture.md`, `docs/game-design.md`, `docs/stages-roadmap.md`, research notes
 `research2/1-selfview-tech.md`, `2-modern-ui.md`, `3-characters.md`, `4-game-c.md`, `5-game-d.md`, `6-game-e.md`

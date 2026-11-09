@@ -14,6 +14,7 @@ const localDataKeys = [
   CoachHistoryNotifier.key,
   CoachHistoryNotifier.activityDaysKey,
   'pendingGymCode', // pendingGymCodeKey in app/router.dart
+  'arcade.progress.v1', // ArcadeProgressNotifier.key
 ];
 
 /// Removes everything MotionQuest keeps on this device: settings, auth tokens,

@@ -1,5 +1,7 @@
 # New game modes plan: Craftguard Duels (A) and Taal Toofan (B)
 
+> **Implementation note (2026-11-09):** a first playable version of the games in this document now ships in the app (v2). See [progress.md](progress.md) for what was built, what deliberately differs, and what is still open; rules live in [game-design.md](game-design.md#arcade-games-v2-2026-11-09).
+
 Status: **proposal, nothing implemented** (2026-11-05). This plan stands on its own. It reconciles the five
 research notes (market, exercise science, tech feasibility, Game A draft, Game B draft) with AGENTS.md,
 `docs/game-design.md`, `docs/stages-roadmap.md` (§3 moves, §5 bosses, §6 bands, §7 access) and

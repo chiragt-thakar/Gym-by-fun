@@ -56,6 +56,13 @@ void main() {
           'Checkpoint reached',
           'Final stretch',
           'Follow the trail',
+          'Skip for now and explore',
+          'Get ready to play',
+          'Teach the game how you move',
+          'Show your comfortable range',
+          "Let's set up",
+          'Not now, keep exploring',
+          'One minute before your first run',
         };
         for (final key in authored) {
           expect(tr(key), isNot(key), reason: key);

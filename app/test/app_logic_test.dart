@@ -96,27 +96,48 @@ void main() {
     }
   });
 
-  test(
-    'onboarding order: age → readiness → setup → calibrate → tutorial → home',
-    () {
-      var s = const Settings();
-      expect(nextOnboardingStep(s), '/welcome');
-      s = s.copyWith(ageConfirmed: true);
-      expect(nextOnboardingStep(s), '/readiness');
-      s = s.copyWith(readinessDone: true);
-      expect(nextOnboardingStep(s), '/setup');
-      s = s.copyWith(setupDone: true);
-      expect(nextOnboardingStep(s), '/calibrate');
-      s = s.copyWith(
-        calibration: CalibrationProfile.fromStanding(
-          PoseFrame(timestampMs: 0, landmarks: SyntheticBody(noise: 0).pose()),
-        ),
-      );
-      expect(nextOnboardingStep(s), '/tutorial');
-      s = s.copyWith(tutorialDone: true);
-      expect(nextOnboardingStep(s), isNull);
-    },
-  );
+  test('onboarding requires only age and readiness; setup can wait', () {
+    var s = const Settings();
+    expect(nextOnboardingStep(s), '/welcome');
+    s = s.copyWith(ageConfirmed: true);
+    expect(nextOnboardingStep(s), '/readiness');
+    s = s.copyWith(readinessDone: true);
+    // No setup, calibration or tutorial yet: the app is free to explore.
+    expect(nextOnboardingStep(s), isNull);
+  });
+
+  test('play gate sends an uncalibrated run to get-ready and back', () {
+    var s = const Settings(ageConfirmed: true, readinessDone: true);
+    final quest = Uri.parse('/quest?level=w1-forest-escape&pace=gentle');
+    final gate = playGate(s, quest)!;
+    expect(Uri.parse(gate).path, '/get-ready');
+    expect(Uri.parse(gate).queryParameters['next'], quest.toString());
+    expect(playGate(s, Uri.parse('/tutorial')), startsWith('/get-ready'));
+    // Browsing never hits the gate.
+    for (final p in ['/home', '/settings', '/crew', '/results']) {
+      expect(playGate(s, Uri.parse(p)), isNull, reason: p);
+    }
+    s = s.copyWith(
+      calibration: CalibrationProfile.fromStanding(
+        PoseFrame(timestampMs: 0, landmarks: SyntheticBody(noise: 0).pose()),
+      ),
+    );
+    expect(playGate(s, quest), isNull);
+  });
+
+  test('next accepts only in-app play routes', () {
+    expect(safeNext('/quest?level=w1-forest-escape'), isNotNull);
+    expect(safeNext('/tutorial'), '/tutorial');
+    expect(safeNext(null), isNull);
+    expect(safeNext('/settings'), isNull);
+    expect(safeNext('https://evil.example/quest'), isNull);
+    expect(safeNext('//evil.example/quest'), isNull);
+    expect(withNext('/setup', null), '/setup');
+    expect(
+      Uri.parse(withNext('/setup', '/quest?level=a')).queryParameters['next'],
+      '/quest?level=a',
+    );
+  });
 
   test('settings round-trip; low-impact is the default', () {
     const s = Settings();

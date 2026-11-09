@@ -20,3 +20,6 @@ export 'src/extra_recognisers.dart';
 export 'src/motion_engine.dart';
 export 'src/recording.dart';
 export 'src/accuracy.dart';
+export 'src/body_pose.dart';
+export 'src/pose_matcher.dart';
+export 'src/swing.dart';

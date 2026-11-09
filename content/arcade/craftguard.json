@@ -1,0 +1,144 @@
+{
+  "game": "craftguard",
+  "schemaVersion": 1,
+  "version": 1,
+  "guardians": [
+    {
+      "id": "baoli-warden",
+      "name": "Baoli Warden",
+      "title": "Keeper of the stepwell",
+      "blurb": "A sandstone giant with lattice eyes. It sweeps its steps and drops its ledges on the count.",
+      "art": "baoli",
+      "pads": 2,
+      "intro": "Listen for the count. Move on the hit.",
+      "calmLine": "The Warden sinks into turquoise water, at peace.",
+      "bpm": { "beginner": 80, "intermediate": 88, "advanced": 96 },
+      "attackNames": {
+        "duck": "Step Sweep! Duck!",
+        "left": "Ledge Drop! Left!",
+        "right": "Ledge Drop! Right!",
+        "guard": "Stone Fist! Guard!"
+      },
+      "phases": [
+        ["duck", "right", "duck", "left"],
+        ["guard", "duck", "left", "guard"],
+        ["duck", "left", "guard", "right", "duck"]
+      ]
+    },
+    {
+      "id": "patang-twins",
+      "name": "Patang Twins",
+      "title": "Kites on one string",
+      "blurb": "Magenta and ochre paper kites that dive and tug their glowing string from side to side.",
+      "art": "patang",
+      "pads": 2,
+      "intro": "Two kites, one string. Watch which side tightens.",
+      "calmLine": "The twins fold into paper birds and drift away together.",
+      "bpm": { "beginner": 80, "intermediate": 88, "advanced": 96 },
+      "attackNames": {
+        "duck": "Dive! Duck!",
+        "left": "String Cut! Left!",
+        "right": "String Cut! Right!",
+        "guard": "Tangle! Guard!"
+      },
+      "phases": [
+        ["left", "duck", "right", "duck"],
+        ["right", "left", "guard", "duck"],
+        ["left", "right", "duck", "guard", "left"]
+      ]
+    },
+    {
+      "id": "brass-mayur",
+      "name": "Brass Mayur",
+      "title": "The clockwork peacock",
+      "blurb": "A cast-brass peacock automaton. Its fan flashes gold before every strike.",
+      "art": "mayur",
+      "pads": 3,
+      "premium": true,
+      "intro": "Watch the fan. Three dings, then the strike.",
+      "calmLine": "The Mayur folds its fan and bows.",
+      "bpm": { "beginner": 82, "intermediate": 90, "advanced": 98 },
+      "attackNames": {
+        "duck": "Tail Sweep! Duck!",
+        "left": "Feather Volley! Left!",
+        "right": "Feather Volley! Right!",
+        "guard": "Fan Flash! Guard!"
+      },
+      "phases": [
+        ["guard", "duck", "right", "guard"],
+        ["left", "guard", "duck", "right"],
+        ["guard", "left", "duck", "guard", "right"]
+      ]
+    },
+    {
+      "id": "lattoo-titan",
+      "name": "Lattoo Titan",
+      "title": "The spinning top",
+      "blurb": "A towering lacquered spinning top. It wobbles, whirrs and topples, but never falls.",
+      "art": "lattoo",
+      "pads": 3,
+      "premium": true,
+      "intro": "Listen for the whirr. It always tells you which way.",
+      "calmLine": "The Titan slows into a music-box spin.",
+      "bpm": { "beginner": 82, "intermediate": 90, "advanced": 100 },
+      "attackNames": {
+        "duck": "Topple! Duck!",
+        "left": "Spin Charge! Left!",
+        "right": "Spin Charge! Right!",
+        "guard": "Wobble Slam! Guard!"
+      },
+      "phases": [
+        ["left", "right", "guard", "duck"],
+        ["right", "guard", "left", "duck"],
+        ["duck", "left", "right", "guard", "duck"]
+      ]
+    },
+    {
+      "id": "megh-drummer",
+      "name": "Megh Drummer",
+      "title": "The monsoon cloud",
+      "blurb": "A rain cloud with three drumheads on its chest. It plays a call, then plays it again.",
+      "art": "megh",
+      "pads": 3,
+      "premium": true,
+      "intro": "The cloud drums twice. Same again, same answer.",
+      "calmLine": "The cloud breaks into a rainbow.",
+      "bpm": { "beginner": 84, "intermediate": 92, "advanced": 100 },
+      "attackNames": {
+        "duck": "Lightning Sweep! Duck!",
+        "left": "Gust! Left!",
+        "right": "Gust! Right!",
+        "guard": "Thunder Clap! Guard!"
+      },
+      "phases": [
+        ["guard", "guard", "duck", "duck"],
+        ["left", "right", "left", "right"],
+        ["guard", "duck", "guard", "duck", "left"]
+      ]
+    },
+    {
+      "id": "night-mail",
+      "name": "Night Mail Colossus",
+      "title": "The locomotive that stood up",
+      "blurb": "A steam engine made of trunks and whistles. Four phases, ending at the Terminus.",
+      "art": "nightmail",
+      "pads": 3,
+      "premium": true,
+      "intro": "Three rising whistles means it is coming. Ready?",
+      "calmLine": "The Colossus becomes a toy train circling your shelf.",
+      "bpm": { "beginner": 84, "intermediate": 92, "advanced": 104 },
+      "attackNames": {
+        "duck": "Smoke Bar! Duck!",
+        "left": "Signal Swing! Left!",
+        "right": "Signal Swing! Right!",
+        "guard": "Coupling Punch! Guard!"
+      },
+      "phases": [
+        ["duck", "left", "duck", "right"],
+        ["guard", "duck", "right", "guard"],
+        ["duck", "right", "guard", "left", "duck"],
+        ["left", "guard", "right", "duck"]
+      ]
+    }
+  ]
+}

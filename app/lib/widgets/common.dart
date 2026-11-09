@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:motion_core/motion_core.dart';
 
 import '../app/theme.dart';
@@ -10,6 +11,7 @@ export 'lantern_card.dart';
 export 'quest_button.dart';
 export 'step_progress.dart';
 export 'success_badge.dart';
+export 'ui_kit.dart';
 
 /// Big tap target for sweaty hands. Kept as the app-wide name; the look
 /// comes from [QuestButton].
@@ -35,8 +37,9 @@ class BigButton extends StatelessWidget {
   );
 }
 
-/// Standard screen: transparent bar with a lantern tab beside the title,
-/// the forest backdrop behind, and a padded scrolling column.
+/// Standard page: a clean title bar with a back button that always leads
+/// somewhere sensible (the previous page, or Home when this page was opened
+/// directly), the forest backdrop behind, and a padded scrolling column.
 class ScreenScaffold extends StatelessWidget {
   const ScreenScaffold({
     super.key,
@@ -44,44 +47,74 @@ class ScreenScaffold extends StatelessWidget {
     required this.children,
     this.actions,
     this.showBack = true,
+    this.subtitle,
   });
   final String title;
   final List<Widget> children;
   final List<Widget>? actions;
   final bool showBack;
+  final String? subtitle;
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: Row(
+  Widget build(BuildContext context) {
+    final nav = Navigator.of(context);
+    final router = GoRouter.maybeOf(context);
+    final canPop = nav.canPop() || (router?.canPop() ?? false);
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: !showBack
+            ? null
+            : IconButton(
+                tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                icon: const Icon(Icons.arrow_back_rounded),
+                onPressed: () {
+                  if (canPop) {
+                    nav.maybePop();
+                  } else {
+                    router?.go('/home');
+                  }
+                },
+              ),
+        titleSpacing: showBack ? 0 : Space.gutter,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(title, overflow: TextOverflow.ellipsis),
+            if (subtitle != null)
+              Text(
+                subtitle!,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Lantern.mist,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+          ],
+        ),
+        actions: actions,
+      ),
+      body: Stack(
         children: [
-          Container(
-            width: 8,
-            height: 28,
-            decoration: BoxDecoration(
-              color: Lantern.glow,
-              borderRadius: BorderRadius.circular(4),
+          const Positioned.fill(child: ForestBackdrop()),
+          SafeArea(
+            top: false,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(
+                Space.gutter,
+                Space.s,
+                Space.gutter,
+                Space.xxl,
+              ),
+              children: children,
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(child: Text(title, overflow: TextOverflow.ellipsis)),
         ],
       ),
-      automaticallyImplyLeading: showBack,
-      actions: actions,
-    ),
-    body: Stack(
-      children: [
-        const Positioned.fill(child: ForestBackdrop()),
-        SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-            children: children,
-          ),
-        ),
-      ],
-    ),
-  );
+    );
+  }
 }
 
 /// Tracking quality dot: shape *and* colour (green circle, amber triangle,

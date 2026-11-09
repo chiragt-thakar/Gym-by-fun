@@ -8,6 +8,7 @@ import '../l10n/tr.dart';
 
 import 'package:motion_core/motion_core.dart';
 
+import '../app/router.dart' show withNext;
 import '../app/theme.dart';
 import '../services/pose_service.dart';
 import '../services/settings.dart';
@@ -22,8 +23,13 @@ import '../widgets/frame_view.dart';
 /// Hands-free: the player is 2–2.5 m from the phone, so once they have been
 /// in a good frame for a moment a spoken 3-second countdown starts and
 /// calibration opens by itself. The button is only a shortcut.
+///
+/// [next] is the run the player tapped before they had a calibration; it
+/// opens once setup and calibration are done. In first-time onboarding
+/// (no [next], no calibration yet) the player may skip and explore first.
 class SetupScreen extends ConsumerStatefulWidget {
-  const SetupScreen({super.key});
+  const SetupScreen({super.key, this.next});
+  final String? next;
   @override
   ConsumerState<SetupScreen> createState() => _SetupState();
 }
@@ -137,8 +143,8 @@ class _SetupState extends ConsumerState<SetupScreen> {
     final s = ref.read(settingsProvider);
     context.go(
       s.calibration == null
-          ? '/calibrate'
-          : (s.tutorialDone ? '/home' : '/tutorial'),
+          ? withNext('/calibrate', widget.next)
+          : (widget.next ?? (s.tutorialDone ? '/home' : '/tutorial')),
     );
   }
 
@@ -151,7 +157,9 @@ class _SetupState extends ConsumerState<SetupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final str = ref.watch(settingsProvider).s;
+    final settings = ref.watch(settingsProvider);
+    final str = settings.s;
+    final canSkip = widget.next == null && settings.calibration == null;
     if (_session == null) {
       return ScreenScaffold(
         title: tr('Set up your space'),
@@ -201,6 +209,24 @@ class _SetupState extends ConsumerState<SetupScreen> {
             icon: Icons.videocam,
             onPressed: _starting ? null : _startCamera,
           ),
+          if (canSkip) ...[
+            const SizedBox(height: 4),
+            TextButton(
+              key: const ValueKey('skip-setup'),
+              onPressed: _starting ? null : () => context.go('/home'),
+              child: Text(
+                tr('Skip for now and explore'),
+                style: const TextStyle(fontSize: 17),
+              ),
+            ),
+            Text(
+              tr(
+                'We will set this up when you tap play. It takes about a minute.',
+              ),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14, color: Lantern.fog),
+            ),
+          ],
         ],
       );
     }

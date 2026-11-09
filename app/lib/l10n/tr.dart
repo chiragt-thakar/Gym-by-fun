@@ -1,4 +1,5 @@
 import 'strings.dart';
+import 'tr_v2.dart';
 
 /// The language currently chosen in Settings. Updated by the settings
 /// notifier; the app root rebuilds when it changes.
@@ -10,7 +11,7 @@ AppLanguage currentLanguage = AppLanguage.en;
 /// launch.
 String tr(String en) {
   if (currentLanguage == AppLanguage.en) return en;
-  final t = _t[en];
+  final t = _t[en] ?? v2Strings[en];
   if (t == null) return en;
   return currentLanguage == AppLanguage.hi ? t.$1 : t.$2;
 }
@@ -21,6 +22,63 @@ const Map<String, (String, String)> _t = {
   'Reach for the light': ('रोशनी की ओर हाथ उठाएँ', 'પ્રકાશ તરફ હાથ ઊંચો કરો'),
   'Raise to open': ('खोलने के लिए हाथ उठाएँ', 'ખોલવા હાથ ઊંચા કરો'),
   'Practise your moves': ('गतिविधियों का अभ्यास करें', 'હલનચલનનો અભ્યાસ કરો'),
+  // Explore first, calibrate at play (get-ready page).
+  'Skip for now and explore': (
+    'अभी छोड़ें और ऐप देखें',
+    'હમણાં છોડો અને એપ જુઓ',
+  ),
+  'We will set this up when you tap play. It takes about a minute.': (
+    'जब आप प्ले दबाएँगे तब हम इसे सेट करेंगे। लगभग एक मिनट लगता है।',
+    'તમે પ્લે દબાવશો ત્યારે અમે આ સેટ કરીશું. લગભગ એક મિનિટ લાગે છે.',
+  ),
+  'Get ready to play': ('खेलने के लिए तैयार हो जाएँ', 'રમવા માટે તૈયાર થાઓ'),
+  'Teach the game how you move': (
+    'गेम को बताइए कि आप कैसे हिलते-डुलते हैं',
+    'ગેમને બતાવો કે તમે કેવી રીતે હલનચલન કરો છો',
+  ),
+  'One quick check so every move is measured against your own comfortable range. You only do this once.':
+      (
+        'एक छोटी जाँच, ताकि हर गतिविधि आपकी अपनी आरामदायक सीमा से मापी जाए। यह सिर्फ़ एक बार करना है।',
+        'એક નાની તપાસ, જેથી દરેક હલનચલન તમારી પોતાની આરામદાયક મર્યાદાથી મપાય. આ ફક્ત એક વાર કરવાનું છે.',
+      ),
+  'Prop up the phone and step back': (
+    'फ़ोन टिकाएँ और पीछे हटें',
+    'ફોન ટેકવો અને પાછળ ખસો',
+  ),
+  'about 1 min': ('लगभग 1 मिनट', 'લગભગ 1 મિનિટ'),
+  'Show your comfortable range': (
+    'अपनी आरामदायक सीमा दिखाएँ',
+    'તમારી આરામદાયક મર્યાદા બતાવો',
+  ),
+  'Stand tall, arms up, two squats, lean left and right': (
+    'सीधे खड़े हों, हाथ ऊपर, दो स्क्वैट, बाएँ और दाएँ झुकें',
+    'સીધા ઊભા રહો, હાથ ઉપર, બે સ્ક્વૉટ, ડાબે અને જમણે નમો',
+  ),
+  'about 30 s': ('लगभग 30 सेकंड', 'લગભગ 30 સેકન્ડ'),
+  'Your next adventure': ('आपका अगला रोमांच', 'તમારું આગલું સાહસ'),
+  'Your run starts right after': (
+    'इसके तुरंत बाद आपकी दौड़ शुरू होगी',
+    'તે પછી તરત તમારી દોડ શરૂ થશે',
+  ),
+  'Hands-free: once you are in place, the voice guides you and each step starts by itself.':
+      (
+        'हाथ लगाने की ज़रूरत नहीं: जगह पर आते ही आवाज़ आपको बताएगी और हर कदम अपने आप शुरू होगा।',
+        'હાથ લગાડવાની જરૂર નથી: જગ્યા પર આવતા જ અવાજ તમને માર્ગદર્શન આપશે અને દરેક પગલું જાતે શરૂ થશે.',
+      ),
+  'Start calibration': ('कैलिब्रेशन शुरू करें', 'કેલિબ્રેશન શરૂ કરો'),
+  "Let's set up": ('चलिए सेट करें', 'ચાલો સેટ કરીએ'),
+  'Not now, keep exploring': (
+    'अभी नहीं, ऐप देखते रहें',
+    'હમણાં નહીં, એપ જોતા રહો',
+  ),
+  'One minute before your first run': (
+    'पहली दौड़ से पहले बस एक मिनट',
+    'પહેલી દોડ પહેલાં બસ એક મિનિટ',
+  ),
+  'Explore freely. When you tap play, we will quickly learn your comfortable range.': (
+    'आराम से ऐप देखें। प्ले दबाने पर हम जल्दी से आपकी आरामदायक सीमा जान लेंगे।',
+    'આરામથી એપ જુઓ. પ્લે દબાવતા અમે ઝડપથી તમારી આરામદાયક મર્યાદા જાણી લઈશું.',
+  ),
   'Breather time': ('आराम से साँस लें', 'આરામથી શ્વાસ લો'),
   'Flow section': ('लय में चलें', 'લયમાં ચાલો'),
   'Checkpoint reached': ('चेकपॉइंट पर पहुँचे', 'ચેકપોઇન્ટ પર પહોંચ્યા'),

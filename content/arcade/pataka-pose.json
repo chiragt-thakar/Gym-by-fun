@@ -1,0 +1,191 @@
+{
+  "game": "pataka-pose",
+  "schemaVersion": 1,
+  "version": 1,
+  "poses": [
+    {
+      "id": "star-burst",
+      "name": "Star Burst",
+      "call": "Star Burst! Arms high and wide.",
+      "angles": { "shoulderL": 135, "shoulderR": 135, "elbowL": 170, "elbowR": 170, "hipL": 18, "hipR": 18 },
+      "holdMs": 1500,
+      "upperBody": false
+    },
+    {
+      "id": "cutting-chai",
+      "name": "Cutting Chai",
+      "call": "Cutting Chai! Extra adrak, extra attitude.",
+      "angles": { "shoulderL": 45, "elbowL": 90, "shoulderR": 150, "elbowR": 165 },
+      "must": ["elbowL"],
+      "mirrorOk": true,
+      "holdMs": 1500
+    },
+    {
+      "id": "goalpost",
+      "name": "Goalpost",
+      "call": "Goalpost! Elbows square.",
+      "angles": { "shoulderL": 90, "shoulderR": 90, "elbowL": 90, "elbowR": 90 },
+      "must": ["elbowL", "elbowR"],
+      "holdMs": 1500
+    },
+    {
+      "id": "lamp-post",
+      "name": "Lamp Post",
+      "call": "Lamp Post! Reach right up.",
+      "angles": { "shoulderL": 168, "shoulderR": 168, "elbowL": 170, "elbowR": 170 },
+      "must": ["shoulderL", "shoulderR"],
+      "holdMs": 1800
+    },
+    {
+      "id": "teapot",
+      "name": "Teapot",
+      "call": "Teapot! Hand on hip, pour to the side.",
+      "angles": { "lean": 16, "shoulderL": 45, "elbowL": 90, "shoulderR": 155, "elbowR": 160 },
+      "must": ["lean"],
+      "mirrorOk": true,
+      "holdMs": 1500
+    },
+    {
+      "id": "kite-flyer",
+      "name": "Kite Flyer",
+      "call": "Patang! One hand high, one on the string.",
+      "angles": { "shoulderL": 150, "shoulderR": 105, "lean": 8 },
+      "mirrorOk": true,
+      "holdMs": 1500
+    },
+    {
+      "id": "archer",
+      "name": "Archer",
+      "call": "Archer! Long arm out, draw the string.",
+      "angles": { "shoulderL": 90, "elbowL": 172, "shoulderR": 90, "elbowR": 60 },
+      "must": ["elbowR"],
+      "mirrorOk": true,
+      "holdMs": 1500
+    },
+    {
+      "id": "bhangra",
+      "name": "Bhangra Shoulders",
+      "call": "Bhangra shoulders! Hands up high.",
+      "angles": { "shoulderL": 150, "shoulderR": 150, "elbowL": 115, "elbowR": 115 },
+      "holdMs": 1200
+    },
+    {
+      "id": "arre-wah",
+      "name": "Arre Wah!",
+      "call": "Arre wah! Hands by your face, total surprise.",
+      "angles": { "shoulderL": 70, "shoulderR": 70, "elbowL": 45, "elbowR": 45 },
+      "holdMs": 1100
+    },
+    {
+      "id": "superhero",
+      "name": "Superhero Stand",
+      "call": "Superhero! Hands on hips, feet wide.",
+      "angles": { "shoulderL": 40, "elbowL": 90, "shoulderR": 40, "elbowR": 90, "hipL": 16, "hipR": 16 },
+      "must": ["elbowL", "elbowR"],
+      "holdMs": 1500,
+      "upperBody": false
+    },
+    {
+      "id": "hawai-jahaaz",
+      "name": "Hawai Jahaaz",
+      "call": "Hawai Jahaaz! Wings out, bank the plane.",
+      "angles": { "shoulderL": 90, "shoulderR": 90, "elbowL": 172, "elbowR": 172, "lean": 12 },
+      "must": ["lean"],
+      "mirrorOk": true,
+      "holdMs": 1500
+    },
+    {
+      "id": "warrior-wave",
+      "name": "Warrior Wave",
+      "call": "Warrior Wave! Wide feet, arms long.",
+      "angles": { "shoulderL": 90, "shoulderR": 90, "elbowL": 168, "elbowR": 168, "hipL": 24, "hipR": 24 },
+      "holdMs": 1800,
+      "upperBody": false,
+      "demanding": true
+    },
+    {
+      "id": "side-kick",
+      "name": "Flamingo Flick",
+      "call": "Flamingo flick! One leg out to the side, hold the wall if you like.",
+      "angles": { "shoulderL": 90, "shoulderR": 90, "hipL": 26, "hipR": 4 },
+      "must": ["hipL"],
+      "mirrorOk": true,
+      "holdMs": 1500,
+      "upperBody": false,
+      "demanding": true
+    },
+    {
+      "id": "selfie-stick",
+      "name": "Selfie Stick",
+      "call": "Selfie Stick! Long arm, best angle.",
+      "angles": { "shoulderR": 135, "elbowR": 170, "shoulderL": 65, "elbowL": 40 },
+      "must": ["shoulderR"],
+      "mirrorOk": true,
+      "holdMs": 1200
+    },
+    {
+      "id": "lotus-wave",
+      "name": "Lotus Wave",
+      "call": "Lotus Wave! Hands meet overhead.",
+      "angles": { "shoulderL": 160, "shoulderR": 160, "elbowL": 140, "elbowR": 140 },
+      "holdMs": 1500
+    },
+    {
+      "id": "thinking-statue",
+      "name": "Thinking Statue",
+      "call": "Thinking Statue! Very serious, very deep.",
+      "angles": { "shoulderL": 55, "elbowL": 40, "shoulderR": 25, "elbowR": 95 },
+      "mirrorOk": true,
+      "holdMs": 1500
+    },
+    {
+      "id": "coconut-sway",
+      "name": "Coconut Sway",
+      "call": "Coconut tree in the breeze! Arms up, sway.",
+      "angles": { "shoulderL": 165, "shoulderR": 165, "lean": 14 },
+      "must": ["lean"],
+      "mirrorOk": true,
+      "holdMs": 1500
+    },
+    {
+      "id": "pataka",
+      "name": "Pataka!",
+      "call": "Pataka! The big finish.",
+      "angles": { "shoulderL": 168, "shoulderR": 92, "elbowL": 170, "elbowR": 168, "hipR": 22 },
+      "mirrorOk": true,
+      "holdMs": 1500,
+      "upperBody": false
+    }
+  ],
+  "stages": [
+    {
+      "id": "chai-break",
+      "name": "Chai Break",
+      "blurb": "Upper-body shapes only, with longer lead time. Playable in a small room.",
+      "band": "chai",
+      "frames": ["goalpost", "cutting-chai", "lamp-post", "chill", "kite-flyer", "arre-wah", "archer", "chill", "selfie-stick", "lotus-wave", "bhangra"]
+    },
+    {
+      "id": "mela-night",
+      "name": "Mela Night",
+      "blurb": "The full fairground: wide stances, leans, a statue frame and the Pataka finisher.",
+      "band": "mela",
+      "frames": ["star-burst", "cutting-chai", "teapot", "goalpost", "chill", "superhero", "hawai-jahaaz", "statue:lamp-post", "archer", "chill", "warrior-wave", "kite-flyer", "bhangra", "pataka"]
+    },
+    {
+      "id": "mirchi-rush",
+      "name": "Mirchi Rush",
+      "blurb": "Shorter lead, tighter shapes, longer holds. For when you are warmed up.",
+      "band": "mirchi",
+      "frames": ["teapot", "archer", "coconut-sway", "side-kick", "chill", "warrior-wave", "thinking-statue", "statue:superhero", "hawai-jahaaz", "chill", "selfie-stick", "star-burst", "pataka"]
+    },
+    {
+      "id": "pass-the-pataka",
+      "name": "Pass the Pataka",
+      "blurb": "Two to six friends, one phone. Four frames each, then pass the spot.",
+      "band": "mela",
+      "party": true,
+      "frames": ["goalpost", "cutting-chai", "star-burst", "lamp-post", "kite-flyer", "superhero", "archer", "bhangra", "teapot", "hawai-jahaaz", "arre-wah", "pataka", "lotus-wave", "selfie-stick", "coconut-sway", "thinking-statue"]
+    }
+  ]
+}

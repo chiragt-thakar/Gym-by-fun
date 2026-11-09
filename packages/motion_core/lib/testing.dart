@@ -3,3 +3,4 @@
 library;
 
 export 'src/testing/synthetic.dart';
+export 'src/testing/stick.dart';

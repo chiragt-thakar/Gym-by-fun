@@ -29,6 +29,26 @@ class Voice {
     'hit.wav',
     'checkpoint.wav',
     'tracking.wav',
+    // Arcade games (original synthesised sounds, see tools/make_sounds.py).
+    'a_pop0.wav',
+    'a_pop1.wav',
+    'a_pop2.wav',
+    'a_pop3.wav',
+    'a_pop4.wav',
+    'a_drum.wav',
+    'a_tick.wav',
+    'a_clap.wav',
+    'a_shaker.wav',
+    'a_bell.wav',
+    'a_chime.wav',
+    'a_whoosh.wav',
+    'a_bat.wav',
+    'a_burst.wav',
+    'a_select.wav',
+    'a_rotate.wav',
+    'a_count.wav',
+    'a_weld.wav',
+    'a_thud.wav',
   ];
 
   Future<void> init(AppLanguage lang) async {

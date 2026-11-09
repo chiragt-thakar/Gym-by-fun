@@ -1,0 +1,91 @@
+{
+  "game": "taal-toofan",
+  "schemaVersion": 1,
+  "version": 1,
+  "songs": [
+    {
+      "id": "chakri-chal",
+      "title": "Chakri Chal",
+      "family": "raas",
+      "bpm": 104,
+      "hook": "Taali-three",
+      "blurb": "Circular taali grooves. Step, step, clap clap clap.",
+      "sections": [
+        { "name": "Count-in", "kind": "intro", "counts": 1, "pattern": ["-", "-", "-", "-", "-", "-", "-", "-"] },
+        { "name": "Round one", "kind": "verse", "counts": 4, "pattern": ["stepL", "-", "stepR", "-", "clap", "-", "clap", "clap"] },
+        { "name": "Hook", "kind": "hook", "counts": 2, "pattern": ["stepL", "clap", "stepR", "clap", "waveL", "-", "waveR", "-"] },
+        { "name": "Breather", "kind": "chill", "counts": 2, "pattern": ["-", "-", "-", "-", "-", "-", "-", "-"] },
+        { "name": "Round two", "kind": "verse", "counts": 4, "pattern": ["stepR", "-", "stepL", "-", "reachL", "-", "reachR", "clap"] },
+        { "name": "Hook", "kind": "hook", "counts": 4, "pattern": ["stepL", "clap", "stepR", "clap", "waveL", "-", "waveR", "hoy"] },
+        { "name": "Finale", "kind": "finale", "counts": 1, "pattern": ["clap", "-", "clap", "-", "clap", "-", "hoy", "-"] }
+      ]
+    },
+    {
+      "id": "dhol-express",
+      "title": "Dhol Express",
+      "family": "dhol",
+      "bpm": 96,
+      "hook": "Hoy bounce",
+      "blurb": "A half-time bounce with big arms-up shouts.",
+      "sections": [
+        { "name": "Count-in", "kind": "intro", "counts": 1, "pattern": ["-", "-", "-", "-", "-", "-", "-", "-"] },
+        { "name": "Verse", "kind": "verse", "counts": 4, "pattern": ["dip", "-", "-", "-", "waveL", "-", "waveR", "-"] },
+        { "name": "Hook", "kind": "hook", "counts": 2, "pattern": ["hoy", "-", "dip", "-", "clap", "-", "clap", "-"] },
+        { "name": "Breather", "kind": "chill", "counts": 2, "pattern": ["-", "-", "-", "-", "-", "-", "-", "-"] },
+        { "name": "Verse", "kind": "verse", "counts": 4, "pattern": ["stepL", "-", "stepR", "-", "dip", "-", "reachR", "-"] },
+        { "name": "Hook", "kind": "hook", "counts": 4, "pattern": ["hoy", "-", "dip", "-", "clap", "clap", "waveL", "waveR"] },
+        { "name": "Finale", "kind": "finale", "counts": 1, "pattern": ["dip", "-", "-", "-", "hoy", "-", "-", "-"] }
+      ]
+    },
+    {
+      "id": "neon-thumka",
+      "title": "Neon Thumka",
+      "family": "filmi",
+      "bpm": 112,
+      "hook": "Wave and pop",
+      "blurb": "Synth-pop with tabla. Waves, reaches and a big freeze finish.",
+      "sections": [
+        { "name": "Count-in", "kind": "intro", "counts": 1, "pattern": ["-", "-", "-", "-", "-", "-", "-", "-"] },
+        { "name": "Verse", "kind": "verse", "counts": 4, "pattern": ["waveL", "-", "waveR", "-", "stepL", "-", "stepR", "-"] },
+        { "name": "Pre-hook", "kind": "verse", "counts": 1, "pattern": ["clap", "-", "clap", "-", "clap", "-", "clap", "-"] },
+        { "name": "Hook", "kind": "hook", "counts": 2, "pattern": ["reachL", "-", "reachR", "-", "waveL", "clap", "waveR", "clap"] },
+        { "name": "Breather", "kind": "chill", "counts": 2, "pattern": ["-", "-", "-", "-", "-", "-", "-", "-"] },
+        { "name": "Verse", "kind": "verse", "counts": 4, "pattern": ["stepR", "-", "waveR", "-", "stepL", "-", "waveL", "-"] },
+        { "name": "Hook", "kind": "hook", "counts": 4, "pattern": ["reachL", "-", "reachR", "-", "waveL", "clap", "waveR", "hoy"] },
+        { "name": "Finale", "kind": "finale", "counts": 1, "pattern": ["clap", "-", "clap", "-", "-", "-", "hoy", "-"] }
+      ]
+    },
+    {
+      "id": "sangeet-squad",
+      "title": "Sangeet Squad",
+      "family": "filmi",
+      "bpm": 108,
+      "hook": "Squad clap",
+      "blurb": "A house-party groove built for friends taking turns.",
+      "sections": [
+        { "name": "Count-in", "kind": "intro", "counts": 1, "pattern": ["-", "-", "-", "-", "-", "-", "-", "-"] },
+        { "name": "Verse", "kind": "verse", "counts": 4, "pattern": ["clap", "-", "stepL", "-", "clap", "-", "stepR", "-"] },
+        { "name": "Hook", "kind": "hook", "counts": 2, "pattern": ["waveL", "waveR", "clap", "-", "dip", "-", "hoy", "-"] },
+        { "name": "Breather", "kind": "chill", "counts": 2, "pattern": ["-", "-", "-", "-", "-", "-", "-", "-"] },
+        { "name": "Verse", "kind": "verse", "counts": 4, "pattern": ["reachL", "-", "clap", "-", "reachR", "-", "clap", "-"] },
+        { "name": "Hook", "kind": "hook", "counts": 4, "pattern": ["waveL", "waveR", "clap", "-", "dip", "-", "hoy", "-"] },
+        { "name": "Finale", "kind": "finale", "counts": 1, "pattern": ["clap", "clap", "clap", "-", "hoy", "-", "-", "-"] }
+      ]
+    },
+    {
+      "id": "chill-chai",
+      "title": "Chill Chai",
+      "family": "chill",
+      "bpm": 84,
+      "hook": "Slow reach",
+      "blurb": "A gentle lo-fi groove for winding down. Slow reaches and soft claps.",
+      "sections": [
+        { "name": "Count-in", "kind": "intro", "counts": 1, "pattern": ["-", "-", "-", "-", "-", "-", "-", "-"] },
+        { "name": "Sway", "kind": "verse", "counts": 5, "pattern": ["reachL", "-", "-", "-", "reachR", "-", "-", "-"] },
+        { "name": "Breather", "kind": "chill", "counts": 1, "pattern": ["-", "-", "-", "-", "-", "-", "-", "-"] },
+        { "name": "Soft hook", "kind": "hook", "counts": 3, "pattern": ["stepL", "-", "-", "-", "clap", "-", "stepR", "-"] },
+        { "name": "Finale", "kind": "finale", "counts": 1, "pattern": ["reachL", "-", "-", "-", "reachR", "-", "-", "-"] }
+      ]
+    }
+  ]
+}

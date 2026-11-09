@@ -1,5 +1,94 @@
 # Progress
 
+## App v2: new shell, game library and six new games - 2026-11-09
+**Shell and UX (owner request: production-grade look, working back button,
+separate pages, a game list with previews).**
+- New bottom navigation: **Home · Games · Progress · Profile**
+  (`StatefulShellRoute`). Android back now pops pages, sends other tabs to
+  Home, and on Home asks for a second press before leaving. Deep pages opened
+  directly go Home on back instead of closing the app (`BackToHome`).
+- Home was split up: greeting, setup reminder, "Continue your adventure",
+  Today's pick (same game for everyone each IST day), a 7-day strip with moves
+  and minutes from all games, and an "Explore games" carousel. The runner's
+  world map moved to its own game page.
+- **Games** tab: genre filters and large cards with original preview art.
+  **Game page**: hero art, a four-scene preview gallery, how-to steps, movement
+  chips, comfort note, level list with locks/stars/badges, options (difficulty,
+  level, assist, no-squat welding, party players with an 18+ confirmation), a
+  Craftguard trophy shelf, a LUMEN habitat view and a sticky Play bar.
+- **Progress** tab (week, 14 days, per-game records, collections) and
+  **Profile** tab (explorer, quick settings, body setup, Gym Crew, developer
+  tools in dev builds). Design tokens (`Space`, `Txt`) and one UI kit
+  (`widgets/ui_kit.dart`); refreshed buttons, cards, chips and type scale.
+- New strings in Hindi and Gujarati (`l10n/tr_v2.dart`; long game descriptions
+  still fall back to English). Native-speaker review remains required.
+
+**Games (from new-games-plan, new-games-plan-2 and the LUMEN research).**
+All six are playable with real on-device pose input, share one play screen and
+keep the non-negotiable rules (landmarks only, tracking loss forgiven, rule 6,
+JSON content, deterministic engines, no jumps). Rules and numbers are in
+[game-design.md](game-design.md#arcade-games-v2-2026-11-09).
+- **Craftguard Duels**: 6 original guardians (Baoli Warden, Patang Twins, Brass
+  Mayur, Lattoo Titan, Megh Drummer, Night Mail Colossus), 4-count telegraphs,
+  Poise → stagger → side pads → Charge, Sparks with Regroup, calm seals.
+- **Taal Toofan**: 5 original charted songs, cards land on body zones,
+  Light/Groove/Toofan levels, Josh meter → Toofan Time, a band that builds
+  from synthesised percussion layers.
+- **Mirror Mela**: Bubble Bazaar, Lantern Lane, Marigold Orbit, Baadal's Storm;
+  left/right hand shapes, cloud sweeps to duck or lean away from, Mela Rush.
+- **Tapeball Tamasha**: Evening Nets, daily Super Over, Three-Over Chase; new
+  swing recogniser; leave wides with arms up, block with a guard; dead balls.
+- **Pataka Pose**: 18 poses, 4 shows incl. Pass the Pataka (2–6 players);
+  hover when the shape cannot be seen; adaptive tolerance.
+- **LUMEN: Orbital Architect**: 2 habitats / 7 boards (incl. the worked board
+  from the research doc); reach-select, lean-turn, bend-weld (or no-squat);
+  restored modules persist.
+
+**Deliberate changes from the written plans.** Tapeball's ball arrives beside
+the player in the image plane (bowler on the left) because a ball from the far
+end would come from *behind* a player facing the camera. Rang Wall is served by
+Pataka Pose (shared pose matcher) instead of a second pose mode. Taal uses
+synthesised percussion layers instead of commissioned stems. Not built yet:
+landmark highlight clips, two-player Jodi/Duo, Beat Sync and capture
+timestamps (M0), festival events, leaderboards/Crew Cup, and server upload of
+arcade sessions (kept on the phone for now).
+
+**Verification.** motion_core 101 tests (24 new: body pose, pose matcher,
+swing), game_director 385 (32 new: every engine + real-content invariants:
+solvable boards, beatable guardians, danceable songs), app 304 (97 new incl.
+Android back behaviour, play gate, camera release, and small-screen checks of
+every new screen in EN/HI/GU at 1.3× text). App/Dart analysis clean, server
+lint/typecheck clean, 18 levels + 6 arcade files validated. Visual previews:
+`docs/screenshots/v2-*.png` (illustrations, no camera images).
+**Not verified:** real-phone feel, swing/guard/zone reliability with real
+bodies and clothing, audio timing on Bluetooth, frame rate on budget phones.
+Thresholds for the new gestures are first estimates and need recorded data.
+- Dev APK (everything unlocked): `flutter build apk --debug
+  --dart-define=DEV_UNLOCK_ALL=true` → `app/build/app/outputs/flutter-apk/app-debug.apk`.
+
+## New game research and explore-first proposal - 2026-11-09
+- Added [LUMEN: Orbital Architect research](lumen-orbital-architect-research.md):
+  a separate body-controlled orbital restoration puzzle, with an exact worked
+  board, state-specific controls, persistent habitat rewards, comfort/accessibility
+  limits, proposed content contract and prototype/release acceptance criteria.
+- Researched official WHO/NHS guidance, movement-break trials (including a null
+  finding), shoulder-fatigue research, exercise motivation and a six-month exergame
+  trial. The proposal separates evidence from design hypotheses and makes no
+  fitness, medical, weight-loss or retention guarantees for the unbuilt game.
+  Existing future-game proposal documents were not used as creative inputs.
+- Traced the current router/setup/calibration/tutorial continuation problem and
+  specified explore-first navigation: retain the adult eligibility gate, defer
+  camera preparation until Play, preserve selected game/stage/pace, safely cancel
+  camera sessions and retain progression/entitlement checks. This is a proposal;
+  the current app still requires its existing onboarding sequence.
+- No application, native, content, dependency or device changes. Both the new
+  game and onboarding implementation await the owner's explicit instruction to
+  start. Stable architecture/game rules remain unchanged pending that decision.
+- Verification: current app analysis clean; all 200 Flutter tests passed.
+  Documentation whitespace and the illustrative JSON/worked puzzle were checked.
+  These baseline checks do not validate the proposed controls or body benefits;
+  physical-control/comfort testing requires consenting human participants.
+
 ## Gameplay, characters and body guide - 2026-11-09
 - Added authored scene identities across all 18 stages: forest, raft-based
   river crossings, ruins, desert, neon rooftops, mountain bridges and festival
@@ -280,3 +369,26 @@ player could not tell how to get back in.
   with the mirror on; the brief preview re-attach when the in-game PiP first
   appears does not cause a visible pause; screenshots are blocked while the
   mirror shows. Kotlin is compiled only in CI.
+
+## Explore first, calibrate at play
+Player request: let people look around the app before calibrating; ask for
+calibration only when they tap play.
+- **Onboarding:** only 18+ and readiness are required (`nextOnboardingStep`).
+  The setup intro gets "Skip for now and explore" (first time only, never on
+  the way to a run). The tutorial is no longer forced; it still follows
+  calibration when no run is waiting.
+- **Play gate:** `playGate` in `app/lib/app/router.dart` sends any `/quest` or
+  `/tutorial` without a calibration to the new `/get-ready` page with
+  `?next=<the run>`. Setup and calibration pass `next` along and open that
+  run when done. `safeNext` accepts only in-app play routes.
+- **Get-ready page** (`get_ready_screen.dart`): a three-stop trail (space ~1
+  min, ticked if done → range ~30 s → the stage tapped), hands-free and
+  privacy notes, "Let's set up" / "Start calibration", and "Not now, keep
+  exploring". Home shows a tappable reminder card while uncalibrated.
+- New strings translated to hi/gu (native-speaker review still open).
+- Tests: app 207 (new `play_gate_test.dart`; onboarding/gate/`safeNext` cases
+  in `app_logic_test.dart`).
+- **Verify on a phone:** fresh install → age → readiness → sign-in (skip) →
+  setup intro → "Skip for now and explore" → Home shows the reminder card →
+  tap play → get-ready → set up → calibrate → the run starts by itself.
+

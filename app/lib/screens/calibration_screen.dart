@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:motion_core/motion_core.dart';
 
+import '../app/router.dart' show withNext;
 import '../l10n/tr.dart';
 import '../services/pose_service.dart';
 import '../services/settings.dart';
@@ -20,8 +21,12 @@ import '../widgets/frame_view.dart';
 /// advances by itself, framing problems are spoken with a direction, and a
 /// step the player cannot finish within [_skipAfterMs] of in-frame time
 /// falls back to a gentle default instead of leaving them stuck.
+///
+/// [next] is the run the player tapped before calibrating; it opens when
+/// calibration is done.
 class CalibrationScreen extends ConsumerStatefulWidget {
-  const CalibrationScreen({super.key});
+  const CalibrationScreen({super.key, this.next});
+  final String? next;
   @override
   ConsumerState<CalibrationScreen> createState() => _CalibrationState();
 }
@@ -79,7 +84,7 @@ class _CalibrationState extends ConsumerState<CalibrationScreen> {
     }
     if (!started) {
       await session.dispose();
-      if (mounted) context.go('/setup');
+      if (mounted) context.go(withNext('/setup', widget.next));
       return;
     }
     _session = session;
@@ -141,7 +146,8 @@ class _CalibrationState extends ConsumerState<CalibrationScreen> {
     _session = null;
     if (mounted) {
       context.go(
-        ref.read(settingsProvider).tutorialDone ? '/home' : '/tutorial',
+        widget.next ??
+            (ref.read(settingsProvider).tutorialDone ? '/home' : '/tutorial'),
       );
     }
   }

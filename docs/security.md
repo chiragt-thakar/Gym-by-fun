@@ -1,5 +1,19 @@
 # Security, privacy and safety controls
 
+## Arcade games and shell v2 (2026-11-09)
+- New games consume landmarks only (`BodyPose` is computed from the 33 points);
+  no camera frame, mask or clip is created, stored or shared. The optional mirror
+  is the existing native preview, dimmed, inside a fixed 3:4 viewport.
+- Arcade progress (`arcade.progress.v1`) holds counts, scores, stars and restored
+  module names on the device; it is cleared with other local data on reset.
+- Pass the Pataka requires the account holder to confirm that everyone playing
+  is 18+; guest nicknames live only for that game and are never stored.
+- Swing, guard and pad targets are in the image plane, beside or above the
+  player; nothing asks the player to move toward the phone. Jumps never appear.
+- Copy uses general-fitness wording only (no calories, weight or medical claims).
+- All new sounds are synthesised locally by `tools/make_sounds.py`; all art is
+  original vector code.
+
 ## Gameplay/body-avatar update (2026-11-09)
 
 The live body avatar is drawn exclusively from the latest visible landmarks;

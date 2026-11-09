@@ -209,6 +209,13 @@ left is the player's left.
 
 ## Calibration (~30 s)
 
+When: only the safety steps (18+ and readiness) are required before the app
+opens. Setup and calibration are offered once in onboarding and can be
+skipped ("Skip for now and explore"). Any run (`/quest`, `/tutorial`) started
+without a calibration goes to the get-ready page first (router `playGate`),
+then setup (skipped if already done) → calibration → straight into the run
+the player tapped. Browsing never needs a calibration.
+
 Still 2 s (hip wander < 8 % torso vs running mean) → arms up held 0.5 s → two
 squats → lean left held 0.5 s → lean right held 0.5 s. Minimums: squat depth
 15 % torso, lean range 10 % torso. Drift check: torso length ±15 %, or the
@@ -382,3 +389,45 @@ calibration does not yet record a standing ankle x. Tests: `test/extra_recognise
   feasibility spacing are unchanged, so more warning never makes a run harder.
 - Verified: gentle (×1.2, assist, low-impact) simulated once per level — competent bot takes
   0 hits, slow bot finishes, all encounters feasible.
+
+## Arcade games (v2, 2026-11-09)
+Six new games share one pattern: **pure-Dart rule engines in
+`packages/game_director/lib/src/arcade/`**, content in `content/arcade/*.json`
+(validated by `content/schema/arcade.schema.json` and by the engine tests),
+body geometry from `motion_core` (`BodyPose`, `PoseMatcher`, `SwingRecogniser`),
+and one shared play screen in the app. Engines see landmarks and motion events
+only, never pixels.
+
+Shared rules (every game):
+- **Game clock = real time while tracked.** A red tracking light freezes the
+  clock (`ArcadeClock`). After tracking returns, anything whose window closes in
+  the next 800 ms is *forgiven* and removed from the maximum (rule 5).
+- **Rule 6:** every input is judged only against a live target/ask; reaching
+  an empty zone, punching with no pad, or bending before a route connects does
+  nothing.
+- **Latency:** inputs are judged at `clock - 100 ms`; windows are late-biased
+  (`TimingWindows.lateBias`). A move already held when its window opens earns at
+  most *Good* (anti-camping).
+- **Body space:** torso units from the shoulder centre, +y up, player-left on
+  screen-left. A slow `BodyAnchor` (updated only from standing frames) keeps zones
+  still while the player dips.
+- Pause = tracking loss (held moves clear). Hands-free resume uses `ReadyGate`
+  (raise both arms 1.2 s, lower, 3 s good frames).
+- Sounds are original, synthesised by `tools/make_sounds.py`.
+
+| Game | Core verb | Judging | Forgiveness / fairness |
+|---|---|---|---|
+| **Mirror Mela** | Hand into a zone as its ring closes | Zones `hiL/R (±0.75, 1.15)`, `sideL/R (±1.3, 0.05)`, `lowL/R (±1.15, −0.75)`; radius 0.44–0.52 T; ≥ 2 frames inside; graze = 1.3× radius → OK | Orbit sweeps ≥ 3 s apart, ≥ 2.2 s warning; a hit only costs combo + 1 of 3 shields (5-combo restores); golden finale fits inside the round |
+| **Pataka Pose** | Strike and hold a shape | `PoseMatcher` angles (shoulder/hip tol 20° + falloff 30°, elbow/knee 25°/35°, lean 10°/15°); 3-frame median; lock ≥ band lock for 2 frames; hold ≥ lock − 8; 300 ms grace then 2× drain | Frame **hovers** if < 70 % of pose weight is visible (no score); 3 fails on one joint → +5° for that joint; chill frame every ≤ 6 frames; ≤ 2 demanding shapes in a row; party turns every 4 frames with a 5 s step-in |
+| **Craftguard Duels** | Answer an attack on a 4-count | Impact at beat 4 of an 8-beat phrase; windows perfect 150 / good 280 / ok 420 ms + 120 ms late bias; duck/lean = recogniser state or hip shift ≥ 0.3 T; guard = `BodyPose.isGuard` 2 frames; pads at (±1.15, 0.05) r 0.6 | Sparks lost at most 1 per 2 s; 0 sparks → **Regroup** (phase restarts, never game over); missed pads/charges cost nothing; after 3 fallback loops a phase completes anyway |
+| **Taal Toofan** | Hit move cards on the beat | Cards land on body zones; windows 120/220/320 ms + 100 ms bias (+20 ms for step/dip); clap needs 1 frame, others 2; Light/Groove/Toofan score 4/7/8 of every 8-count | Songs always finish; accuracy = (P + 0.6 G + 0.25 OK) / scored; tracking loss holds the groove and counts back in 4 beats; skipped cards excluded |
+| **Tapeball Tamasha** | Swing across the body | `SwingRecogniser`: hands together (≤ 0.45 T) held ≥ 100 ms at/above shoulder on one side, then hand-midpoint travel ≥ 1.0 shoulder width (low-impact 0.6) within 100–1200 ms; lofted if hands still ≥ −0.3 T; ±550/380/300 ms window by difficulty | Lost tracking in a run-up = **dead ball**, re-bowled; no wickets on beginner; wides are re-bowled; ball arrives *beside* the player in the image plane, never toward the camera |
+| **LUMEN** | Reach-select, lean-turn, bend-weld | Cards at (−1.2, −0.55), (0, −0.3), (1.2, −0.55) r 0.45, dwell 450 ms; neutral 300 ms rearms; leans rotate one step per recognised lean; weld = fresh squat after the route connects and arms are neutral (no-squat: hands together 700 ms) | No timers; thinking takes no game time; tracking loss discards partial gestures, keeps the board; restored modules persist and never decay |
+
+Content invariants checked by `packages/game_director/test/arcade_content_test.dart`:
+every LUMEN board starts broken and has a solution; Pataka stages reference real
+poses, Chai Break is upper-body only; every guardian is calmed and every song
+danced (> 80 % accuracy) by a competent bot on every level; Tapeball formats
+finish with no wickets lost for an idle beginner; the app's bundled copies equal
+the canonical JSON. No core recogniser threshold (squat/lean/raise/barrier/step)
+was changed.

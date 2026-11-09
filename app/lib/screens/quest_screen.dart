@@ -228,7 +228,15 @@ class _QuestState extends ConsumerState<QuestScreen>
     final s = ref.read(settingsProvider);
     final cal = s.calibration;
     if (cal == null) {
-      if (mounted) context.go('/calibrate');
+      // The router's play gate normally catches this first.
+      if (mounted) {
+        context.go(
+          Uri(
+            path: '/get-ready',
+            queryParameters: {'next': GoRouterState.of(context).uri.toString()},
+          ).toString(),
+        );
+      }
       return;
     }
     final bundle = DefaultAssetBundle.of(context);

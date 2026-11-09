@@ -1,0 +1,324 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://motionquest.app/schema/arcade.schema.json",
+  "title": "MotionQuest arcade game content",
+  "description": "Stages, songs, guardians, poses and boards for the camera arcade games. Validated in CI; the engines in packages/game_director decode exactly these shapes.",
+  "type": "object",
+  "required": ["game", "schemaVersion", "version"],
+  "properties": {
+    "game": {
+      "enum": ["mirror-mela", "pataka-pose", "craftguard", "taal-toofan", "tapeball", "lumen"]
+    },
+    "schemaVersion": { "const": 1 },
+    "version": { "type": "integer", "minimum": 1 }
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "game": { "const": "mirror-mela" },
+        "stages": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/melaStage" } }
+      },
+      "required": ["stages"]
+    },
+    {
+      "properties": {
+        "game": { "const": "pataka-pose" },
+        "poses": { "type": "array", "minItems": 4, "items": { "$ref": "#/$defs/pose" } },
+        "stages": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/patakaStage" } }
+      },
+      "required": ["poses", "stages"]
+    },
+    {
+      "properties": {
+        "game": { "const": "craftguard" },
+        "guardians": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/guardian" } }
+      },
+      "required": ["guardians"]
+    },
+    {
+      "properties": {
+        "game": { "const": "taal-toofan" },
+        "songs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/song" } }
+      },
+      "required": ["songs"]
+    },
+    {
+      "properties": {
+        "game": { "const": "tapeball" },
+        "formats": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/format" } },
+        "outcomes": { "$ref": "#/$defs/outcomes" }
+      },
+      "required": ["formats", "outcomes"]
+    },
+    {
+      "properties": {
+        "game": { "const": "lumen" },
+        "stages": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/lumenStage" } }
+      },
+      "required": ["stages"]
+    }
+  ],
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,40}$" },
+    "text": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "difficulty": { "enum": ["beginner", "intermediate", "advanced"] },
+    "windows": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "perfect": { "type": "integer", "minimum": 60, "maximum": 400 },
+        "good": { "type": "integer", "minimum": 120, "maximum": 600 },
+        "ok": { "type": "integer", "minimum": 120, "maximum": 700 },
+        "lateBias": { "type": "integer", "minimum": 0, "maximum": 200 }
+      }
+    },
+    "melaStage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "mode", "durationMs", "warningMs", "targetsPerMin", "radius", "zones"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "$ref": "#/$defs/text" },
+        "blurb": { "$ref": "#/$defs/text" },
+        "mode": { "enum": ["bazaar", "orbit"] },
+        "durationMs": { "type": "integer", "minimum": 30000, "maximum": 120000 },
+        "warningMs": { "type": "integer", "minimum": 1300, "maximum": 4000 },
+        "targetsPerMin": { "type": "integer", "minimum": 10, "maximum": 38 },
+        "radius": { "type": "number", "minimum": 0.3, "maximum": 0.7 },
+        "zones": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": { "enum": ["hiL", "hiR", "sideL", "sideR", "lowL", "lowR"] }
+        },
+        "hazardShare": { "type": "number", "minimum": 0, "maximum": 0.4 },
+        "doubleShare": { "type": "number", "minimum": 0, "maximum": 0.3 },
+        "anyHand": { "type": "boolean" },
+        "seed": { "type": "integer" },
+        "windows": { "$ref": "#/$defs/windows" }
+      }
+    },
+    "angle": { "type": "number", "minimum": -40, "maximum": 180 },
+    "angleName": { "enum": ["shoulderL", "shoulderR", "elbowL", "elbowR", "hipL", "hipR", "kneeL", "kneeR", "lean"] },
+    "pose": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "angles"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "$ref": "#/$defs/text" },
+        "call": { "$ref": "#/$defs/text" },
+        "angles": {
+          "type": "object",
+          "minProperties": 2,
+          "propertyNames": { "$ref": "#/$defs/angleName" },
+          "additionalProperties": { "$ref": "#/$defs/angle" }
+        },
+        "must": { "type": "array", "items": { "$ref": "#/$defs/angleName" }, "uniqueItems": true },
+        "mirrorOk": { "type": "boolean" },
+        "holdMs": { "type": "integer", "minimum": 800, "maximum": 4000 },
+        "upperBody": { "type": "boolean" },
+        "demanding": { "type": "boolean" }
+      }
+    },
+    "patakaStage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "frames"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "$ref": "#/$defs/text" },
+        "blurb": { "$ref": "#/$defs/text" },
+        "band": { "enum": ["chai", "mela", "mirchi", "pro"] },
+        "party": { "type": "boolean" },
+        "frames": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 24,
+          "items": { "type": "string", "pattern": "^(chill|statue:[a-z0-9-]+|[a-z0-9-]+)$" }
+        }
+      }
+    },
+    "guardian": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "art", "bpm", "phases"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "$ref": "#/$defs/text" },
+        "title": { "$ref": "#/$defs/text" },
+        "blurb": { "$ref": "#/$defs/text" },
+        "art": { "enum": ["baoli", "patang", "mayur", "lattoo", "megh", "nightmail"] },
+        "premium": { "type": "boolean" },
+        "pads": { "type": "integer", "minimum": 2, "maximum": 3 },
+        "intro": { "$ref": "#/$defs/text" },
+        "calmLine": { "$ref": "#/$defs/text" },
+        "bpm": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["beginner", "intermediate", "advanced"],
+          "properties": {
+            "beginner": { "type": "integer", "minimum": 70, "maximum": 92 },
+            "intermediate": { "type": "integer", "minimum": 76, "maximum": 100 },
+            "advanced": { "type": "integer", "minimum": 80, "maximum": 108 }
+          }
+        },
+        "attackNames": {
+          "type": "object",
+          "propertyNames": { "enum": ["duck", "left", "right", "guard"] },
+          "additionalProperties": { "$ref": "#/$defs/text" }
+        },
+        "phases": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 4,
+          "items": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 8,
+            "items": { "enum": ["duck", "left", "right", "guard"] }
+          }
+        }
+      }
+    },
+    "song": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "family", "bpm", "sections"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "title": { "$ref": "#/$defs/text" },
+        "blurb": { "$ref": "#/$defs/text" },
+        "hook": { "$ref": "#/$defs/text" },
+        "family": { "enum": ["raas", "dhol", "filmi", "chill"] },
+        "bpm": { "type": "integer", "minimum": 72, "maximum": 128 },
+        "sections": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "kind", "counts", "pattern"],
+            "properties": {
+              "name": { "$ref": "#/$defs/text" },
+              "kind": { "enum": ["intro", "verse", "hook", "chill", "finale"] },
+              "counts": { "type": "integer", "minimum": 1, "maximum": 12 },
+              "pattern": {
+                "type": "array",
+                "minItems": 8,
+                "maxItems": 8,
+                "items": { "enum": ["-", "clap", "stepL", "stepR", "waveL", "waveR", "reachL", "reachR", "dip", "hoy"] }
+              }
+            }
+          }
+        }
+      }
+    },
+    "format": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "balls"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "$ref": "#/$defs/text" },
+        "blurb": { "$ref": "#/$defs/text" },
+        "balls": { "type": "integer", "minimum": 3, "maximum": 24 },
+        "wickets": { "type": "integer", "minimum": 0, "maximum": 3 },
+        "target": { "type": "integer", "minimum": 4, "maximum": 60 },
+        "seed": { "type": "integer" },
+        "daily": { "type": "boolean" },
+        "wideShare": { "type": "number", "minimum": 0, "maximum": 0.3 }
+      }
+    },
+    "outcomeRow": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "array",
+        "minItems": 2,
+        "maxItems": 2,
+        "prefixItems": [
+          { "type": "integer", "minimum": -1, "maximum": 6 },
+          { "type": "number", "exclusiveMinimum": 0 }
+        ]
+      }
+    },
+    "outcomes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["drive", "lofted"],
+      "properties": {
+        "drive": { "$ref": "#/$defs/outcomeGrades" },
+        "lofted": { "$ref": "#/$defs/outcomeGrades" }
+      }
+    },
+    "outcomeGrades": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["perfect", "good", "ok"],
+      "properties": {
+        "perfect": { "$ref": "#/$defs/outcomeRow" },
+        "good": { "$ref": "#/$defs/outcomeRow" },
+        "ok": { "$ref": "#/$defs/outcomeRow" }
+      }
+    },
+    "cell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["r", "c", "dir"],
+      "properties": {
+        "r": { "type": "integer", "minimum": 0, "maximum": 5 },
+        "c": { "type": "integer", "minimum": 0, "maximum": 5 },
+        "dir": { "enum": ["n", "e", "s", "w"] }
+      }
+    },
+    "lumenStage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "habitat", "boards"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "$ref": "#/$defs/text" },
+        "habitat": { "$ref": "#/$defs/id" },
+        "blurb": { "$ref": "#/$defs/text" },
+        "boards": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 6,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "title", "module", "rows", "cols", "source", "receiver", "pieces"],
+            "properties": {
+              "id": { "$ref": "#/$defs/id" },
+              "title": { "$ref": "#/$defs/text" },
+              "module": { "enum": ["light", "water", "air", "canopy", "lens", "coolant", "dome"] },
+              "story": { "$ref": "#/$defs/text" },
+              "rows": { "type": "integer", "minimum": 2, "maximum": 5 },
+              "cols": { "type": "integer", "minimum": 2, "maximum": 5 },
+              "source": { "$ref": "#/$defs/cell" },
+              "receiver": { "$ref": "#/$defs/cell" },
+              "pieces": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["r", "c", "type", "rot"],
+                  "properties": {
+                    "r": { "type": "integer", "minimum": 0, "maximum": 5 },
+                    "c": { "type": "integer", "minimum": 0, "maximum": 5 },
+                    "type": { "enum": ["straight", "corner"] },
+                    "rot": { "type": "integer", "minimum": 0, "maximum": 3 },
+                    "card": { "type": "integer", "minimum": 1, "maximum": 3 },
+                    "fixed": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

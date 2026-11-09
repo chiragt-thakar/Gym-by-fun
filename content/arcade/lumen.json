@@ -1,0 +1,144 @@
+{
+  "game": "lumen",
+  "schemaVersion": 1,
+  "version": 1,
+  "stages": [
+    {
+      "id": "first-light",
+      "name": "First Light Conservatory",
+      "habitat": "conservatory",
+      "blurb": "Four small repairs bring the seed garden back: light, water, air, and finally the canopy.",
+      "boards": [
+        {
+          "id": "light-circuit",
+          "title": "Light circuit",
+          "module": "light",
+          "story": "The grow lamps flicker on, one bench at a time.",
+          "rows": 3,
+          "cols": 3,
+          "source": { "r": 1, "c": 0, "dir": "e" },
+          "receiver": { "r": 1, "c": 2, "dir": "w" },
+          "pieces": [
+            { "r": 1, "c": 1, "type": "straight", "rot": 0, "card": 1 },
+            { "r": 0, "c": 1, "type": "corner", "rot": 1, "fixed": true },
+            { "r": 2, "c": 1, "type": "corner", "rot": 3, "fixed": true }
+          ]
+        },
+        {
+          "id": "water-pump",
+          "title": "Water pump",
+          "module": "water",
+          "story": "The pump coughs, then hums. Water finds the seed trays again.",
+          "rows": 3,
+          "cols": 3,
+          "source": { "r": 1, "c": 0, "dir": "e" },
+          "receiver": { "r": 2, "c": 2, "dir": "n" },
+          "pieces": [
+            { "r": 1, "c": 1, "type": "corner", "rot": 2, "card": 1 },
+            { "r": 0, "c": 1, "type": "corner", "rot": 3, "card": 2 },
+            { "r": 0, "c": 2, "type": "corner", "rot": 0, "card": 3 },
+            { "r": 1, "c": 2, "type": "straight", "rot": 0, "fixed": true }
+          ]
+        },
+        {
+          "id": "air-circulation",
+          "title": "Air circulation",
+          "module": "air",
+          "story": "Fans turn slowly. The leaves on the vines begin to move.",
+          "rows": 3,
+          "cols": 4,
+          "source": { "r": 2, "c": 0, "dir": "e" },
+          "receiver": { "r": 1, "c": 3, "dir": "n" },
+          "pieces": [
+            { "r": 2, "c": 1, "type": "corner", "rot": 0, "card": 1 },
+            { "r": 1, "c": 1, "type": "straight", "rot": 0, "fixed": true },
+            { "r": 0, "c": 1, "type": "corner", "rot": 1, "fixed": true },
+            { "r": 0, "c": 2, "type": "straight", "rot": 0, "card": 2 },
+            { "r": 0, "c": 3, "type": "corner", "rot": 0, "card": 3 },
+            { "r": 2, "c": 2, "type": "straight", "rot": 1, "fixed": true }
+          ]
+        },
+        {
+          "id": "canopy",
+          "title": "Conservatory canopy",
+          "module": "canopy",
+          "story": "The glass canopy opens like a flower. Earthlight pours in.",
+          "rows": 4,
+          "cols": 4,
+          "source": { "r": 3, "c": 0, "dir": "n" },
+          "receiver": { "r": 0, "c": 3, "dir": "w" },
+          "pieces": [
+            { "r": 2, "c": 0, "type": "corner", "rot": 3, "card": 1 },
+            { "r": 2, "c": 1, "type": "straight", "rot": 1, "fixed": true },
+            { "r": 2, "c": 2, "type": "corner", "rot": 1, "card": 2 },
+            { "r": 1, "c": 2, "type": "straight", "rot": 1, "card": 3 },
+            { "r": 0, "c": 2, "type": "corner", "rot": 1, "fixed": true },
+            { "r": 1, "c": 0, "type": "straight", "rot": 0, "fixed": true },
+            { "r": 3, "c": 2, "type": "corner", "rot": 0, "fixed": true }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "observatory-ring",
+      "name": "Observatory Ring",
+      "habitat": "observatory",
+      "blurb": "Three routes through the old star dome: the lens, the coolant loop and the dome lights.",
+      "boards": [
+        {
+          "id": "star-lens",
+          "title": "Star lens",
+          "module": "lens",
+          "story": "The great lens rotates into place. The first star swims into focus.",
+          "rows": 3,
+          "cols": 3,
+          "source": { "r": 0, "c": 0, "dir": "s" },
+          "receiver": { "r": 2, "c": 2, "dir": "w" },
+          "pieces": [
+            { "r": 1, "c": 0, "type": "corner", "rot": 2, "card": 1 },
+            { "r": 1, "c": 1, "type": "corner", "rot": 0, "card": 2 },
+            { "r": 2, "c": 1, "type": "corner", "rot": 1, "card": 3 },
+            { "r": 0, "c": 1, "type": "straight", "rot": 1, "fixed": true }
+          ]
+        },
+        {
+          "id": "coolant-loop",
+          "title": "Coolant loop",
+          "module": "coolant",
+          "story": "Cold blue light runs through the pipes. The instruments wake.",
+          "rows": 3,
+          "cols": 4,
+          "source": { "r": 1, "c": 0, "dir": "e" },
+          "receiver": { "r": 2, "c": 3, "dir": "n" },
+          "pieces": [
+            { "r": 1, "c": 1, "type": "straight", "rot": 0, "card": 1 },
+            { "r": 1, "c": 2, "type": "corner", "rot": 1, "card": 2 },
+            { "r": 0, "c": 2, "type": "corner", "rot": 1, "fixed": true },
+            { "r": 0, "c": 3, "type": "corner", "rot": 3, "card": 3 },
+            { "r": 1, "c": 3, "type": "straight", "rot": 0, "fixed": true },
+            { "r": 2, "c": 1, "type": "straight", "rot": 1, "fixed": true }
+          ]
+        },
+        {
+          "id": "dome-lights",
+          "title": "Dome lights",
+          "module": "dome",
+          "story": "The dome lights trace the constellations. The ring is awake.",
+          "rows": 4,
+          "cols": 4,
+          "source": { "r": 0, "c": 1, "dir": "s" },
+          "receiver": { "r": 3, "c": 2, "dir": "w" },
+          "pieces": [
+            { "r": 1, "c": 1, "type": "corner", "rot": 0, "card": 1 },
+            { "r": 1, "c": 0, "type": "corner", "rot": 3, "card": 2 },
+            { "r": 2, "c": 0, "type": "straight", "rot": 0, "fixed": true },
+            { "r": 3, "c": 0, "type": "corner", "rot": 2, "card": 3 },
+            { "r": 3, "c": 1, "type": "straight", "rot": 1, "fixed": true },
+            { "r": 1, "c": 2, "type": "straight", "rot": 1, "fixed": true },
+            { "r": 2, "c": 2, "type": "corner", "rot": 2, "fixed": true }
+          ]
+        }
+      ]
+    }
+  ]
+}

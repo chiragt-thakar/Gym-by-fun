@@ -16,7 +16,13 @@ import 'package:motionquest/services/api_client.dart';
 import 'package:motionquest/services/session_queue.dart';
 import 'package:motionquest/l10n/strings.dart';
 import 'package:motionquest/l10n/tr.dart';
+import 'package:motionquest/arcade/arcade_results_screen.dart';
+import 'package:motionquest/arcade/arcade_screen.dart';
 import 'package:motionquest/screens/crew_screen.dart';
+import 'package:motionquest/screens/game_detail_screen.dart';
+import 'package:motionquest/screens/games_screen.dart';
+import 'package:motionquest/screens/profile_screen.dart';
+import 'package:motionquest/screens/progress_screen.dart';
 import 'package:motionquest/screens/home_screen.dart';
 import 'package:motionquest/screens/onboarding_screens.dart';
 import 'package:motionquest/screens/results_screen.dart';
@@ -75,6 +81,33 @@ final Map<String, Widget Function()> _screens = {
   'sign in': () => const SignInScreen(),
   'stage info': () => Scaffold(
     body: StageInfoSheet(stage: stages.first, onPlay: () {}),
+  ),
+  'games': () => const GamesScreen(),
+  'progress': () => const ProgressScreen(),
+  'profile': () => const ProfileScreen(),
+  'detail craftguard': () => const GameDetailScreen(gameId: 'craftguard'),
+  'detail pataka': () => const GameDetailScreen(gameId: 'pataka-pose'),
+  'detail runner': () => const GameDetailScreen(gameId: 'adventure'),
+  'arcade results': () => const ArcadeResultsScreen(
+    result: ArcadeResult(
+      args: ArcadeArgs(gameId: 'tapeball', stageId: 'super-over'),
+      stageName: 'Super Over',
+      previousBest: 8,
+      summary: ArcadeSummary(
+        gameId: 'tapeball',
+        stageId: 'super-over',
+        score: 14,
+        stars: 3,
+        maxStars: 3,
+        accuracy: 0.8,
+        bestCombo: 5,
+        activeMs: 150000,
+        completed: true,
+        headline: 'Chased 12 with 2 balls to spare',
+        moves: {'swing': 6, 'arms up': 1},
+        details: {'Runs': '14', 'Wickets': '0/2', 'Fours': '2', 'Sixes': '1'},
+      ),
+    ),
   ),
 };
 

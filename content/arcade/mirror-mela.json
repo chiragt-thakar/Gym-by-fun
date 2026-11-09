@@ -1,0 +1,69 @@
+{
+  "game": "mirror-mela",
+  "schemaVersion": 1,
+  "version": 1,
+  "stages": [
+    {
+      "id": "bubble-bazaar",
+      "name": "Bubble Bazaar",
+      "blurb": "Soap bubbles drift to your hands. Pop each one as its ring closes.",
+      "mode": "bazaar",
+      "durationMs": 60000,
+      "warningMs": 2200,
+      "targetsPerMin": 20,
+      "radius": 0.52,
+      "zones": ["hiL", "hiR", "sideL", "sideR"],
+      "doubleShare": 0.1,
+      "anyHand": true,
+      "seed": 11,
+      "windows": { "perfect": 200, "good": 400, "ok": 400, "lateBias": 100 }
+    },
+    {
+      "id": "lantern-lane",
+      "name": "Lantern Lane",
+      "blurb": "Paper lanterns float lower and wider. Round ones for the left hand, diamonds for the right.",
+      "mode": "bazaar",
+      "durationMs": 75000,
+      "warningMs": 1900,
+      "targetsPerMin": 26,
+      "radius": 0.46,
+      "zones": ["hiL", "hiR", "sideL", "sideR", "lowL", "lowR"],
+      "doubleShare": 0.14,
+      "anyHand": false,
+      "seed": 23,
+      "windows": { "perfect": 160, "good": 320, "ok": 320, "lateBias": 100 }
+    },
+    {
+      "id": "marigold-orbit",
+      "name": "Marigold Orbit",
+      "blurb": "Marigolds circle you while slow cloud sweeps pass by. Duck or lean away, then keep collecting.",
+      "mode": "orbit",
+      "durationMs": 75000,
+      "warningMs": 2100,
+      "targetsPerMin": 22,
+      "radius": 0.5,
+      "zones": ["hiL", "hiR", "sideL", "sideR"],
+      "hazardShare": 0.2,
+      "doubleShare": 0.1,
+      "anyHand": true,
+      "seed": 31,
+      "windows": { "perfect": 180, "good": 380, "ok": 380, "lateBias": 100 }
+    },
+    {
+      "id": "baadal-storm",
+      "name": "Baadal's Storm",
+      "blurb": "The prankster cloud brings the whole fair. More decisions, never more speed.",
+      "mode": "orbit",
+      "durationMs": 90000,
+      "warningMs": 1700,
+      "targetsPerMin": 30,
+      "radius": 0.44,
+      "zones": ["hiL", "hiR", "sideL", "sideR", "lowL", "lowR"],
+      "hazardShare": 0.3,
+      "doubleShare": 0.16,
+      "anyHand": false,
+      "seed": 47,
+      "windows": { "perfect": 140, "good": 280, "ok": 280, "lateBias": 100 }
+    }
+  ]
+}

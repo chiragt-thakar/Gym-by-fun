@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../l10n/strings.dart';
 import '../l10n/tr.dart';
 import '../services/api_client.dart';
+import '../arcade/progress.dart';
 import '../services/coach_service.dart';
 import '../services/local_data.dart';
 import '../services/session_queue.dart';
@@ -66,6 +67,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       await queue.clear();
       if (!mounted) return;
       ref.read(coachHistoryProvider.notifier).clear();
+      ref.read(arcadeProgressProvider.notifier).clear();
       await ref.read(sharedPrefsProvider).remove('pendingGymCode');
       await ref.read(tokenStoreProvider).clear();
       if (!mounted) return;
@@ -171,6 +173,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       await wipeLocalData(prefs);
       if (!mounted) return;
       ref.invalidate(coachHistoryProvider);
+      ref.invalidate(arcadeProgressProvider);
       n.reset();
       context.go('/welcome');
     } catch (_) {
@@ -320,7 +323,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           secondary: true,
           onPressed: () {
             n.update((x) => x.copyWith(clearCalibration: true));
-            context.go('/calibrate');
+            context.push('/calibrate');
           },
         ),
         BigButton(
@@ -329,7 +332,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           secondary: true,
           onPressed: () {
             n.update((x) => x.copyWith(setupDone: false));
-            context.go('/setup');
+            context.push('/setup');
           },
         ),
         const _H('Privacy'),
