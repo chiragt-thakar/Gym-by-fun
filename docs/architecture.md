@@ -1,5 +1,30 @@
 # Architecture
 
+## Tracking engine v2, pairing and Joynetic (2026-11-13)
+- **Name.** The product is Joynetic. Internal identifiers that would break
+  installs, tokens or links keep the old name (application id, channel names,
+  link scheme, JWT issuer, queue, databases, domains).
+- **Tracking.** `motion_core` is now a game-agnostic engine:
+  `BodyTracker` (subject lock → facing → graded quality → stabiliser → state
+  machine) produces one `TrackedFrame` per camera frame; `MotionEngine` adds
+  body features, plug-in detectors and drift correction and produces
+  `MotionEvent`s and `MotionSignals`. Full description:
+  [tracking.md](tracking.md).
+- **One tracker per camera session.** `MotionSession` owns the `BodyTracker`
+  and hands each `TrackedFrame` to the active engine and to the screen. Screens
+  no longer run their own quality gate or smoother.
+- **Usable, not perfect.** Play runs on any frame whose torso is tracked.
+  Detectors check the landmarks they read.
+- **Calibration is body-relative and versioned.** Lengths are multiples of the
+  torso; the profile is re-positioned (`rebase`) rather than re-measured.
+  Profiles are per player on the device.
+- **Detectors are plug-ins.** `DetectorRegistry` + `DetectorSpec(id, config)`.
+  Core moves keep their typed events; new gestures use `GestureEvent`.
+- **Pairing** is a server module (`server/src/modules/pairing`): Redis-only
+  state with TTLs, POST up + SSE down, no landmarks or video in any message.
+- **Design system.** `Jn` tokens in `app/theme.dart`; see
+  [design.md](design.md).
+
 ## App shell v2 and the arcade layer (2026-11-09)
 - **Navigation.** `StatefulShellRoute.indexedStack` with four tabs: Home
   (`/home`), Games (`/games`), Progress (`/progress`), Profile (`/profile`),
@@ -127,6 +152,10 @@ results, gyms and payments.
 | Framing advice + debounce in motion_core (`Framing`, `FramingFilter`) | One tested place turns a gate failure into one direction ("move to your left", "step back"); the 400 ms display debounce keeps text and voice from flickering. The engine's pause/resume timing is unchanged. |
 | motion_core and game_director are pure Dart | Deterministic, replay-testable on every commit; engine-agnostic (TV/console later). |
 | Recognisers are state machines with hysteresis | Separate start/end thresholds, confirm frames, cooldowns; no flicker. |
+| Only the torso is required to play | Feet, knees and hands flicker at 2 m; requiring all of them paused the game on every small move. Detectors guard their own landmarks. |
+| Tracker state has per-transition dwell times | A noisy frame can neither pause the game nor clear a warning. |
+| Calibration stored in torso multiples, re-positioned passively | The player never stands exactly where they calibrated. |
+| Pairing over POST + SSE, state in Redis | No new dependency, passes every proxy, any instance serves either device. |
 | Leg span (hip→ankle) measures squat depth | Unaffected by phone tilt; a forward bend does not change it. |
 | Quality gate uses torso-based body size | A squat shrinks the bounding box; it must not read as "too far". |
 | Tracking pause is debounced (250 ms) and resume needs 300 ms of good frames | Short glitches only turn the dot amber. |
@@ -161,3 +190,4 @@ crew_scores, entitlements, billing_events, content_versions, report_runs.
 | Payments | `GET /entitlements`, `POST /webhooks/revenuecat`, `POST /webhooks/razorpay` |
 | Gym admin | `POST /admin/gyms`, `POST /admin/gyms/:id/codes`, `GET /admin/gyms/:id/poster`, `POST /admin/gyms/:id/quests`, `GET /admin/gyms/:id/report`, `POST /admin/content/levels` |
 | Trainers | `GET /trainer/:gymId?key=…` (web page), `POST /trainer/:gymId/quests?key=…` |
+| Pairing | `POST /pair/sessions`, `POST /pair/join`, `GET/DELETE /pair/sessions/:id`, `POST /pair/sessions/:id/messages`, `GET /pair/sessions/:id/stream` (SSE) |

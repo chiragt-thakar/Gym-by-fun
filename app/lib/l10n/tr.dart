@@ -336,18 +336,18 @@ const Map<String, (String, String)> _t = {
   // Onboarding
   'Continue': ('आगे बढ़ें', 'આગળ વધો'),
   'Before you play': ('खेलने से पहले', 'રમતા પહેલાં'),
-  'MotionQuest is for adults aged 18 and over.': (
-    'MotionQuest 18 वर्ष और उससे अधिक उम्र के वयस्कों के लिए है।',
-    'MotionQuest 18 વર્ષ અને તેથી વધુ ઉંમરના પુખ્તો માટે છે.',
+  'Joynetic is for adults aged 18 and over.': (
+    'Joynetic 18 वर्ष और उससे अधिक उम्र के वयस्कों के लिए है।',
+    'Joynetic 18 વર્ષ અને તેથી વધુ ઉંમરના પુખ્તો માટે છે.',
   ),
   'I am 18 or older': (
     'मेरी उम्र 18 या उससे अधिक है',
     'મારી ઉંમર 18 કે તેથી વધુ છે',
   ),
   'I am under 18': ('मेरी उम्र 18 से कम है', 'મારી ઉંમર 18 થી ઓછી છે'),
-  'Sorry — MotionQuest is only for adults right now. Thanks for your interest!': (
-    'माफ़ कीजिए — अभी MotionQuest केवल वयस्कों के लिए है। रुचि के लिए धन्यवाद!',
-    'માફ કરશો — હાલમાં MotionQuest ફક્ત પુખ્તો માટે છે. રસ બતાવવા બદલ આભાર!',
+  'Sorry — Joynetic is only for adults right now. Thanks for your interest!': (
+    'माफ़ कीजिए — अभी Joynetic केवल वयस्कों के लिए है। रुचि के लिए धन्यवाद!',
+    'માફ કરશો — હાલમાં Joynetic ફક્ત પુખ્તો માટે છે. રસ બતાવવા બદલ આભાર!',
   ),
   'Readiness check': ('तैयारी जाँच', 'તૈયારી તપાસ'),
   'A quick check before you move. Your answers stay on this screen and are not saved.':
@@ -436,10 +436,10 @@ const Map<String, (String, String)> _t = {
     'कैमरे की अनुमति दें और शुरू करें',
     'કેમેરાની મંજૂરી આપો અને શરૂ કરો',
   ),
-  'Camera permission is needed to play. You can allow it in Android Settings → Apps → MotionQuest.':
+  'Camera permission is needed to play. You can allow it in Android Settings → Apps → Joynetic.':
       (
-        'खेलने के लिए कैमरे की अनुमति चाहिए। Android सेटिंग्स → ऐप्स → MotionQuest में अनुमति दें।',
-        'રમવા માટે કેમેરાની મંજૂરી જોઈએ. Android સેટિંગ્સ → ઍપ્સ → MotionQuest માં મંજૂરી આપો.',
+        'खेलने के लिए कैमरे की अनुमति चाहिए। Android सेटिंग्स → ऐप्स → Joynetic में अनुमति दें।',
+        'રમવા માટે કેમેરાની મંજૂરી જોઈએ. Android સેટિંગ્સ → ઍપ્સ → Joynetic માં મંજૂરી આપો.',
       ),
   'Camera permission is needed to play.': (
     'खेलने के लिए कैमरे की अनुमति चाहिए।',

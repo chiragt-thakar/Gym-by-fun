@@ -82,16 +82,25 @@ class AppCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = BorderRadius.circular(radius);
-    return Material(
-      color: color,
-      shape: RoundedRectangleBorder(
+    // The standard panel is a raised surface: lit from above, with a
+    // shadow under it. A card given its own colour stays flat in it.
+    final raised = color == Lantern.canopy;
+    return DecoratedBox(
+      decoration: BoxDecoration(
         borderRadius: r,
-        side: BorderSide(color: borderColor),
+        gradient: raised ? Jn.surface : null,
+        color: raised ? null : color,
+        border: Border.all(color: borderColor),
+        boxShadow: raised ? Jn.cardShadow : null,
       ),
-      clipBehavior: clip || onTap != null ? Clip.antiAlias : Clip.none,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(padding: padding, child: child),
+      child: Material(
+        type: MaterialType.transparency,
+        borderRadius: r,
+        clipBehavior: clip || onTap != null ? Clip.antiAlias : Clip.none,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(padding: padding, child: child),
+        ),
       ),
     );
   }

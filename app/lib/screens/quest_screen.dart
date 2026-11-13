@@ -9,6 +9,7 @@ import 'package:game_director/game_director.dart';
 import 'package:go_router/go_router.dart';
 import 'package:motion_core/motion_core.dart';
 
+import '../app/theme.dart';
 import '../l10n/tr.dart';
 
 import '../game/forest_game.dart';
@@ -22,6 +23,7 @@ import '../services/premium.dart';
 import '../services/voice.dart';
 import '../widgets/common.dart';
 import '../widgets/frame_view.dart';
+import '../widgets/tracking_overlay.dart';
 import 'results_screen.dart';
 
 const forestAsset = 'assets/levels/w1-forest-escape.json';
@@ -143,25 +145,27 @@ class _QuestState extends ConsumerState<QuestScreen>
   static const _framing = Framing();
   final _framed = ValueNotifier<FramedView>(const FramedView(null, null));
   final _framingFilter = FramingFilter();
-  final _smoother = LandmarkSmoother();
-  StreamSubscription<PoseFrame>? _frameSub;
+  StreamSubscription<TrackedFrame>? _frameSub;
   FramingAdvice? _rawAdvice;
   FramingFix? _spokenFix;
   int _spokenAt = 0;
   bool _mirror = false;
 
-  void _onFrame(PoseFrame f) {
-    final ts = f.timestampMs;
-    final raw = _framing.advise(f);
+  /// One tracked frame: the tracker has already locked onto the player,
+  /// graded the frame and stabilised the landmarks.
+  void _onFrame(TrackedFrame t) {
+    final ts = t.timestampMs;
+    final raw = _framing.advise(t.raw, t.quality);
     _rawAdvice = raw;
     final shown = _framingFilter.update(raw, ts);
-    _framed.value = FramedView(_smoother.smooth(f), shown);
+    // While the frame is playable, hidden feet are not worth a warning.
+    _framed.value = FramedView(
+      t.frame,
+      playAdvice(shown, usable: t.playable),
+    );
     if ((_paused || _checkpointOffer != null) && _phase == _Phase.run) {
-      final good =
-          raw.ok &&
-          const QualityGate().check(f).ok &&
-          _session?.light == TrackingLight.green;
-      if (!shown.ok && ts - _spokenAt >= 6000) {
+      final good = t.playable && _session?.light == TrackingLight.green;
+      if (!good && !shown.ok && ts - _spokenAt >= 6000) {
         _spokenAt = ts;
         _voice.sayKey(framingKey(shown.fix), force: true);
       }
@@ -194,6 +198,7 @@ class _QuestState extends ConsumerState<QuestScreen>
     // While the run waits, repeat the direction when it changes or every 8 s.
     final waiting = _game?.hud.value.trackingIssue != null;
     if (waiting &&
+        !t.playable &&
         !shown.ok &&
         (shown.fix != _spokenFix || ts - _spokenAt >= 8000) &&
         ts - _spokenAt >= 2500) {
@@ -284,7 +289,11 @@ class _QuestState extends ConsumerState<QuestScreen>
             : s.thresholds,
       );
       _session = session;
+      session.cameraLost.addListener(_onCameraLost);
       _menuSub = session.events.listen((event) {
+        // A short buzz when tracking is lost or found: felt from across
+        // the room, without looking at the phone.
+        if (event is TrackingPaused || event is TrackingResumed) _buzz();
         if (!_paused && _checkpointOffer == null) return;
         if (event is MoveStarted && event.move == Move.raiseArms ||
             event is MoveHeld && event.move == Move.raiseArms) {
@@ -320,6 +329,24 @@ class _QuestState extends ConsumerState<QuestScreen>
     }
   }
 
+  void _buzz() {
+    if (ref.read(settingsProvider).haptics) HapticFeedback.mediumImpact();
+  }
+
+  /// The camera stopped delivering frames and could not be restarted
+  /// (usually another app took it). The run is kept; the player retries.
+  void _onCameraLost() {
+    final session = _session;
+    if (session == null || !session.cameraLost.value || !mounted) return;
+    _pause();
+    _cameraStop = session.stop();
+    setState(
+      () => _error = tr(
+        'The camera stopped. Close any other app that is using it, then try again.',
+      ),
+    );
+  }
+
   /// Starts the camera session and the run. Returns false on failure.
   Future<bool> _startCamera() async {
     await _cameraStop;
@@ -328,9 +355,11 @@ class _QuestState extends ConsumerState<QuestScreen>
     if (session == null) return false;
     bool ok;
     try {
+      final prefs = ref.read(settingsProvider);
       ok = await session.start(
         tier: _tier,
-        selfView: ref.read(settingsProvider).cameraMirror,
+        selfView: prefs.cameraMirror,
+        multiPerson: prefs.multiPerson,
       );
     } on PlatformException catch (e) {
       debugPrint('pose start failed: ${e.code}');
@@ -354,7 +383,7 @@ class _QuestState extends ConsumerState<QuestScreen>
       setState(() => _error = tr('Camera permission is needed to play.'));
       return false;
     }
-    _frameSub ??= session.frames.listen(_onFrame);
+    _frameSub ??= session.tracked.listen(_onFrame);
     if (_mirror != session.selfView) setState(() => _mirror = session.selfView);
     return true;
   }
@@ -644,19 +673,39 @@ class _QuestState extends ConsumerState<QuestScreen>
       return ScreenScaffold(
         title: tr('Daily Quest'),
         children: [
-          Text(_error!, style: const TextStyle(fontSize: 19)),
-          if (_session != null) BigButton(tr('Retry'), onPressed: _retryCamera),
-          BigButton(
-            tr(_phase == _Phase.run ? 'Quit (this run is not saved)' : 'Back'),
-            onPressed: _quit,
+          StateView(
+            icon: _session == null
+                ? Icons.lock_outline_rounded
+                : Icons.videocam_off_rounded,
+            title: _error!,
+            message: _phase == _Phase.run
+                ? tr('Nothing is lost. Your run is waiting for you.')
+                : null,
+            actions: [
+              if (_session != null)
+                BigButton(
+                  tr('Retry'),
+                  icon: Icons.refresh_rounded,
+                  onPressed: _retryCamera,
+                ),
+              BigButton(
+                tr(
+                  _phase == _Phase.run
+                      ? 'Quit (this run is not saved)'
+                      : 'Back',
+                ),
+                secondary: _session != null,
+                onPressed: _quit,
+              ),
+            ],
           ),
         ],
       );
     }
     final s = ref.watch(settingsProvider).s;
     final body = switch (_phase) {
-      _Phase.loading => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      _Phase.loading => Scaffold(
+        body: BrandLoader(label: tr('Getting ready…')),
       ),
       _Phase.warmup => _ExerciseFlow(
         title: s.t('warmup'),
@@ -721,6 +770,19 @@ class _QuestState extends ConsumerState<QuestScreen>
                 ),
               ],
             ),
+          if (ref.watch(settingsProvider.select((x) => x.diagnostics)))
+            if (_session case final session?)
+              Positioned(
+                left: 8,
+                bottom: 8,
+                right: 8,
+                child: SafeArea(
+                  child: Align(
+                    alignment: Alignment.bottomLeft,
+                    child: TrackingDiagnostics(session: session),
+                  ),
+                ),
+              ),
         ],
       ),
     );
@@ -777,7 +839,7 @@ class _Overlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Positioned.fill(
     child: Material(
-      color: Colors.black87,
+      color: Jn.scrim,
       child: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -861,13 +923,13 @@ class _RunView extends StatelessWidget {
                             i < h.hearts
                                 ? Icons.favorite
                                 : Icons.favorite_border,
-                            color: Colors.redAccent,
+                            color: Lantern.danger,
                             size: 30,
                           ),
                         const SizedBox(width: 8),
                         const Icon(
                           Icons.bolt,
-                          color: Colors.cyanAccent,
+                          color: Lantern.scarf,
                           size: 20,
                         ),
                         Text(
@@ -945,7 +1007,7 @@ class _RunView extends StatelessWidget {
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xE60B1611),
+                          color: const Color(0xE60A0C10),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Column(
@@ -981,7 +1043,7 @@ class _RunView extends StatelessWidget {
                                 if (h.missionWon)
                                   const Icon(
                                     Icons.check_rounded,
-                                    color: Color(0xFF3FD0C0),
+                                    color: Lantern.scarf,
                                     size: 18,
                                   )
                                 else
@@ -989,7 +1051,7 @@ class _RunView extends StatelessWidget {
                                     '${h.missionCount.clamp(0, h.missionGoal)}/${h.missionGoal}',
                                     style: const TextStyle(
                                       fontSize: 12,
-                                      color: Color(0xFF3FD0C0),
+                                      color: Lantern.scarf,
                                     ),
                                   ),
                               ],
@@ -1010,9 +1072,9 @@ class _RunView extends StatelessWidget {
                             vertical: 10,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xEE0B1611),
+                            color: const Color(0xEE0A0C10),
                             borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: const Color(0xFF3FD0C0)),
+                            border: Border.all(color: Lantern.scarf),
                           ),
                           child: Text(
                             '${tr(h.feedback!)}${h.combo >= 3 ? '  ·  ${tr('Flow')} ${h.combo}' : ''}',

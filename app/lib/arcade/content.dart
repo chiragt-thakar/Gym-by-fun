@@ -37,6 +37,7 @@ class ArcadeContent {
     required this.dailyFormats,
     required this.outcomes,
     required this.lumen,
+    this.slice = const [],
   });
 
   final List<MelaStage> mela;
@@ -49,6 +50,7 @@ class ArcadeContent {
   final Set<String> dailyFormats;
   final OutcomeTable outcomes;
   final List<LumenStage> lumen;
+  final List<SliceStage> slice;
 
   static Future<ArcadeContent> load(AssetBundle bundle) async {
     Future<Map<String, dynamic>> read(String name) async =>
@@ -63,6 +65,7 @@ class ArcadeContent {
     final taal = await read('taal-toofan');
     final tape = await read('tapeball');
     final lumen = await read('lumen');
+    final slice = await read('neon-slice');
     return ArcadeContent(
       mela: [for (final s in list(mela, 'stages')) MelaStage.fromJson(s)],
       poses: {
@@ -89,6 +92,7 @@ class ArcadeContent {
       },
       outcomes: OutcomeTable.fromJson(tape['outcomes'] as Map<String, dynamic>),
       lumen: [for (final s in list(lumen, 'stages')) LumenStage.fromJson(s)],
+      slice: [for (final s in list(slice, 'stages')) SliceStage.fromJson(s)],
     );
   }
 
@@ -151,6 +155,17 @@ class ArcadeContent {
           name: s.name,
           blurb: s.blurb,
           subtitle: '${s.boards.length} repairs',
+        ),
+    ],
+    'neon-slice' => [
+      for (final s in slice)
+        ArcadeStage(
+          id: s.id,
+          name: s.name,
+          blurb: s.blurb,
+          subtitle: s.bombShare > 0
+              ? '${s.durationMs ~/ 1000} s · with mines'
+              : '${s.durationMs ~/ 1000} s · no mines',
         ),
     ],
     _ => const [],

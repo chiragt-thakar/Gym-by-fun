@@ -1,5 +1,9 @@
 import 'quality_gate.dart';
 
+/// Which side of the player's own body (the player's left is screen left
+/// in the mirrored selfie frame).
+enum BodySide { left, right }
+
 /// Moves the motion core can recognise. World 1 uses the first four.
 enum Move { squat, leanLeft, leanRight, raiseArms }
 
@@ -113,4 +117,65 @@ class ExtraMoveRejected extends MotionEvent {
   final RejectReason reason;
   @override
   String toString() => 'ExtraMoveRejected($move $reason @$timestampMs)';
+}
+
+/// The life cycle of a plug-in gesture.
+enum GesturePhase {
+  /// A sustained gesture began (a twist, a hold).
+  started,
+
+  /// Emitted periodically while a sustained gesture continues.
+  held,
+
+  /// A sustained gesture finished.
+  ended,
+
+  /// A momentary gesture happened (a jump, a punch, a knee lift).
+  fired,
+
+  /// It looked like the gesture but did not count; see
+  /// [GestureEvent.reason].
+  rejected,
+}
+
+/// A discrete event from a plug-in detector (see `DetectorRegistry`).
+///
+/// New gestures use this one event type with a string id, so adding a
+/// detector never changes the event model or any game that does not care
+/// about it. The built-in core moves keep their typed events
+/// ([MoveStarted] …) for existing games.
+class GestureEvent extends MotionEvent {
+  const GestureEvent(
+    this.gesture,
+    this.phase,
+    super.timestampMs, {
+    this.side,
+    this.strength = 1,
+    this.heldMs = 0,
+    this.completed = true,
+    this.reason,
+  });
+
+  /// The detector id, e.g. `jump`, `punch`, `twist`, `kneeLift`.
+  final String gesture;
+  final GesturePhase phase;
+
+  /// The side that did it (a punching hand, a lifted knee, the direction of
+  /// a twist), when the gesture has one.
+  final BodySide? side;
+
+  /// How big the gesture was, as a multiple of its trigger threshold
+  /// (1 = just enough).
+  final double strength;
+
+  /// For [GesturePhase.held] and [GesturePhase.ended]: how long so far.
+  final int heldMs;
+
+  /// False when a sustained gesture was cut short by a tracking loss.
+  final bool completed;
+  final RejectReason? reason;
+
+  @override
+  String toString() => 'Gesture($gesture ${phase.name}'
+      '${side == null ? '' : ' ${side!.name}'} @$timestampMs)';
 }

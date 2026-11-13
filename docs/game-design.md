@@ -83,7 +83,7 @@ hypothesis, not a measured result of this update.
 - [FitXR: Your Journey](https://fitxr.com/blogs/fitxr-platform/new-your-journey-workouts-built-around-you)
   describes a curated path based on preferences and previous classes. Our
   interpretation: recommend a clear next chapter instead of making the player
-  browse a large catalogue. MotionQuest keeps its deterministic unlock chain;
+  browse a large catalogue. Joynetic keeps its deterministic unlock chain;
   this update does not introduce a learned recommendation model.
 - [Nintendo: Ring Fit game modes](https://www.nintendo.com/en-gb/Support/Purchases-Subscriptions/Games/How-to-Choose-a-Game-Mode-Ring-Fit-Adventure--1664661.html)
   distinguishes adventure, quick play and custom exercise. Our interpretation:
@@ -93,7 +93,7 @@ hypothesis, not a measured result of this update.
 - [BodyArcade](https://bodyarcade.com/) describes short camera-controlled games
   and on-device video processing. This is a company description, not an
   independent performance assessment. Our interpretation: camera control and
-  privacy alone will not distinguish MotionQuest; continuity, feedback and a
+  privacy alone will not distinguish Joynetic; continuity, feedback and a
   coherent original world need to carry the experience.
 
 These are product-design inputs, not proof that a feature improves adherence,
@@ -315,7 +315,7 @@ Shapes also differ (chevrons, rocks, star, arch with up-arrow), never colour alo
 
 ## AI coach: Coach Kavi
 
-Coach Kavi (an original fox-orange runner's guide) is MotionQuest's on-device
+Coach Kavi (an original fox-orange runner's guide) is Joynetic's on-device
 coach. It is rule-based, deterministic and offline: `Coach` in
 `packages/game_director/lib/src/coach.dart`, no cloud model. It reads the last
 20 run summaries (counts only, stored locally) and returns message keys plus

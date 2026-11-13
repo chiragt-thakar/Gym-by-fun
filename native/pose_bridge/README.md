@@ -1,6 +1,6 @@
 # pose_bridge
 
-Native Android bridge for MotionQuest: CameraX front camera → MediaPipe Pose
+Native Android bridge for Joynetic: CameraX front camera → MediaPipe Pose
 Landmarker (live-stream mode; Full on fast phones, Lite otherwise; GPU with
 CPU fallback).
 

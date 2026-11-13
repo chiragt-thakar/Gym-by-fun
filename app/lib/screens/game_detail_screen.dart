@@ -106,7 +106,7 @@ class _GameDetailState extends ConsumerState<GameDetailScreen> {
                 child: IconButton.filledTonal(
                   tooltip: tr('Back'),
                   style: IconButton.styleFrom(
-                    backgroundColor: const Color(0x990B1611),
+                    backgroundColor: const Color(0x990A0C10),
                   ),
                   icon: const Icon(
                     Icons.arrow_back_rounded,
@@ -138,7 +138,7 @@ class _GameDetailState extends ConsumerState<GameDetailScreen> {
                           colors: [
                             Color(0x66000000),
                             Color(0x00000000),
-                            Color(0xFF0B1611),
+                            Color(0xFF0A0C10),
                           ],
                           stops: [0, 0.4, 1],
                         ),
@@ -726,7 +726,7 @@ class _StageTile extends StatelessWidget {
                       fontWeight: FontWeight.w900,
                       fontSize: 16,
                       color: selected
-                          ? const Color(0xFF0B1611)
+                          ? const Color(0xFF0A0C10)
                           : Lantern.parchment,
                     ),
                   )

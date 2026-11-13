@@ -25,13 +25,13 @@ Source of truth for store copy and Play Console answers. Facts come from
 
 | Option | Chars | Note |
 |---|---|---|
-| MotionQuest: Move to Play | 25 | Recommended. Clear verb, no claim |
-| MotionQuest: Camera Fit Game | 28 | "Fit" in the sense of fitness game; acceptable |
-| MotionQuest – Home Move Game | 28 | Targets "home workout game" searches |
-| MotionQuest: Body Runner | 24 | Game-first framing |
+| Joynetic: Move to Play | 25 | Recommended. Clear verb, no claim |
+| Joynetic: Camera Fit Game | 28 | "Fit" in the sense of fitness game; acceptable |
+| Joynetic – Home Move Game | 28 | Targets "home workout game" searches |
+| Joynetic: Body Runner | 24 | Game-first framing |
 
-Hindi / Gujarati listings keep the Latin brand name: `MotionQuest: खेलो, हिलो` (21),
-`MotionQuest: રમો અને હલો` (23). Check the brand name and trademark first (launch checklist §1).
+Hindi / Gujarati listings keep the Latin brand name: `Joynetic: खेलो, हिलो` (21),
+`Joynetic: રમો અને હલો` (23). Check the brand name and trademark first (launch checklist §1).
 
 ---
 
@@ -44,7 +44,7 @@ Alt (73): `A home movement game: your body runs the adventure. Video stays on ph
 ### Full description (≈ 2,700 characters, limit 4,000)
 
 ```
-Turn your living room into an adventure. In MotionQuest your phone's front camera is the
+Turn your living room into an adventure. In Joynetic your phone's front camera is the
 controller: squat to duck under branches, lean to switch lanes, raise your arms to open
 the gates. No band, no mat, no extra gadgets — just you, your phone and a little space.
 
@@ -90,7 +90,7 @@ event. Premium unlocks the later worlds, their boss battles and more events, bil
 through Google Play.
 
 IMPORTANT
-MotionQuest is a game for general fitness, not medical advice, and is for adults 18+.
+Joynetic is a game for general fitness, not medical advice, and is for adults 18+.
 Stop if anything hurts and use the in-app pain report. If you have a health condition,
 are pregnant, or are new to exercise, check with a doctor before you start. Clear a safe
 space around you and keep the phone stable at floor or table height.
@@ -109,7 +109,7 @@ Alt: `घर पर खेलें मूवमेंट गेम — आप�
 ### पूरा विवरण
 
 ```
-अपने घर को एक रोमांचक सफ़र में बदलें। MotionQuest में आपके फ़ोन का फ़्रंट कैमरा ही
+अपने घर को एक रोमांचक सफ़र में बदलें। Joynetic में आपके फ़ोन का फ़्रंट कैमरा ही
 कंट्रोलर है: डालियों के नीचे से निकलने के लिए स्क्वैट करें, लेन बदलने के लिए झुकें,
 और दरवाज़े खोलने के लिए हाथ ऊपर उठाएँ। कोई बैंड या गैजेट नहीं — बस आप, आपका फ़ोन और
 थोड़ी-सी जगह।
@@ -155,7 +155,7 @@ Alt: `घर पर खेलें मूवमेंट गेम — आप�
 की दुनिया, उनकी बॉस लड़ाइयाँ और और इवेंट खुलते हैं, भुगतान Google Play के ज़रिए।
 
 ज़रूरी बात
-MotionQuest सामान्य फ़िटनेस के लिए एक गेम है, यह चिकित्सा सलाह नहीं है, और सिर्फ़ 18+
+Joynetic सामान्य फ़िटनेस के लिए एक गेम है, यह चिकित्सा सलाह नहीं है, और सिर्फ़ 18+
 वयस्कों के लिए है। कहीं भी दर्द हो तो रुक जाएँ और ऐप में दर्द की रिपोर्ट करें। अगर आपको
 कोई स्वास्थ्य समस्या है, आप गर्भवती हैं या व्यायाम नया शुरू कर रहे हैं, तो पहले डॉक्टर
 से सलाह लें। अपने आसपास सुरक्षित जगह खाली रखें और फ़ोन को स्थिर रखें।
@@ -174,7 +174,7 @@ Alt: `ઘરે રમો મૂવમેન્ટ ગેમ — તમારો
 ### સંપૂર્ણ વર્ણન
 
 ```
-તમારા ઘરને એક સાહસમાં ફેરવો. MotionQuestમાં તમારા ફોનનો ફ્રન્ટ કૅમેરા જ કંટ્રોલર છે:
+તમારા ઘરને એક સાહસમાં ફેરવો. Joyneticમાં તમારા ફોનનો ફ્રન્ટ કૅમેરા જ કંટ્રોલર છે:
 ડાળીઓ નીચેથી નીકળવા સ્ક્વૉટ કરો, લેન બદલવા ઝૂકો અને દરવાજા ખોલવા હાથ ઊંચા કરો. કોઈ
 બેન્ડ કે ગેજેટ નહીં — ફક્ત તમે, તમારો ફોન અને થોડી જગ્યા.
 
@@ -218,7 +218,7 @@ Alt: `ઘરે રમો મૂવમેન્ટ ગેમ — તમારો
 આગળની દુનિયાઓ, તેની બૉસ લડાઈઓ અને વધુ ઇવેન્ટ ખૂલે છે, ચુકવણી Google Play દ્વારા.
 
 મહત્વની વાત
-MotionQuest સામાન્ય ફિટનેસ માટેની એક ગેમ છે, તબીબી સલાહ નથી, અને ફક્ત 18+ પુખ્તો માટે
+Joynetic સામાન્ય ફિટનેસ માટેની એક ગેમ છે, તબીબી સલાહ નથી, અને ફક્ત 18+ પુખ્તો માટે
 છે. ક્યાંય દુખાવો થાય તો અટકી જાઓ અને ઍપમાં દુખાવાની જાણ કરો. જો તમને કોઈ સ્વાસ્થ્ય
 સમસ્યા હોય, તમે ગર્ભવતી હો અથવા કસરત નવી શરૂ કરતા હો, તો પહેલાં ડૉક્ટરની સલાહ લો.
 આસપાસ સલામત જગ્યા ખાલી રાખો અને ફોન સ્થિર રાખો.
@@ -276,7 +276,7 @@ sheet may appear only with approved §8 copy and no MET numbers.
 - **Subject:** an adult player mid-squat (side-on silhouette in warm orange) on the left,
   morphing into the in-game runner ducking a forest branch on the right; Coach Kavi (fox)
   small in the corner.
-- **Text:** "MotionQuest" plus one line, "Move to play". Keep text inside the central safe
+- **Text:** "Joynetic" plus one line, "Move to play". Keep text inside the central safe
   area (Play may crop edges and overlay a play button when a promo video exists).
 - **Style:** original art only, the game's forest palette (deep greens, firefly gold, fox
   orange). High contrast; readable at thumbnail size.
@@ -303,7 +303,7 @@ subtitles.
 | 16–19 s | Close-up of setup screen text: video never leaves your phone | "Video never leaves your phone." |
 | 19–22 s | Results screen, Coach Kavi card suggesting an easier level | "Coach Kavi helps you pick the right level." |
 | 22–26 s | Three friends at a gym, phones up, Crew board; then a Garba Quest clip with taali claps | "Join your Gym Crew. Play Garba Quest." |
-| 26–30 s | Logo + "Get it on Google Play" badge (official badge only) | "MotionQuest. A game for general fitness, not medical advice. 18+." |
+| 26–30 s | Logo + "Get it on Google Play" badge (official badge only) | "Joynetic. A game for general fitness, not medical advice. 18+." |
 
 Show a clear safe play space in every home shot; nobody jumps (low-impact default). No
 sweating-to-exhaustion shots, no body-shape focus.
@@ -375,13 +375,13 @@ Re-check this table whenever a new `user_id` table or consent purpose is added.
 | Product id | `premium_monthly` | `premium_yearly` |
 | Price | ₹129 / month | ₹699 / year |
 | Free trial | none | 7 days (new subscribers only) |
-| Name (≤ 55) | MotionQuest Premium — Monthly | MotionQuest Premium — Yearly |
+| Name (≤ 55) | Joynetic Premium — Monthly | Joynetic Premium — Yearly |
 | Benefits (≤ 40 each, up to 4) | Unlock Worlds 2–9 as they release · All boss battles · All festival events · Daily Quest with every move you calibrated | same |
 | Description | Unlock every world, boss battle and festival event. Billed monthly through Google Play. Cancel anytime in Google Play. | Unlock every world, boss battle and festival event. 7-day free trial, then ₹699 per year through Google Play. Cancel anytime in Google Play. |
 
-Hindi: "MotionQuest Premium — हर महीने / हर साल. सभी दुनिया, बॉस लड़ाइयाँ और त्योहार इवेंट
+Hindi: "Joynetic Premium — हर महीने / हर साल. सभी दुनिया, बॉस लड़ाइयाँ और त्योहार इवेंट
 खोलें। Google Play के ज़रिए भुगतान; कभी भी Google Play में रद्द करें।"
-Gujarati: "MotionQuest Premium — માસિક / વાર્ષિક. બધી દુનિયાઓ, બૉસ લડાઈઓ અને તહેવાર ઇવેન્ટ
+Gujarati: "Joynetic Premium — માસિક / વાર્ષિક. બધી દુનિયાઓ, બૉસ લડાઈઓ અને તહેવાર ઇવેન્ટ
 ખોલો. Google Play દ્વારા ચુકવણી; ક્યારેય પણ Google Play માં રદ કરો."
 
 No benefit line may mention fitness results. Prices shown in-app come from the Play
@@ -415,7 +415,7 @@ Sample (EN): "Unlock every world. Worlds 2–9, all boss battles and festival ev
 
 EN (≤ 500):
 ```
-Welcome to the MotionQuest closed test! 
+Welcome to the Joynetic closed test! 
 • Play with your phone's front camera: squat, lean and raise your arms.
 • Worlds: Forest Awakening, Desert Trials, Neon City, Mountain Expedition + Garba Quest.
 • Daily Quest with warm-up and cool-down; low-impact by default.
@@ -427,7 +427,7 @@ Please report anything that felt unfair, any tracking trouble, and your phone mo
 
 HI:
 ```
-MotionQuest क्लोज़्ड टेस्ट में स्वागत है!
+Joynetic क्लोज़्ड टेस्ट में स्वागत है!
 • फ़ोन के फ़्रंट कैमरे से खेलें: स्क्वैट, झुकना और हाथ उठाना।
 • दुनिया: Forest Awakening, Desert Trials, Neon City, Mountain Expedition + Garba Quest.
 • वॉर्म-अप और कूल-डाउन के साथ Daily Quest; शुरुआत से लो-इम्पैक्ट।
@@ -439,7 +439,7 @@ MotionQuest क्लोज़्ड टेस्ट में स्वाग�
 
 GU:
 ```
-MotionQuest ક્લોઝ્ડ ટેસ્ટમાં સ્વાગત છે!
+Joynetic ક્લોઝ્ડ ટેસ્ટમાં સ્વાગત છે!
 • ફોનના ફ્રન્ટ કૅમેરાથી રમો: સ્ક્વૉટ, ઝૂકવું અને હાથ ઊંચા કરવા.
 • દુનિયાઓ: Forest Awakening, Desert Trials, Neon City, Mountain Expedition + Garba Quest.
 • વૉર્મ-અપ અને કૂલ-ડાઉન સાથે Daily Quest; શરૂઆતથી લો-ઇમ્પેક્ટ.

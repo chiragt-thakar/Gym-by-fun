@@ -66,7 +66,7 @@ class FrameView extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(radius),
           border: Border.all(
-            color: ok ? Colors.greenAccent : Lantern.warning,
+            color: ok ? Lantern.scarf : Lantern.warning,
             width: 3,
           ),
         ),
@@ -185,7 +185,7 @@ class FramePainter extends CustomPainter {
 
     if (showTarget) {
       // Where a standing body should sit: head to feet with a margin.
-      final c = ok ? Colors.greenAccent : Colors.white;
+      final c = ok ? Lantern.scarf : Colors.white;
       _target.color = c.withValues(alpha: ok ? 0.9 : 0.55);
       _targetFill.color = c.withValues(alpha: ok ? 0.10 : 0.05);
       final head = Offset(w * 0.5, h * 0.14);

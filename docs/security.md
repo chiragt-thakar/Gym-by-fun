@@ -1,5 +1,28 @@
 # Security, privacy and safety controls
 
+## Tracking engine v2 and pairing (2026-11-13)
+
+- **Camera.** Unchanged promises: frames stay native, only landmarks cross into
+  Dart, nothing is stored. With "Other people in the room" on, the landmarks of
+  other bodies in view also reach Dart; they are used only to keep the lock on
+  the player and are discarded in the same frame. They are never recorded,
+  never uploaded and never part of a landmark recording.
+- **Simulated input** exists only in builds made with
+  `--dart-define=JOYNETIC_INPUT=…`. A release build cannot construct it.
+- **Calibration** now includes body proportions (limb ratios, shoulder and hip
+  width). It stays on the phone unless the player turns on the calibration
+  backup consent, exactly as before; per-player profiles are local only.
+- **Pairing.** Codes are 6 characters from a 32-letter alphabet, valid for five
+  minutes and consumed atomically on first use (`GETDEL`); joining is limited
+  to 10 attempts per IP per 10 minutes. Each device gets a random 256-bit token,
+  stored only as SHA-256 and compared in constant time; tokens travel in a
+  header, never a URL. Unknown session and wrong token are distinct status
+  codes but neither reveals which device a token belongs to. Every message is
+  validated against a strict schema: there is no message type that can carry
+  landmarks, images or video, unknown fields are rejected, numbers are bounded,
+  batches are capped at 32. Sessions and their replay logs expire by
+  themselves and are deleted when either device ends the session.
+
 ## Arcade games and shell v2 (2026-11-09)
 - New games consume landmarks only (`BodyPose` is computed from the 33 points);
   no camera frame, mask or clip is created, stored or shared. The optional mirror

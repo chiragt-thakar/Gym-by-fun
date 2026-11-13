@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:game_director/game_director.dart';
 
+import 'looks.dart';
 import 'paint_kit.dart';
 
 const indigo = Color(0xFF1F2A5C);
@@ -13,7 +14,7 @@ const cream = Color(0xFFF3E9D2);
 const kiteMagenta = Color(0xFFC2185B);
 
 /// Craft-punk arena: dusk sky, arches, a patterned terracotta floor.
-void duelBackdrop(Canvas c, Size s, double t, {double dim = 0}) {
+void _duelScene(Canvas c, Size s, double t, {double dim = 0}) {
   sky(
     c,
     s,
@@ -81,7 +82,7 @@ void duelBackdrop(Canvas c, Size s, double t, {double dim = 0}) {
 
 /// The guardian: [windup] 0..1 leans into an attack, [stagger] wobbles it,
 /// [calm] 0..1 fades it into its calm form.
-void paintGuardian(
+void _guardianBody(
   Canvas c,
   Offset at,
   double size,
@@ -681,7 +682,7 @@ void duelPreview(Canvas c, Size s, int variant, {String art = 'baoli'}) {
       elbowR: 45,
     ),
   };
-  paintAvatar(c, j, accent: brass);
+  paintAvatar(c, j, look: duelLook);
   if (variant == 2) {
     final at = m(1.15, 0.05);
     glow(c, at, m.unit * 0.8, teal, alpha: 0.6);
@@ -714,5 +715,62 @@ void duelPreview(Canvas c, Size s, int variant, {String art = 'baoli'}) {
       r * 1.1,
       cream,
     );
+  }
+}
+
+/// The stepwell court at night, lit by its two braziers: firelight lying on
+/// the stone, moonlight through the middle arch, dust in the air.
+void duelBackdrop(Canvas c, Size s, double t, {double dim = 0}) {
+  _duelScene(c, s, t);
+  final horizon = s.height * 0.6;
+  final depth = s.height - horizon;
+  lightShaft(c, Offset(s.width / 2, horizon - 118), depth * 0.9 + 118, s.width * 0.2, const Color(0xFFBFD2FF), alpha: 0.12);
+  for (final x in [s.width * 0.08, s.width * 0.92]) {
+    final flick = 1 + 0.12 * math.sin(t * 9 + x);
+    lightPool(c, Offset(x, horizon + depth * 0.3), s.width * 0.7 * flick, depth * 0.75, const Color(0xFFFF9A3C), alpha: 0.3);
+  }
+  // The duelling ring catches the light.
+  lightPool(c, Offset(s.width / 2, horizon + depth * 0.55), s.width * 0.9, depth * 0.6, cream, alpha: 0.1);
+  hazeBand(c, s, horizon, s.height * 0.1, const Color(0xFF8A6A9A), alpha: 0.2);
+  // Dust motes rising through the firelight.
+  final mote = Paint();
+  for (var i = 0; i < 18; i++) {
+    final x = hash(i * 9 + 2) * s.width;
+    final y = horizon + depth * (1 - ((hash(i * 5 + 1) + t * 0.03 * (0.5 + hash(i))) % 1));
+    mote.color = const Color(0xFFFFD9A0).withValues(alpha: 0.12 + 0.2 * hash(i * 3));
+    c.drawCircle(Offset(x + math.sin(t + i) * 6, y), 1.4, mote);
+  }
+  vignette(c, s, strength: 0.6);
+  if (dim > 0) {
+    c.drawRect(Offset.zero & s, Paint()..color = Colors.black.withValues(alpha: dim));
+  }
+}
+
+/// The guardian, set into the scene: a shadow on the stone under it and a
+/// rim of light behind it that flares as it winds up and softens to a warm
+/// halo as it calms. [windup] 0..1 leans into an attack, [stagger] wobbles
+/// it, [calm] 0..1 fades it into its calm form.
+void paintGuardian(
+  Canvas c,
+  Offset at,
+  double size,
+  String art,
+  double t, {
+  double windup = 0,
+  bool stagger = false,
+  double calm = 0,
+  int side = 0,
+}) {
+  softShadow(c, at + Offset(0, size * 0.62), size * 1.5, size * 0.26, alpha: 0.45 * (1 - calm * 0.5));
+  final aura = Color.lerp(
+    Color.lerp(teal, terracotta, windup.clamp(0.0, 1.0))!,
+    const Color(0xFFFFE2A8),
+    calm.clamp(0.0, 1.0),
+  )!;
+  glow(c, at, size * (0.95 + 0.15 * windup), aura, alpha: 0.22 + 0.2 * windup + 0.15 * calm);
+  _guardianBody(c, at, size, art, t, windup: windup, stagger: stagger, calm: calm, side: side);
+  if (stagger) {
+    // Poise broken: sparks shake loose.
+    sparkBurst(c, at - Offset(0, size * 0.2), (t * 1.6) % 1, brass, n: 9, spread: size * 0.8, seed: (t * 1.6).floor());
   }
 }

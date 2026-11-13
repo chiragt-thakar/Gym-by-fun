@@ -1,6 +1,6 @@
 # Performance
 
-MotionQuest must play smoothly on budget Android phones (2–3 GB RAM, little
+Joynetic must play smoothly on budget Android phones (2–3 GB RAM, little
 free storage). These budgets are release gates, not aspirations.
 
 ## Budgets

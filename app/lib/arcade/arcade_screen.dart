@@ -17,12 +17,15 @@ import '../services/settings.dart';
 import '../services/voice.dart';
 import '../widgets/common.dart';
 import '../widgets/frame_view.dart';
+import '../widgets/tracking_overlay.dart';
 import 'art/cricket_art.dart';
 import 'art/duel_art.dart';
+import 'art/looks.dart';
 import 'art/lumen_art.dart';
 import 'art/mela_art.dart';
 import 'art/paint_kit.dart';
 import 'art/pataka_art.dart';
+import 'art/slice_art.dart';
 import 'art/taal_art.dart';
 import 'catalog.dart';
 import 'content.dart';
@@ -156,6 +159,12 @@ ArcadeEngine buildEngine(ArcadeContent c, ArcadeArgs a, Settings s) {
         difficulty: assist ? 'beginner' : difficulty,
         lowImpact: s.lowImpact,
       );
+    case 'neon-slice':
+      final st = c.slice.firstWhere(
+        (x) => x.id == a.stageId,
+        orElse: () => c.slice.first,
+      );
+      return SliceEngine(st.variant(seed: daily, assist: assist));
     default:
       final st = c.lumen.firstWhere(
         (x) => x.id == a.stageId,
@@ -191,12 +200,24 @@ class ArcadeResult {
 enum _Phase { loading, framing, countdown, play }
 
 class _Fx {
-  _Fx(this.at, this.text, this.color, this.born, {this.burst = false});
+  _Fx(
+    this.at,
+    this.text,
+    this.color,
+    this.born, {
+    this.burst = false,
+    this.big = false,
+  });
   final Offset at;
   final String text;
   final Color color;
   final int born;
+
+  /// Sparks and a shock ring as well as the text.
   final bool burst;
+
+  /// A headline moment (a bonus, a six): larger, with a glow.
+  final bool big;
 }
 
 class ArcadeScreen extends ConsumerStatefulWidget {
@@ -216,9 +237,8 @@ class _ArcadeScreenState extends ConsumerState<ArcadeScreen>
   ArcadeEngine? _engine;
   ArcadeContent? _content;
   MotionSession? _session;
-  StreamSubscription<PoseFrame>? _frameSub;
+  StreamSubscription<TrackedFrame>? _frameSub;
   StreamSubscription<MotionEvent>? _eventSub;
-  final _smoother = LandmarkSmoother();
   final _anchor = BodyAnchor();
   final _framingFilter = FramingFilter();
   static const _framing = Framing();
@@ -228,6 +248,7 @@ class _ArcadeScreenState extends ConsumerState<ArcadeScreen>
   Duration _last = Duration.zero;
   int _now = 0;
   int _framedFor = 0;
+  int _usableFor = 0;
   int _countdownLeft = 0;
   bool _paused = false;
   bool _mirror = false;
@@ -277,10 +298,12 @@ class _ArcadeScreenState extends ConsumerState<ArcadeScreen>
         thresholds: s.thresholds,
       );
       _session = session;
+      session.cameraLost.addListener(_onCameraLost);
       _eventSub = session.events.listen(_onMotion);
       final ok = await session.start(
         tier: s.deviceTier ?? DeviceTier.mid,
         selfView: s.cameraMirror,
+        multiPerson: s.multiPerson,
       );
       if (!mounted || _disposed) {
         await session.dispose();
@@ -291,7 +314,7 @@ class _ArcadeScreenState extends ConsumerState<ArcadeScreen>
         return;
       }
       _mirror = session.selfView;
-      _frameSub = session.frames.listen(_onFrame);
+      _frameSub = session.tracked.listen(_onFrame);
       setState(() => _phase = _Phase.framing);
       _say('Step back until your whole body glows in the frame.');
       _ticker.start();
@@ -310,7 +333,25 @@ class _ArcadeScreenState extends ConsumerState<ArcadeScreen>
     }
   }
 
+  /// The camera stopped and could not be restarted: say so, keep nothing
+  /// running, and let the player go back.
+  void _onCameraLost() {
+    final session = _session;
+    if (session == null || !session.cameraLost.value || !mounted) return;
+    _ticker.stop();
+    session.stop();
+    setState(
+      () => _error = tr(
+        'The camera stopped. Close any other app that is using it, then try again.',
+      ),
+    );
+  }
+
   void _onMotion(MotionEvent e) {
+    if ((e is TrackingPaused || e is TrackingResumed) &&
+        ref.read(settingsProvider).haptics) {
+      HapticFeedback.mediumImpact();
+    }
     if (e is MoveStarted && e.move == Move.raiseArms ||
         e is MoveHeld && e.move == Move.raiseArms) {
       _raised = true;
@@ -321,32 +362,32 @@ class _ArcadeScreenState extends ConsumerState<ArcadeScreen>
     if (_phase == _Phase.play && !_paused) _engine?.motion(e);
   }
 
-  void _onFrame(PoseFrame f) {
-    final smooth = f.hasPerson ? _smoother.smooth(f) : f;
-    _frame = smooth;
-    final raw = _framing.advise(f);
-    _advice = _framingFilter.update(raw, f.timestampMs);
-    final good = f.hasPerson && const QualityGate().check(f).ok;
+  /// One tracked frame. Play runs on any frame whose torso is tracked
+  /// (the tracker has already locked onto the player and bridged gaps); a
+  /// hidden foot or knee no longer stops a game that does not need it.
+  void _onFrame(TrackedFrame t) {
+    final f = t.frame;
+    _frame = f;
+    final raw = _framing.advise(t.raw, t.quality);
+    final shown = _framingFilter.update(raw, t.timestampMs);
+    // Before play the full advice helps the player frame themselves; once
+    // playing, only what matters is shown.
+    _advice = _phase == _Phase.play
+        ? playAdvice(shown, usable: t.playable)
+        : shown;
+    final good = t.playable;
     if (good) {
-      _anchor.update(smooth);
-      _pose = BodyPose.from(smooth, anchor: _anchor);
+      _anchor.update(f);
+      _pose = BodyPose.from(f, anchor: _anchor);
     } else {
       _pose = null;
     }
     if (_paused) {
-      final go = _ready.update(
-        f.timestampMs,
-        good: good && raw.ok,
-        raised: _raised,
-      );
+      final go = _ready.update(t.timestampMs, good: good, raised: _raised);
       if (go) _resume();
       return;
     }
-    if (_phase == _Phase.play &&
-        good &&
-        _session?.light == TrackingLight.green) {
-      _engine?.pose(_pose!);
-    }
+    if (_phase == _Phase.play && good) _engine?.pose(_pose!);
   }
 
   void _onTick(Duration elapsed) {
@@ -356,9 +397,12 @@ class _ArcadeScreenState extends ConsumerState<ArcadeScreen>
     if (_paused) return;
     switch (_phase) {
       case _Phase.framing:
+        // A clean full-body view starts quickly. A player whose feet will
+        // not fit (a small room) still starts, after a longer steady spell.
         final ok = _advice.ok && _pose != null;
         _framedFor = ok ? _framedFor + dt : 0;
-        if (_framedFor >= 1200) _startCountdown();
+        _usableFor = _pose != null ? _usableFor + dt : 0;
+        if (_framedFor >= 1200 || _usableFor >= 4000) _startCountdown();
       case _Phase.countdown:
         final before = (_countdownLeft / 1000).ceil();
         _countdownLeft -= dt;
@@ -407,7 +451,10 @@ class _ArcadeScreenState extends ConsumerState<ArcadeScreen>
     String text,
     Color color, {
     bool burst = false,
-  }) => _fx.add(_Fx(_screenOf(x, y), text, color, _now, burst: burst));
+    bool big = false,
+  }) => _fx.add(
+    _Fx(_screenOf(x, y), text, color, _now, burst: burst, big: big),
+  );
 
   void _captionLine(String? text, {int ms = 2600}) {
     if (text == null) return;
@@ -452,7 +499,48 @@ class _ArcadeScreenState extends ConsumerState<ArcadeScreen>
           _cricketEvent(ev);
         case 'lumen':
           _lumenEvent(ev);
+        case 'neon-slice':
+          _sliceEvent(ev);
       }
+    }
+  }
+
+  void _sliceEvent(ArcadeEvent ev) {
+    switch (ev.kind) {
+      case 'launch':
+        _voice.cue('a_whoosh');
+      case 'slice':
+        _voice.cue('a_pop${ev.value % 5}');
+        _fxAt(
+          ev.x,
+          ev.y,
+          '+${ev.points}',
+          ev.grade == Grade.perfect ? sliceColour(ev.value) : Lantern.parchment,
+          burst: ev.grade == Grade.perfect,
+        );
+      case 'multi':
+        _voice.cue('a_chime');
+        _fxAt(
+          ev.x,
+          ev.y + 0.5,
+          '${ev.value} IN ONE  +${ev.points}',
+          Lantern.glow,
+          burst: true,
+          big: true,
+        );
+      case 'bomb':
+        _voice.cue('a_thud');
+        if (ref.read(settingsProvider).haptics) HapticFeedback.heavyImpact();
+        _fxAt(ev.x, ev.y, '${ev.points}', Lantern.danger, burst: true);
+        _say(ev.text!);
+        _captionLine(ev.text);
+      case 'frenzy':
+        _voice.cue('a_bell');
+        _say('Neon Frenzy!');
+        _captionLine('Neon Frenzy! Points ×1.5 for six seconds.');
+      case 'phase':
+        _voice.cue('a_drum');
+        _captionLine(ev.text, ms: 1800);
     }
   }
 
@@ -744,6 +832,7 @@ class _ArcadeScreenState extends ConsumerState<ArcadeScreen>
       final ok = await session.start(
         tier: s.deviceTier ?? DeviceTier.mid,
         selfView: s.cameraMirror,
+        multiPerson: s.multiPerson,
       );
       if (!ok || !mounted) return;
     }
@@ -785,6 +874,7 @@ class _ArcadeScreenState extends ConsumerState<ArcadeScreen>
           session.start(
             tier: s.deviceTier ?? DeviceTier.mid,
             selfView: s.cameraMirror,
+            multiPerson: s.multiPerson,
           );
         }
       case AppLifecycleState.detached:
@@ -825,16 +915,11 @@ class _ArcadeScreenState extends ConsumerState<ArcadeScreen>
       return ScreenScaffold(
         title: tr(_game.title),
         children: [
-          const SizedBox(height: 24),
-          Icon(Icons.videocam_off_rounded, size: 48, color: Lantern.warning),
-          const SizedBox(height: 16),
-          Text(
-            _error!,
-            style: Theme.of(context).textTheme.titleMedium,
-            textAlign: TextAlign.center,
+          StateView(
+            icon: Icons.videocam_off_rounded,
+            title: _error!,
+            actions: [BigButton(tr('Back'), onPressed: _quit)],
           ),
-          const SizedBox(height: 24),
-          BigButton(tr('Back'), onPressed: _quit),
         ],
       );
     }
@@ -892,10 +977,20 @@ class _ArcadeScreenState extends ConsumerState<ArcadeScreen>
                     ),
                   ),
                   SafeArea(child: _hud(context, s)),
-                  if (_phase == _Phase.loading)
-                    const Center(child: CircularProgressIndicator()),
+                  if (_phase == _Phase.loading) const BrandLoader(),
                   if (_phase == _Phase.framing) _framingCard(context),
                   if (_paused) _pauseOverlay(context),
+                  if (s.diagnostics)
+                    if (_session case final session?)
+                      Positioned(
+                        left: 8,
+                        right: 8,
+                        bottom: 84,
+                        child: Align(
+                          alignment: Alignment.bottomLeft,
+                          child: TrackingDiagnostics(session: session),
+                        ),
+                      ),
                 ],
               );
             },
@@ -917,7 +1012,7 @@ class _ArcadeScreenState extends ConsumerState<ArcadeScreen>
                 tooltip: tr('Pause'),
                 onPressed: _phase == _Phase.loading ? null : _pause,
                 style: IconButton.styleFrom(
-                  backgroundColor: const Color(0xCC0B1611),
+                  backgroundColor: const Color(0xCC0A0C10),
                 ),
                 icon: const Icon(Icons.pause_rounded, color: Lantern.parchment),
               ),
@@ -952,7 +1047,7 @@ class _ArcadeScreenState extends ConsumerState<ArcadeScreen>
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xD90B1611),
+                  color: const Color(0xD90A0C10),
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
                     color: _game.accent.withValues(alpha: 0.5),
@@ -1000,6 +1095,7 @@ class _ArcadeScreenState extends ConsumerState<ArcadeScreen>
     if (e is PatakaEngine && e.phase == 'show' && e.frame?.pose != null) {
       return e.frame!.pose!.name;
     }
+    if (e is SliceEngine && e.stunned) return tr('Blades recharging…');
     return null;
   }
 
@@ -1032,6 +1128,11 @@ class _ArcadeScreenState extends ConsumerState<ArcadeScreen>
         c.format.wickets > 0 ? '${c.runs}/${c.wickets}' : '${c.runs}',
         '${c.ballsLeft} balls left',
       ),
+      SliceEngine n => (
+        const ['WARM-UP', 'HEAT', 'OVERDRIVE'][n.phase],
+        '${n.score}',
+        n.combo > 1 ? '×${n.combo} combo' : null,
+      ),
       LumenEngine l => (
         'REPAIR ${math.min(l.boardIndex + 1, l.stage.boards.length)}/${l.stage.boards.length}',
         l.board.title,
@@ -1045,7 +1146,7 @@ class _ArcadeScreenState extends ConsumerState<ArcadeScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xCC0B1611),
+        color: const Color(0xCC0A0C10),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Lantern.line),
       ),
@@ -1116,7 +1217,7 @@ class _ArcadeScreenState extends ConsumerState<ArcadeScreen>
             maxHeight: MediaQuery.sizeOf(context).height * 0.55,
           ),
           child: AppCard(
-            color: const Color(0xEE0B1611),
+            color: const Color(0xEE0A0C10),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -1287,6 +1388,15 @@ class _Backdrop extends CustomPainter {
         );
       case 'tapeball':
         cricketBackdrop(c, size, t);
+      case 'neon-slice':
+        final se = e is SliceEngine ? e : null;
+        sliceBackdrop(
+          c,
+          size,
+          t,
+          heat: se?.phase ?? 0,
+          frenzy: se?.frenzy ?? false,
+        );
       default:
         lumenBackdrop(c, size, t);
     }
@@ -1314,7 +1424,13 @@ class _Play extends CustomPainter {
     // The player: an outline over the mirror, or the original avatar.
     final joints = AvatarJoints.fromFrame(s._frame, vp);
     if (joints != null) {
-      paintAvatar(c, joints, outlineOnly: mirror, accent: heroAccent);
+      paintAvatar(
+        c,
+        joints,
+        outlineOnly: mirror,
+        accent: heroAccent,
+        look: lookFor(s.widget.args.gameId),
+      );
     } else if (s._phase != _Phase.loading) {
       // Where to stand.
       final m = BodyMap.demo(vp);
@@ -1342,6 +1458,8 @@ class _Play extends CustomPainter {
           taalPlay(c, size, m, te, t);
         case CricketEngine ce:
           cricketPlay(c, size, m, ce, pose, t);
+        case SliceEngine se:
+          slicePlay(c, size, m, se, t);
         case LumenEngine le:
           final area = Rect.fromLTWH(
             size.width * 0.1,
@@ -1367,20 +1485,16 @@ class _Play extends CustomPainter {
     for (final f in s._fx) {
       final age = (s._now - f.born) / 1000;
       if (f.burst) {
+        // An impact: a ring racing out, sparks, and a little confetti.
+        shockRing(c, f.at, age / 0.55, f.big ? 110 : 70, f.color);
+        sparkBurst(c, f.at, age / 0.8, f.color, seed: f.born);
         confetti(c, f.at, age / 1.1, [
           f.color,
           Lantern.glow,
           Lantern.scarf,
-        ], seed: f.born);
+        ], n: f.big ? 22 : 10, seed: f.born);
       }
-      strokedText(
-        c,
-        f.text,
-        f.at + Offset(0, -40 * age),
-        size: 22,
-        color: f.color,
-        opacity: (1 - age).clamp(0.0, 1.0),
-      );
+      scorePop(c, f.text, f.at, age, f.color, big: f.big);
     }
   }
 

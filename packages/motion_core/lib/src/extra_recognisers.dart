@@ -73,9 +73,14 @@ enum _BarrierState { idle, held }
 /// been false for [ExtraMoveThresholds.barrierGraceMs].
 class BarrierHoldRecogniser implements Recogniser {
   BarrierHoldRecogniser(this.cal, this.t, this.x);
-  final CalibrationProfile cal;
+  CalibrationProfile cal;
   final MotionThresholds t;
   final ExtraMoveThresholds x;
+
+  @override
+  String get id => 'barrierHold';
+  @override
+  void recalibrate(CalibrationProfile c) => cal = c;
 
   _BarrierState _s = _BarrierState.idle;
   int _confirm = 0;
@@ -191,9 +196,14 @@ enum _StepState { centre, left, right }
 /// standing square to the camera).
 class SideStepRecogniser implements Recogniser {
   SideStepRecogniser(this.cal, this.t, this.x);
-  final CalibrationProfile cal;
+  CalibrationProfile cal;
   final MotionThresholds t;
   final ExtraMoveThresholds x;
+
+  @override
+  String get id => 'sideStep';
+  @override
+  void recalibrate(CalibrationProfile c) => cal = c;
 
   _StepState _s = _StepState.centre;
   int _confirm = 0;

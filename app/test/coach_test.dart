@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:game_director/game_director.dart';
 import 'package:motion_core/motion_core.dart';
-import 'package:motionquest/l10n/coach_strings.dart';
-import 'package:motionquest/l10n/strings.dart';
-import 'package:motionquest/screens/results_screen.dart';
-import 'package:motionquest/services/coach_service.dart';
-import 'package:motionquest/services/settings.dart';
+import 'package:joynetic/l10n/coach_strings.dart';
+import 'package:joynetic/l10n/strings.dart';
+import 'package:joynetic/screens/results_screen.dart';
+import 'package:joynetic/services/coach_service.dart';
+import 'package:joynetic/services/settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 RunResult result({int score = 1000, int hit = 0, int hearts = 3}) => RunResult(

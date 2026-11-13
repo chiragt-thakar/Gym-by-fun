@@ -1,7 +1,7 @@
-# 1 — Market & motion-game research for MotionQuest (Nov 2026)
+# 1 — Market & motion-game research for Joynetic (Nov 2026)
 
 Scope: what keeps people playing camera/motion fitness games, what drives them away, India-specific
-social and spending patterns, and what that means for two new original MotionQuest modes.
+social and spending patterns, and what that means for two new original Joynetic modes.
 Evidence quality is flagged. Hard retention numbers for motion games are almost never published;
 most of what follows is sales figures, company-reported play rankings, reviews and analyst comment.
 
@@ -27,13 +27,13 @@ story or RPG progression (Ring Fit), a daily habit loop (Fitness Boxing), music 
 - **Paywalls and ads inside play.** Players dislike adverts for the subscription and locked back-catalogues (Just Dance reviews above).
 - **Unlock gating and compulsive prompts.** Moves are gated behind daily workouts, and repeated weigh-in prompts feel compulsive ([TechRadar FB3](https://www.techradar.com/gaming/fitness-boxing-3-your-personal-trainer-review), [Stevivor](https://stevivor.com/reviews/fitness-boxing-3-review-welterweight-fitness-experience)).
 - **Repetition and novelty decay.** In a 12-week exergame cohort, 72.3% dropped out (medRxiv 2024 preprint, older adults, not peer reviewed: [medRxiv](https://medrxiv.org/content/10.1101/2024.02.23.24303246v1.full-text)). An older review saw exercise adherence fall after about 6 weeks ([UCL poster](https://discovery-pp.ucl.ac.uk/1407704/1/Douglass-Bonner%20Potts%20Medicine2013%20poster.pdf)). Long-term evidence is thin ([XR open problem](https://www.emergentmind.com/open-problems/long-term-practicality-of-xr-exergames-beyond-novelty)).
-- **Peripheral and setup friction** (Ring Fit leg strap slipping, hardware lock-in). MotionQuest's phone-only setup avoids this, but it still has to manage the 2 m distance and framing.
+- **Peripheral and setup friction** (Ring Fit leg strap slipping, hardware lock-in). Joynetic's phone-only setup avoids this, but it still has to manage the 2 m distance and framing.
 
 ## C. Session length benchmarks
 - Ring Fit: about 15–30 min per session (review-reported).
 - Mobile games in general: top-tier average session is about 8–9 min, median about 5–6 min ([GameAnalytics 2025](https://gameindustrylibrary.com/documents/gameanalytics-mobile-gaming-benchmarks-2025)).
 - Fitness Boxing lets players pick a daily workout length, with bite-sized fallbacks.
-- **Implication:** MotionQuest's 3–3.5 min stages are a good single "round". Chaining 3–4 rounds makes a natural 10–15 min session, with an option to stop after one.
+- **Implication:** Joynetic's 3–3.5 min stages are a good single "round". Chaining 3–4 rounds makes a natural 10–15 min session, with an option to stop after one.
 
 ## D. India: social, virality, family
 - **Discovery is social.** The top discovery channels are social media (58.7%), short-video apps (46.6%) and influencers or streamers (45.3%) ([Niko Partners via Outlook Respawn](https://respawn.outlookindia.com/amp/story/gaming/gaming-news/niko-partners-why-its-time-to-enter-indias-gaming-market), [Niko substack](https://substack.nikopartners.com/p/indias-gaming-market-surpasses-1)).
@@ -45,12 +45,12 @@ story or RPG progression (Ring Fit), a daily habit loop (Fitness Boxing), music 
 ## E. Monetisation that works (and India's constraints)
 - **Hardware plus subscription** funding steady content: Nex Play Pass at $49 per 3 months or $89 a year ([allmind](https://allmind.ai/news/88dc7a30401dcfc45ed82caac7721efe9423b56251efc9aa0eba49b9b1a03761)). **Premium plus subscription**: Supernatural at $20/mo, Just Dance+. **One-time premium**: Ring Fit, Fitness Boxing, Beat Saber plus DLC song packs.
 - **India specifics.** ARPU is about $2–3 against more than $200 in the US. Small transactions (₹15–20) are what Indians are comfortable with. 74.9% of gamers make non-RMG IAP purchases, and UPI handles more than ₹10,000 cr a month of game spend ([Business Today](https://www.businesstoday.in/tech-today/news/story/non-rmg-games-set-to-surge-in-india-3-in-4-gamers-already-spending-arpu-just-3-says-report-496006-2025-09-27), [Outlook Respawn ARPU](https://respawn.outlookindia.com/gaming/gaming-originals/is-indias-low-gaming-arpu-sustainable-for-publishers), [Outlook Respawn UPI](https://respawn.outlookindia.com/gaming/gaming-news/indias-online-gaming-spend-hits-10000-crore-a-month)). 80% use UPI, and many hold several subscriptions ([Outlook Money / Lumikai](https://www.outlookmoney.com/banking/majority-of-indians-pay-for-online-content-gaming-leads-in-wallet-share-says-lumikai)).
-- **Fit with MotionQuest.** Low-priced Google Play subscriptions (monthly and annual) plus B2B gym distribution (Gym Crew) match these constraints. Cosmetic unlocks earned through play, as in Fitness Boxing's outfits, avoid pay-to-win. AGENTS.md rule 11 applies: Google Play billing only, and no nudges during a run.
+- **Fit with Joynetic.** Low-priced Google Play subscriptions (monthly and annual) plus B2B gym distribution (Gym Crew) match these constraints. Cosmetic unlocks earned through play, as in Fitness Boxing's outfits, avoid pay-to-win. AGENTS.md rule 11 applies: Google Play billing only, and no nudges during a run.
 
-## F. Lessons for designing two NEW original MotionQuest modes
+## F. Lessons for designing two NEW original Joynetic modes
 1. **Make it readable in one second, then add a long-term layer.** The Nex top titles and Wii Sports read instantly. Give each new mode a single obvious verb (for example "hold the shape", "hit on the beat") and a progression or mastery layer beyond it, such as star ratings per stage, a personal best, or a story map like Ring Fit's.
 2. **Build a pose-matching ("mirror") mode and a rhythm mode before anything else.** The most-played Nex title is mirror-themed (its exact mechanic is not verified), and music and rhythm power Just Dance, Beat Saber and Supernatural. Both fit MediaPipe's strengths: whole-body static shapes and timed gross movements, not fine precision. Keep every song, pose set and visual original.
-3. **Design for forgiving tracking.** Precision complaints killed Kinect and still hurt Just Dance on phones. Use generous windows and judge outcomes on held poses or on timing within ±150–250 ms rather than on exact angles. Show a live silhouette or framing aid. MotionQuest's existing "tracking failure slows the game, never costs lives" rule is a differentiator, so keep it in both modes.
+3. **Design for forgiving tracking.** Precision complaints killed Kinect and still hurt Just Dance on phones. Use generous windows and judge outcomes on held poses or on timing within ±150–250 ms rather than on exact angles. Show a live silhouette or framing aid. Joynetic's existing "tracking failure slows the game, never costs lives" rule is a differentiator, so keep it in both modes.
 4. **Ship family and pass-the-phone play on day one.** Camera solo-only is a top Just Dance complaint, and Nex is built for party play. A turn-based "pass and play" mode (one tracked body at a time, which suits single-person MediaPipe Pose) with a shared scoreboard gives family and festival play without multi-person tracking.
 5. **Generate a share-ready clip, privately.** Indian discovery runs on Reels and Shorts. Video must never leave the device, so offer an opt-in, on-device rendered result card or stylised avatar replay built from landmarks, never camera frames. The player chooses to share it, and there is no automatic upload.
 6. **Fit both the 3-minute round and the 10–15 minute session.** Keep rounds at about 3 min, the mobile norm, and chain them into an optional daily set. Copy Fitness Boxing's cheap "keep the streak" option (a 1-round mini session). Skip its compulsive prompts and unlock gating: unlock moves through play, never through gated daily chores.

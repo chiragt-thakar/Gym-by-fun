@@ -3,8 +3,8 @@
 import 'dart:async';
 
 import 'package:motion_core/motion_core.dart';
-import 'package:motionquest/services/pose_service.dart';
-import 'package:motionquest/services/settings.dart';
+import 'package:joynetic/services/pose_service.dart';
+import 'package:joynetic/services/settings.dart';
 
 class ReplayPoseSource implements PoseSource {
   ReplayPoseSource(this.recorded, {this.permission = true});
@@ -25,6 +25,7 @@ class ReplayPoseSource implements PoseSource {
   Future<String> start({
     DeviceTier tier = DeviceTier.mid,
     bool selfView = false,
+    bool multiPerson = false,
   }) async {
     final error = nextStartError;
     nextStartError = null;

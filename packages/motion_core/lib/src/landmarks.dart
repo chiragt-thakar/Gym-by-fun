@@ -36,7 +36,7 @@ class Landmark {
       'Landmark(${x.toStringAsFixed(3)}, ${y.toStringAsFixed(3)}, v=${visibility.toStringAsFixed(2)})';
 }
 
-/// MediaPipe pose landmark indices that MotionQuest uses.
+/// MediaPipe pose landmark indices that Joynetic uses.
 abstract final class Lm {
   static const nose = 0;
   static const leftShoulder = 11;
@@ -51,8 +51,43 @@ abstract final class Lm {
   static const rightKnee = 26;
   static const leftAnkle = 27;
   static const rightAnkle = 28;
+  static const leftPinky = 17;
+  static const rightPinky = 18;
+  static const leftIndex = 19;
+  static const rightIndex = 20;
+  static const leftThumb = 21;
+  static const rightThumb = 22;
+  static const leftHeel = 29;
+  static const rightHeel = 30;
+  static const leftFootIndex = 31;
+  static const rightFootIndex = 32;
 
   static const count = 33;
+
+  /// The torso: the minimum that must be seen for tracking to be usable.
+  /// Everything else (head, arms, legs) is checked by the detector that
+  /// needs it.
+  static const core = [leftShoulder, rightShoulder, leftHip, rightHip];
+
+  /// Left/right index pairs, for canonicalising a mirrored frame.
+  static const pairs = <(int, int)>[
+    (1, 4),
+    (2, 5),
+    (3, 6),
+    (7, 8),
+    (9, 10),
+    (leftShoulder, rightShoulder),
+    (leftElbow, rightElbow),
+    (leftWrist, rightWrist),
+    (leftPinky, rightPinky),
+    (leftIndex, rightIndex),
+    (leftThumb, rightThumb),
+    (leftHip, rightHip),
+    (leftKnee, rightKnee),
+    (leftAnkle, rightAnkle),
+    (leftHeel, rightHeel),
+    (leftFootIndex, rightFootIndex),
+  ];
 
   /// Points that must be visible for the full-body quality check.
   static const fullBody = [
@@ -109,6 +144,7 @@ class PoseFrame {
     this.imageWidth,
     this.imageHeight,
     this.inferenceMs,
+    this.others = const [],
   }) : assert(landmarks.isEmpty || landmarks.length == Lm.count);
 
   /// Capture timestamp on the device's monotonic clock, in milliseconds.
@@ -124,7 +160,20 @@ class PoseFrame {
   /// Native inference time for this frame, if reported.
   final double? inferenceMs;
 
+  /// Other people the estimator saw in the same image (33 landmarks each),
+  /// when it runs with more than one pose. `SubjectLock` picks the primary
+  /// player; everything downstream sees one body. Never recorded.
+  final List<List<Landmark>> others;
+
   bool get hasPerson => landmarks.isNotEmpty;
+
+  /// Width / height of the analysed image (3:4 portrait when unknown).
+  /// Normalised x and y have different pixel scales; multiply an x distance
+  /// by this to compare it with a y distance.
+  double get aspect {
+    final w = imageWidth, h = imageHeight;
+    return w != null && h != null && h > 0 ? w / h : 0.75;
+  }
 
   Landmark operator [](int i) => landmarks[i];
 
@@ -159,30 +208,39 @@ class PoseFrame {
       );
 
   /// Decodes the flat `[t, w, h, inf, x0, y0, z0, v0, x1, ...]` list the
-  /// native bridge sends over the EventChannel.
+  /// native bridge sends over the EventChannel. When the estimator reports
+  /// several people, their 33-landmark blocks follow one another; the first
+  /// becomes [landmarks] and the rest [others]. A truncated trailing block
+  /// is ignored.
   factory PoseFrame.fromFlat(List<dynamic> flat) {
     final t = (flat[0] as num).toInt();
     final w = (flat[1] as num).toInt();
     final h = (flat[2] as num).toInt();
     final inf = (flat[3] as num).toDouble();
-    final lms = <Landmark>[];
-    if (flat.length >= 4 + Lm.count * 4) {
-      for (var i = 0; i < Lm.count; i++) {
-        final o = 4 + i * 4;
-        lms.add(Landmark(
+    const block = Lm.count * 4;
+    final poses = (flat.length - 4) ~/ block;
+    List<Landmark> pose(int p) {
+      final base = 4 + p * block;
+      return List<Landmark>.generate(Lm.count, (i) {
+        final o = base + i * 4;
+        return Landmark(
           (flat[o] as num).toDouble(),
           (flat[o + 1] as num).toDouble(),
           (flat[o + 2] as num).toDouble(),
           (flat[o + 3] as num).toDouble(),
-        ));
-      }
+        );
+      }, growable: false);
     }
+
     return PoseFrame(
       timestampMs: t,
-      landmarks: lms,
+      landmarks: poses >= 1 ? pose(0) : const <Landmark>[],
       imageWidth: w > 0 ? w : null,
       imageHeight: h > 0 ? h : null,
       inferenceMs: inf >= 0 ? inf : null,
+      others: poses > 1
+          ? [for (var p = 1; p < poses; p++) pose(p)]
+          : const <List<Landmark>>[],
     );
   }
 }

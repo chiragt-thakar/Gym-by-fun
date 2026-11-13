@@ -82,7 +82,7 @@ const adventureId = 'adventure';
 const games = <GameInfo>[
   GameInfo(
     id: adventureId,
-    title: 'MotionQuest Trails',
+    title: 'Joynetic Trails',
     tagline: 'Run through four worlds with your whole body.',
     description:
         'The original adventure. Your explorer runs on their own; you duck '
@@ -118,6 +118,51 @@ const games = <GameInfo>[
         'Catch light orbs and open the gates.',
       ),
     ],
+  ),
+  GameInfo(
+    id: 'neon-slice',
+    title: 'Neon Slice',
+    tagline: 'Sweep your hands. Cut the glow. Leave the mines.',
+    description:
+        'Glowing fruit arcs up through a rain-dark arcade alley. A fast sweep '
+        'of either hand is a blade: cut through the fruit, string cuts into '
+        'a combo, and take three in one sweep for a bonus. Static mines fly '
+        'with the fruit and must be left alone. The pace climbs through '
+        'three acts, and twelve clean cuts in a row light a Neon Frenzy.',
+    genre: GameGenre.arcade,
+    extraGenre: GameGenre.sports,
+    accent: Color(0xFFFF3D9A),
+    deep: Color(0xFF1B0B2E),
+    icon: Icons.bolt_rounded,
+    minutes: '1–1.5 min a round',
+    intensity: 'Moderate',
+    stageNoun: 'Round',
+    isNew: true,
+    moves: [
+      MoveInfo(Icons.swipe_rounded, 'Arm sweep'),
+      MoveInfo(Icons.north_east_rounded, 'Reach high'),
+      MoveInfo(Icons.compare_arrows_rounded, 'Both hands'),
+    ],
+    howTo: [
+      HowToStep(
+        Icons.swipe_rounded,
+        'Sweep to slice',
+        'Move a hand quickly through a fruit. A resting hand cuts nothing.',
+      ),
+      HowToStep(
+        Icons.dangerous_rounded,
+        'Leave the mines',
+        'Dark, spiked mines cost points and switch your blades off for a moment.',
+      ),
+      HowToStep(
+        Icons.auto_awesome_rounded,
+        'Chain your cuts',
+        'Every cut in a row raises the multiplier. Three in one sweep is a bonus.',
+      ),
+    ],
+    comfort:
+        'Sweeps stay in front of and beside you, never toward the phone. '
+        'Keep about an arm and a half of space on each side.',
   ),
   GameInfo(
     id: 'craftguard',

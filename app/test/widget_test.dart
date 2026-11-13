@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:motionquest/app/router.dart';
-import 'package:motionquest/main.dart';
-import 'package:motionquest/services/settings.dart';
+import 'package:joynetic/app/router.dart';
+import 'package:joynetic/main.dart';
+import 'package:joynetic/services/settings.dart';
+import 'package:joynetic/widgets/brand.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> pumpApp(WidgetTester t) async {
@@ -15,7 +16,7 @@ Future<void> pumpApp(WidgetTester t) async {
   await t.pumpWidget(
     ProviderScope(
       overrides: [sharedPrefsProvider.overrideWithValue(prefs)],
-      child: const MotionQuestApp(),
+      child: const JoyneticApp(),
     ),
   );
   await t.pumpAndSettle();
@@ -26,7 +27,7 @@ void main() {
     'a new player lands on the welcome screen and can switch language',
     (t) async {
       await pumpApp(t);
-      expect(find.text('MotionQuest'), findsOneWidget);
+      expect(find.byType(JoyneticLogo), findsOneWidget);
       expect(find.text('Your body is the controller.'), findsOneWidget);
       await t.tap(find.text('ગુજરાતી'));
       await t.pumpAndSettle();
@@ -65,7 +66,7 @@ void main() {
   ) async {
     await pumpApp(t);
     final container = ProviderScope.containerOf(
-      t.element(find.byType(MotionQuestApp)),
+      t.element(find.byType(JoyneticApp)),
     );
     container.read(routerProvider).go('/join?code=iron-ab12cd');
     await t.pumpAndSettle();

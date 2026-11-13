@@ -112,7 +112,7 @@ export async function buildWeeklyReport(ctx: AppContext, gymId: string, now: Dat
 
 export function formatReport(r: WeeklyReport): string {
   const lines = [
-    `*${r.gymName} — MotionQuest weekly report (${r.week})*`,
+    `*${r.gymName} — Joynetic weekly report (${r.week})*`,
     '',
     `Active members: ${r.activeMembers} of ${r.members} sharing`,
     `Home sessions: ${r.sessions} · ${r.activeMinutes} active minutes`,

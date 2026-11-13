@@ -9,6 +9,8 @@ import '../l10n/strings.dart';
 import '../services/settings.dart';
 import '../widgets/common.dart';
 
+/// First launch. One idea (your body is the controller), three honest
+/// promises, the language, one button.
 class WelcomeScreen extends ConsumerWidget {
   const WelcomeScreen({super.key});
 
@@ -33,36 +35,62 @@ class WelcomeScreen extends ConsumerWidget {
                       children: [
                         const StepProgress(current: 0, total: 3),
                         const Spacer(),
-                        const Center(child: _LanternMark()),
-                        const SizedBox(height: 16),
-                        Text(
-                          'MotionQuest',
-                          style: Theme.of(context).textTheme.displaySmall,
-                          textAlign: TextAlign.center,
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: JoyneticLogo(
+                            size: 76,
+                            stacked: true,
+                            glow: true,
+                          ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 10),
                         Text(
                           str.t('tagline'),
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(color: Lantern.glow),
-                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 20),
+                        const _Promise(
+                          Icons.timer_outlined,
+                          'Three to fifteen minutes a session',
+                        ),
+                        const _Promise(
+                          Icons.lock_outline_rounded,
+                          'Your camera stays on this phone',
+                        ),
+                        const _Promise(
+                          Icons.favorite_outline_rounded,
+                          'A game, not medical advice',
                         ),
                         const Spacer(),
                         Text(
                           str.t('choose_language'),
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyLarge,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: Lantern.fog),
                         ),
-                        const SizedBox(height: 12),
-                        for (final l in AppLanguage.values)
-                          BigButton(
-                            l.label,
-                            secondary: s.language != l,
-                            icon: s.language == l ? Icons.check : null,
-                            onPressed: () => ref
-                                .read(settingsProvider.notifier)
-                                .update((x) => x.copyWith(language: l)),
-                          ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final l in AppLanguage.values)
+                              ChoiceChip(
+                                key: ValueKey('language-${l.name}'),
+                                selected: s.language == l,
+                                label: Text(
+                                  l.label,
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 8,
+                                ),
+                                onSelected: (_) => ref
+                                    .read(settingsProvider.notifier)
+                                    .update((x) => x.copyWith(language: l)),
+                              ),
+                          ],
+                        ),
                         const SizedBox(height: 16),
                         BigButton(
                           str.t('continue'),
@@ -98,7 +126,7 @@ class _AgeGateState extends ConsumerState<AgeGateScreen> {
       children: [
         const StepProgress(current: 1, total: 3),
         Text(
-          tr('MotionQuest is for adults aged 18 and over.'),
+          tr('Joynetic is for adults aged 18 and over.'),
           style: Theme.of(context).textTheme.headlineMedium,
         ),
         const SizedBox(height: 16),
@@ -113,7 +141,7 @@ class _AgeGateState extends ConsumerState<AgeGateScreen> {
             icon: Icons.do_not_disturb_on,
             child: Text(
               tr(
-                'Sorry — MotionQuest is only for adults right now. Thanks for your interest!',
+                'Sorry — Joynetic is only for adults right now. Thanks for your interest!',
               ),
               style: const TextStyle(fontSize: 19),
             ),
@@ -234,23 +262,26 @@ class _ReadinessState extends ConsumerState<ReadinessScreen> {
   }
 }
 
-/// Brand mark: a chunky lantern medallion (orange flame on a teal ring).
-class _LanternMark extends StatelessWidget {
-  const _LanternMark();
+/// One short promise on the welcome screen: an icon and a line.
+class _Promise extends StatelessWidget {
+  const _Promise(this.icon, this.text);
+  final IconData icon;
+  final String text;
 
   @override
-  Widget build(BuildContext context) => Container(
-    width: 96,
-    height: 96,
-    decoration: BoxDecoration(
-      color: Lantern.canopy,
-      shape: BoxShape.circle,
-      border: Border.all(color: Lantern.scarf, width: 5),
-    ),
-    child: const Icon(
-      Icons.local_fire_department_rounded,
-      size: 58,
-      color: Lantern.glow,
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 5),
+    child: Row(
+      children: [
+        Icon(icon, size: 20, color: Lantern.scarf),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            tr(text),
+            style: const TextStyle(fontSize: 16, color: Lantern.parchment),
+          ),
+        ),
+      ],
     ),
   );
 }

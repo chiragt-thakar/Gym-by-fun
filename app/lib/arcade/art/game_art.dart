@@ -7,6 +7,7 @@ import 'duel_art.dart';
 import 'lumen_art.dart';
 import 'mela_art.dart';
 import 'pataka_art.dart';
+import 'slice_art.dart';
 import 'taal_art.dart';
 
 /// Original, offline preview art for a game. [variant] picks one of four
@@ -77,6 +78,8 @@ class _ArtPainter extends CustomPainter {
         cricketPreview(c, s, variant);
       case 'lumen':
         lumenPreview(c, s, variant);
+      case 'neon-slice':
+        slicePreview(c, s, variant);
     }
   }
 
@@ -131,6 +134,12 @@ List<String> previewCaptions(String gameId) => switch (gameId) {
     'Lean to turn the conduit',
     'Connected: bend to weld',
     'Your conservatory comes back to life',
+  ],
+  'neon-slice' => const [
+    'A fast sweep is a blade',
+    'Either hand, high or wide',
+    'Leave the static mines',
+    'Twelve in a row: Neon Frenzy',
   ],
   _ => const ['', '', '', ''],
 };

@@ -1,0 +1,49 @@
+{
+  "game": "neon-slice",
+  "schemaVersion": 1,
+  "version": 1,
+  "stages": [
+    {
+      "id": "first-cut",
+      "name": "First Cut",
+      "blurb": "Glow fruit rises one at a time. Sweep a hand through each one. No mines.",
+      "durationMs": 60000,
+      "startPerMin": 20,
+      "peakPerMin": 34,
+      "bombShare": 0,
+      "waveShare": 0.15,
+      "flightMs": 2600,
+      "radius": 0.38,
+      "minSpeed": 1.8,
+      "seed": 101
+    },
+    {
+      "id": "night-market",
+      "name": "Night Market",
+      "blurb": "Waves of two and three, and the first static mines. Cut the bright ones, leave the dark ones.",
+      "durationMs": 75000,
+      "startPerMin": 24,
+      "peakPerMin": 44,
+      "bombShare": 0.22,
+      "waveShare": 0.35,
+      "flightMs": 2400,
+      "radius": 0.35,
+      "minSpeed": 2.0,
+      "seed": 211
+    },
+    {
+      "id": "overdrive",
+      "name": "Overdrive",
+      "blurb": "Fast arcs, big waves and mines in the middle of them. One sweep can take three.",
+      "durationMs": 90000,
+      "startPerMin": 28,
+      "peakPerMin": 56,
+      "bombShare": 0.34,
+      "waveShare": 0.5,
+      "flightMs": 2150,
+      "radius": 0.33,
+      "minSpeed": 2.2,
+      "seed": 307
+    }
+  ]
+}

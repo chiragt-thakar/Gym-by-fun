@@ -1,4 +1,4 @@
-# Game C: MIRROR MELA, an AR mirror arcade (MotionQuest mode)
+# Game C: MIRROR MELA, an AR mirror arcade (Joynetic mode)
 
 *Tagline: "The fair comes to you."* (Mela = fair, a secular word used across India.) Working
 name; check trademark before launch. You see yourself mirrored on screen, or a landmark-drawn
@@ -253,7 +253,7 @@ same targets relative to their own body.
 - During a round, the last **15 s of landmarks** sit in a RAM ring buffer: 15 s × 30 fps × 33
   points × (x, y, visibility) ≈ 180 KB. The buffer is dropped when the session ends.
 - "Make my clip" renders **on device** (MediaCodec): avatar figure + game objects + score +
-  combo + watermark "MotionQuest • Mirror Mela", 720×1280, 15 s, ≈ 3–4 MB MP4, Reels/Shorts
+  combo + watermark "Joynetic • Mirror Mela", 720×1280, 15 s, ≈ 3–4 MB MP4, Reels/Shorts
   ready. The player picks an avatar skin for the clip.
 - Sharing uses the Android share sheet and needs a tap. **No auto upload. No camera pixels in any
   path. No landmarks sent to the server.** The rendered MP4 is saved to app cache and deleted
@@ -265,14 +265,14 @@ same targets relative to their own body.
 
 ## 12. Free and Premium (Google Play billing only; no nudges during play, rule 11)
 
-| Free (unlimited play) | Premium (existing MotionQuest subscription) |
+| Free (unlimited play) | Premium (existing Joynetic subscription) |
 |---|---|
 | Bubble Bazaar: all difficulties, 2 stalls | All 3 modes on all 6 stalls |
 | Orbit: 1 stall | Rang Wall: full 40-wall library + 4 new walls/month (JSON content packs) |
 | Rang Wall: 3 walls | Premium cosmetic set (6 skins, 4 trails), clip frame themes |
 | Daily Remix, share clips, pass-and-play (Bubble Bazaar) | Pass-and-play in all modes, weekly Crew challenge boards |
 
-Pricing suggestion, for the team to decide: fold into the MotionQuest plan (e.g. ₹99/month,
+Pricing suggestion, for the team to decide: fold into the Joynetic plan (e.g. ₹99/month,
 ₹699/year). Shown only on the store screen and the post-session results screen, never during a
 round. Gym-code access unlocks Premium for gym members.
 

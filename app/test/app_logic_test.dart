@@ -9,14 +9,14 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:motion_core/motion_core.dart';
 import 'package:motion_core/testing.dart';
-import 'package:motionquest/app/router.dart';
-import 'package:motionquest/game/forest_game.dart';
-import 'package:motionquest/l10n/strings.dart';
-import 'package:motionquest/screens/quest_screen.dart';
-import 'package:motionquest/services/api_client.dart';
-import 'package:motionquest/services/pose_service.dart';
-import 'package:motionquest/services/session_queue.dart';
-import 'package:motionquest/services/settings.dart';
+import 'package:joynetic/app/router.dart';
+import 'package:joynetic/game/forest_game.dart';
+import 'package:joynetic/l10n/strings.dart';
+import 'package:joynetic/screens/quest_screen.dart';
+import 'package:joynetic/services/api_client.dart';
+import 'package:joynetic/services/pose_service.dart';
+import 'package:joynetic/services/session_queue.dart';
+import 'package:joynetic/services/settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'fakes.dart';
@@ -239,7 +239,7 @@ void main() {
   test('frame watchdog pauses tracking when frames stop (rule 5)', () async {
     final s = SyntheticSession(SyntheticBody(seed: 4));
     final cal = s.calibrate();
-    final frames = s.record([const ScriptStep(Action.idle, 1000)]).frames;
+    final frames = s.record([const ScriptStep(Action.idle, 2000)]).frames;
     final src = ReplayPoseSource(frames.take(20).toList());
     final session = MotionSession(
       src,
@@ -262,11 +262,19 @@ void main() {
     expect(paused, hasLength(1));
     expect(paused.single.issue, TrackingIssue.noPerson);
 
-    // Frames return: tracking resumes.
+    // Frames return: the stall clears at once, and play resumes after the
+    // tracker has seen the player steadily again (no instant un-pause on a
+    // single frame).
     src.push(frames[20]);
     await Future<void>.delayed(Duration.zero);
     expect(session.stalled, isFalse);
+    expect(events.last, isA<TrackingPaused>());
+    for (final f in frames.skip(21).take(20)) {
+      src.push(f);
+    }
+    await Future<void>.delayed(Duration.zero);
     expect(events.last, isA<TrackingResumed>());
+    expect(events.whereType<TrackingResumed>(), hasLength(1));
     await sub.cancel();
     await session.dispose();
   });

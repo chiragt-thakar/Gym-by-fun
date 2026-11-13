@@ -517,7 +517,7 @@ authored pool (deterministic). Personal bests per mode × difficulty; weekly "zo
 
 ### 5.10 Social
 Last **15 s of landmarks** in RAM (15 × 30 × 33 × (x,y,vis) ≈ 180 KB) → "Make my clip": avatar + objects + score +
-watermark "MotionQuest • Mirror Mela", 720×1280, 15 s, ≈ 3–4 MB MP4 via `native/clip_encoder`; share sheet only, no
+watermark "Joynetic • Mirror Mela", 720×1280, 15 s, ≈ 3–4 MB MP4 via `native/clip_encoder`; share sheet only, no
 auto upload, cache deleted after 24 h unless saved. Static Rang Wall art card + result card. **Pass-and-play** 2–4 adults,
 one tracked at a time, 60 s Bubble Bazaar each, 10 s quick calibration per player. Copy: "I scored 18,420 at Mirror Mela".
 
@@ -527,7 +527,7 @@ Uttarayan Kite Terrace (kites as targets; catch-and-place "reel in"), Monsoon Co
 content), Onam/Pongal Harvest Field. No deity imagery or ritual gestures.
 
 ### 5.12 Free / Premium (Google Play only; offer only on store screen and post-session results — never during a round, never after a loss)
-| Free (unlimited) | Premium (existing MotionQuest Premium; gym code unlocks) |
+| Free (unlimited) | Premium (existing Joynetic Premium; gym code unlocks) |
 |---|---|
 | Bubble Bazaar all difficulties, 2 stalls; Orbit 1 stall; Rang Wall 3 walls; Daily Remix; clips; pass-and-play (Bubble Bazaar) | All 3 modes × 6 stalls; Rang Wall 40-wall library + 4 new/month (JSON packs); premium cosmetic set (6 skins, 4 trails), clip frames; pass-and-play all modes; weekly Crew boards |
 
@@ -682,7 +682,7 @@ broadcaster score-bug looks; no "pick tonight's winner" (fantasy/real-money adja
 no trademarked keywords in Play metadata.
 
 ### 6.12 Free / Premium
-| Free | Premium (MotionQuest Premium; gym members free) |
+| Free | Premium (Joynetic Premium; gym members free) |
 |---|---|
 | Nets, Over of the Day, Bowl-Out, Raid Rush taster, Gully Lane, 3 bats, 2 kits, joining a gym crew when granted | Chase, Gully Match, Fielding Drill, full Raid Rush, Shuttle Rally, all grounds, all cosmetic tracks, private crews/leagues, festival events |
 Access checked at mode select, never mid-match; no paywall on a loss screen; no links outside Play.
@@ -849,7 +849,7 @@ confetti + score, watermark **"Made with landmarks only — no camera video"**. 
 | New Year / Sangeet season | "Sangeet Showdown" playlist | Baraat Shoulders, Selfie Stick | sequin vest |
 
 ### 7.11 Free / Premium
-| Free | Premium (MotionQuest Premium; festival packs as small IAP — owner decision §10) |
+| Free | Premium (Joynetic Premium; festival packs as small IAP — owner decision §10) |
 |---|---|
 | 12 core poses (#1–5, 7, 8 LI, 11, 13, 14, 18, 25), 2 Mela Map stalls, Pass-the-Pataka ≤ 4 players, Pose of the Week, watermarked clips | all 24+ poses + festival drops, full Mela Map, 8-player party, Team Toli, Copy-Cat Chain, all skins, Duo Frame where supported |
 No ads during play; LI variants, support cues and accessibility never paywalled; Play billing only.
@@ -1027,7 +1027,7 @@ Each milestone ends per AGENTS.md: lint clean, tests passing, `docs/progress.md`
 | 4 | **Sports/inclusion headwear** (sports hijab, patka) as player-chosen avatar options (never costumes/unlockables/NPCs)? | Yes, with cultural reviewers' sign-off |
 | 5 | **Trademark / Play Store search** for "Mirror Mela", "Tapeball Tamasha", "Pataka Pose" (backups: Backyard Boundary, Gully Games Night, Freeze Bazaar) | Run before any art with the name; legal review of cricket commentary script and icons |
 | 6 | **Default self-view mode**: Avatar (this plan) vs Mirror (Game C draft)? | Avatar default; track Avatar vs Mirror usage and revisit after beta |
-| 7 | **Pricing**: drafts proposed ₹99/₹699, ₹129/₹699, ₹79–99/₹499–599. One MotionQuest Premium price? Festival packs as separate IAP (₹19–49)? Lifetime IAP? | One Premium price for all games (per `docs/stages-roadmap.md` §7); decide festival IAP after A/B |
+| 7 | **Pricing**: drafts proposed ₹99/₹699, ₹129/₹699, ₹79–99/₹499–599. One Joynetic Premium price? Festival packs as separate IAP (₹19–49)? Lifetime IAP? | One Premium price for all games (per `docs/stages-roadmap.md` §7); decide festival IAP after A/B |
 | 8 | **VO** scope: chirps + text at launch vs full en/hi/gu VO for Kavi + Mithu (~1.5–2.5 MB per language, on-demand)? Male/female commentator voices for D? | Chirps + text at M3/M4; VO packs at M6 if budget allows |
 | 9 | **Party guests**: nickname-only guests with an 18+ confirmation at party start — acceptable, or require each guest to confirm? | Party-start confirmation by account holder + adult-only copy and store art |
 | 10 | **Silhouette** on non-segmentation phones: ship landmark-capsule silhouette, or hide the option? | Ship capsule fallback (same privacy, every tier) |

@@ -1,8 +1,8 @@
 {
-  "name": "motionquest-server",
+  "name": "joynetic-server",
   "version": "0.1.0",
   "private": true,
-  "description": "MotionQuest backend: TypeScript Fastify modular monolith (identity, progress, gyms, billing, content, reports).",
+  "description": "Joynetic backend: TypeScript Fastify modular monolith (identity, progress, gyms, billing, content, reports).",
   "type": "module",
   "engines": {
     "node": ">=22"

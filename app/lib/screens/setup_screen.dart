@@ -37,16 +37,17 @@ class SetupScreen extends ConsumerStatefulWidget {
 class _SetupState extends ConsumerState<SetupScreen> {
   static const _framing = Framing();
   static const _goodHoldMs = 1500;
+  static const _partialHoldMs = 8000;
   static const _countdownMs = 3000;
   static const _repeatHintMs = 6000;
 
   MotionSession? _session;
-  StreamSubscription<PoseFrame>? _sub;
-  final _smoother = LandmarkSmoother();
+  StreamSubscription<TrackedFrame>? _sub;
   final _filter = FramingFilter();
   PoseFrame? _frame;
   FramingAdvice _advice = const FramingAdvice(FramingFix.findMe);
   int? _goodSince;
+  int? _usableSince;
   int? _startedAt;
   int? _autoAt;
   int _now = 0;
@@ -71,6 +72,7 @@ class _SetupState extends ConsumerState<SetupScreen> {
     final ok = await session.start(
       tier: DeviceTier.mid,
       selfView: s.cameraMirror,
+      multiPerson: s.multiPerson,
     );
     if (!mounted) {
       await session.dispose();
@@ -87,26 +89,40 @@ class _SetupState extends ConsumerState<SetupScreen> {
     }
     _session = session;
     _mirror = session.selfView;
-    _sub = session.frames.listen(_onFrame);
+    _sub = session.tracked.listen(_onFrame);
     setState(() => _starting = false);
   }
 
-  void _onFrame(PoseFrame f) {
+  void _onFrame(TrackedFrame t) {
     if (_finishing || !mounted) return;
-    final ts = f.timestampMs;
+    final ts = t.timestampMs;
     _now = ts;
     _startedAt ??= ts;
-    final q = const QualityGate().check(f);
-    final shown = _filter.update(_framing.advise(f, q), ts);
+    final shown = _filter.update(_framing.advise(t.raw, t.quality), ts);
+    // A whole-body view is ideal. A room where only the feet will not fit
+    // still works (squats are read from the thighs), so a steady view that
+    // is cut off at the bottom alone is accepted after a longer wait. Any
+    // other problem (drifting out sideways, too dark) stops the countdown.
+    final partial =
+        t.playable &&
+        shown.cut.length == 1 &&
+        shown.cut.contains(FrameEdge.bottom);
     if (shown.ok) {
       _goodSince ??= ts;
     } else {
       _goodSince = null;
-      _autoAt = null; // left the frame: the countdown waits
+      if (!partial) _autoAt = null; // left the frame: the countdown waits
+    }
+    if (shown.ok || partial) {
+      _usableSince ??= ts;
+    } else {
+      _usableSince = null;
     }
     final benchDone = ts - _startedAt! >= 3000;
     final ready =
-        benchDone && _goodSince != null && ts - _goodSince! >= _goodHoldMs;
+        benchDone &&
+        ((_goodSince != null && ts - _goodSince! >= _goodHoldMs) ||
+            (_usableSince != null && ts - _usableSince! >= _partialHoldMs));
     final voice = ref.read(voiceProvider);
     if (ready && _autoAt == null) {
       _autoAt = ts + _countdownMs;
@@ -120,7 +136,7 @@ class _SetupState extends ConsumerState<SetupScreen> {
     }
     if (shown.ok) _spokenFix = null;
     setState(() {
-      _frame = _smoother.smooth(f);
+      _frame = t.frame;
       _advice = shown;
       _ready = ready;
     });
@@ -164,6 +180,23 @@ class _SetupState extends ConsumerState<SetupScreen> {
       return ScreenScaffold(
         title: tr('Set up your space'),
         children: [
+          // Why the camera, before Android asks for it.
+          Text(
+            tr('Your camera is the controller'),
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            tr(
+              'Joynetic watches how you move, so squats, leans and reaches play the game. That is the only thing the camera is used for.',
+            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyLarge?.copyWith(color: Lantern.fog),
+          ),
+          const SizedBox(height: 16),
+          const CameraTrustPanel(),
+          const SizedBox(height: 16),
           _Step(
             Icons.smartphone,
             tr(
@@ -199,7 +232,7 @@ class _SetupState extends ConsumerState<SetupScreen> {
               icon: Icons.videocam_off,
               child: Text(
                 tr(
-                  'Camera permission is needed to play. You can allow it in Android Settings → Apps → MotionQuest.',
+                  'Camera permission is needed to play. You can allow it in Android Settings → Apps → Joynetic.',
                 ),
                 style: const TextStyle(color: Lantern.warning, fontSize: 17),
               ),
@@ -294,7 +327,7 @@ class _SetupState extends ConsumerState<SetupScreen> {
                                   framingIcon(_advice.fix),
                                   size: 56,
                                   color: _advice.ok
-                                      ? Colors.greenAccent
+                                      ? Lantern.scarf
                                       : Lantern.warning,
                                 )),
                   ),
@@ -353,7 +386,7 @@ class _Countdown extends StatelessWidget {
           value: 1 - remainingMs / totalMs,
           strokeWidth: 8,
           strokeCap: StrokeCap.round,
-          color: Colors.greenAccent,
+          color: Lantern.scarf,
         ),
       ),
       Text(
@@ -364,13 +397,21 @@ class _Countdown extends StatelessWidget {
   );
 }
 
+/// One line of the placement guide: a quiet icon and a sentence.
 class _Step extends StatelessWidget {
   const _Step(this.icon, this.text);
   final IconData icon;
   final String text;
   @override
-  Widget build(BuildContext context) => LanternCard(
-    icon: icon,
-    child: Text(text, style: const TextStyle(fontSize: 18)),
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 7),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 24, color: Lantern.glow),
+        const SizedBox(width: 14),
+        Expanded(child: Text(text, style: const TextStyle(fontSize: 17))),
+      ],
+    ),
   );
 }

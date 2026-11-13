@@ -145,41 +145,426 @@ class AvatarJoints {
   }
 }
 
-/// Paints the original MotionQuest body avatar: rounded capsule limbs, a
-/// soft torso and a round head. With [outlineOnly] (camera mirror on) it is
-/// a light outline over the player's own image.
+/// How a game dresses the player's character. Every game has its own
+/// look so the cast is not one figure in different colours.
+class AvatarLook {
+  const AvatarLook({
+    this.skin = const Color(0xFFC98F6B),
+    this.hair = const Color(0xFF2A1D1A),
+    this.top = const Color(0xFF2F7D6B),
+    this.bottom = const Color(0xFF1D2530),
+    this.shoe = const Color(0xFFF3F5F7),
+    this.trim = const Color(0xFFC8F542),
+    this.hairStyle = HairStyle.short,
+    this.sleeves = true,
+    this.longLegs = true,
+    this.face = true,
+  });
+
+  /// A one-material figure (pose silhouettes, ghosts): [body] for the
+  /// clothes, [limb] for everything else, and no face.
+  const AvatarLook.mannequin(Color body, Color limb, Color accent)
+    : skin = limb,
+      hair = limb,
+      top = body,
+      bottom = body,
+      shoe = limb,
+      trim = accent,
+      hairStyle = HairStyle.short,
+      sleeves = true,
+      longLegs = true,
+      face = false;
+
+  final Color skin;
+  final Color hair;
+
+  /// Jersey / jacket, shorts or leggings, trainers.
+  final Color top;
+  final Color bottom;
+  final Color shoe;
+
+  /// Stripe, seams and sole: the game's accent.
+  final Color trim;
+  final HairStyle hairStyle;
+
+  /// Long sleeves (the forearm is in the top's colour) or bare forearms.
+  final bool sleeves;
+
+  /// Leggings to the ankle, or shorts with bare shins.
+  final bool longLegs;
+
+  /// Draw eyes, brows, nose and mouth.
+  final bool face;
+
+  AvatarLook copyWith({Color? trim, Color? top}) => AvatarLook(
+    skin: skin,
+    hair: hair,
+    top: top ?? this.top,
+    bottom: bottom,
+    shoe: shoe,
+    trim: trim ?? this.trim,
+    hairStyle: hairStyle,
+    sleeves: sleeves,
+    longLegs: longLegs,
+    face: face,
+  );
+}
+
+enum HairStyle { short, bun, crop, tied }
+
+/// Lighter (amount > 0) or darker (amount < 0) version of a colour.
+Color shade(Color c, double amount) => amount >= 0
+    ? Color.lerp(c, const Color(0xFFFFFFFF), amount.clamp(0.0, 1.0))!
+    : Color.lerp(c, const Color(0xFF05070A), (-amount).clamp(0.0, 1.0))!;
+
+/// A limb segment as a tapered capsule, shaded across its width so it reads
+/// as a rounded volume lit from the upper left. Drawn as a quad plus two
+/// end discs that share one gradient, so there are no seams.
+void _limb(
+  Canvas c,
+  Offset a,
+  Offset b,
+  double ra,
+  double rb,
+  Color color,
+  double opacity,
+) {
+  final d = b - a;
+  final len = d.distance;
+  // The normal that faces the light (upper left).
+  var n = len < 0.5
+      ? const Offset(-0.7071, -0.7071)
+      : Offset(-d.dy / len, d.dx / len);
+  if (n.dx + n.dy > 0) n = -n;
+  final paint = Paint()
+    ..shader = LinearGradient(
+      colors: [
+        shade(color, 0.22).withValues(alpha: opacity),
+        color.withValues(alpha: opacity),
+        shade(color, -0.38).withValues(alpha: opacity),
+      ],
+      stops: const [0, 0.42, 1],
+      // Runs from the lit edge to the shaded edge, across the limb.
+      transform: GradientRotation(math.atan2(-n.dy, -n.dx)),
+    ).createShader(
+      Rect.fromCircle(center: (a + b) / 2, radius: math.max(ra, rb)),
+    );
+  if (len >= 0.5) {
+    c.drawPath(
+      Path()
+        ..moveTo(a.dx + n.dx * ra, a.dy + n.dy * ra)
+        ..lineTo(b.dx + n.dx * rb, b.dy + n.dy * rb)
+        ..lineTo(b.dx - n.dx * rb, b.dy - n.dy * rb)
+        ..lineTo(a.dx - n.dx * ra, a.dy - n.dy * ra)
+        ..close(),
+      paint,
+    );
+  }
+  c.drawCircle(a, ra, paint);
+  c.drawCircle(b, rb, paint);
+}
+
+/// A sphere-like disc (heads, hands, joints) lit from the upper left.
+void _ball(Canvas c, Offset at, double r, Color color, double opacity) {
+  c.drawCircle(
+    at,
+    r,
+    Paint()
+      ..shader = RadialGradient(
+        center: const Alignment(-0.45, -0.5),
+        radius: 1.15,
+        colors: [
+          shade(color, 0.25).withValues(alpha: opacity),
+          color.withValues(alpha: opacity),
+          shade(color, -0.4).withValues(alpha: opacity),
+        ],
+        stops: const [0, 0.5, 1],
+      ).createShader(Rect.fromCircle(center: at, radius: r)),
+  );
+}
+
+/// A rounded, lit limb for other characters in the games (see [paintAvatar]
+/// for how the player's own figure uses it).
+void shadedLimb(Canvas c, Offset a, Offset b, double ra, double rb, Color color, {double opacity = 1}) =>
+    _limb(c, a, b, ra, rb, color, opacity);
+
+/// A rounded, lit ball: heads, hands, bodies.
+void shadedBall(Canvas c, Offset at, double r, Color color, {double opacity = 1}) =>
+    _ball(c, at, r, color, opacity);
+
+/// Paints the player's character from tracked joints.
+///
+/// It is drawn as a lit, rounded figure: tapered limbs shaded across their
+/// width, a shaped torso with a jersey stripe, shorts or leggings,
+/// trainers, hands, a neck and a head with hair and a face, and a soft
+/// contact shadow on the floor. [look] is the game's own kit; without one,
+/// [body] / [limb] / [accent] make a one-material mannequin (pose
+/// silhouettes and ghosts).
+///
+/// With [outlineOnly] (camera mirror on) it is a light outline over the
+/// player's own image, so the player sees themselves.
 void paintAvatar(
   Canvas c,
   AvatarJoints j, {
-  Color body = const Color(0xFF2E6B5A),
+  Color body = const Color(0xFF2F7D6B),
   Color limb = const Color(0xFF3E8C74),
-  Color outline = const Color(0xFF050B08),
-  Color accent = const Color(0xFFFF9A3C),
+  Color outline = const Color(0xFF05070A),
+  Color accent = const Color(0xFFC8F542),
+  AvatarLook? look,
   bool outlineOnly = false,
   double opacity = 1,
 }) {
   final u = j.unit;
   final p = j.p, v = j.vis;
   bool ok(int a) => v[a] > 0.35;
+  const lSh = AvatarJoints.lSh, rSh = AvatarJoints.rSh;
+  const lEl = AvatarJoints.lEl, rEl = AvatarJoints.rEl;
+  const lWr = AvatarJoints.lWr, rWr = AvatarJoints.rWr;
+  const lHip = AvatarJoints.lHip, rHip = AvatarJoints.rHip;
+  const lKn = AvatarJoints.lKn, rKn = AvatarJoints.rKn;
+  const lAn = AvatarJoints.lAn, rAn = AvatarJoints.rAn;
+  const head = AvatarJoints.head;
+
+  if (outlineOnly) {
+    _avatarOutline(c, j, accent, outline, opacity);
+    return;
+  }
+  final k = look ?? AvatarLook.mannequin(body, limb, accent);
+  final o = opacity;
+
+  // Contact shadow: where the feet meet the floor.
+  if (ok(lAn) && ok(rAn)) {
+    final foot = (p[lAn] + p[rAn]) / 2 + Offset(0, u * 0.16);
+    final w = (p[lAn] - p[rAn]).distance + u * 0.9;
+    final rect = Rect.fromCenter(center: foot, width: w, height: u * 0.3);
+    c.drawOval(
+      rect,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [
+            const Color(0xFF000000).withValues(alpha: 0.5 * o),
+            const Color(0x00000000),
+          ],
+        ).createShader(rect),
+    );
+  }
+
+  void seg(int a, int b, double ra, double rb, Color col) {
+    if (!ok(a) || !ok(b)) return;
+    // A dark under-shape keeps the figure readable on any backdrop.
+    _limb(c, p[a], p[b], ra + u * 0.03, rb + u * 0.03, outline, 0.55 * o);
+    _limb(c, p[a], p[b], ra, rb, col, o);
+  }
+
+  final shin = k.longLegs ? k.bottom : k.skin;
+  final forearm = k.sleeves ? k.top : k.skin;
+
+  // Back to front: legs, shoes, torso, arms, head.
+  seg(lHip, lKn, u * 0.17, u * 0.13, k.bottom);
+  seg(rHip, rKn, u * 0.17, u * 0.13, k.bottom);
+  seg(lKn, lAn, u * 0.125, u * 0.09, shin);
+  seg(rKn, rAn, u * 0.125, u * 0.09, shin);
+  for (final (an, out) in [(lAn, -1.0), (rAn, 1.0)]) {
+    if (!ok(an)) continue;
+    // Trainer: a short capsule pointing a little outward, with a sole.
+    final toe = p[an] + Offset(out * u * 0.2, u * 0.1);
+    final heel = p[an] + Offset(-out * u * 0.05, u * 0.07);
+    _limb(c, heel, toe, u * 0.115, u * 0.1, outline, 0.55 * o);
+    _limb(c, heel, toe, u * 0.1, u * 0.085, k.shoe, o);
+    c.drawLine(
+      heel + Offset(0, u * 0.085),
+      toe + Offset(0, u * 0.075),
+      Paint()
+        ..color = k.trim.withValues(alpha: o)
+        ..strokeWidth = math.max(1.5, u * 0.035)
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  if (ok(lSh) && ok(rSh) && ok(lHip) && ok(rHip)) {
+    final sl = p[lSh], sr = p[rSh], hl = p[lHip], hr = p[rHip];
+    final sc = (sl + sr) / 2, hc = (hl + hr) / 2;
+    final across = (sr - sl);
+    final aw = across.distance < 1 ? Offset(u * 0.7, 0) : across;
+    final ax = aw / aw.distance;
+    // Shoulders a little wider than the joints, a waist, then the hips.
+    final s0 = sl - ax * u * 0.12, s1 = sr + ax * u * 0.12;
+    final waist = Offset.lerp(sc, hc, 0.72)!;
+    final w0 = waist - ax * (hl - hr).distance * 0.62;
+    final w1 = waist + ax * (hl - hr).distance * 0.62;
+    final h0 = hl - ax * u * 0.1, h1 = hr + ax * u * 0.1;
+    Path torso(double grow) => Path()
+      ..moveTo(s0.dx - ax.dx * grow, s0.dy - grow)
+      ..quadraticBezierTo(sc.dx, sc.dy - u * 0.1 - grow, s1.dx + ax.dx * grow, s1.dy - grow)
+      ..quadraticBezierTo(w1.dx + ax.dx * (u * 0.06 + grow), w1.dy, h1.dx + ax.dx * grow, h1.dy + grow)
+      ..quadraticBezierTo(hc.dx, hc.dy + u * 0.16 + grow, h0.dx - ax.dx * grow, h0.dy + grow)
+      ..quadraticBezierTo(w0.dx - ax.dx * (u * 0.06 + grow), w0.dy, s0.dx - ax.dx * grow, s0.dy - grow)
+      ..close();
+    c.drawPath(torso(u * 0.035), Paint()..color = outline.withValues(alpha: 0.55 * o));
+    final box = torso(0).getBounds();
+    c.drawPath(
+      torso(0),
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            shade(k.top, 0.2).withValues(alpha: o),
+            k.top.withValues(alpha: o),
+            shade(k.top, -0.4).withValues(alpha: o),
+          ],
+          stops: const [0, 0.4, 1],
+        ).createShader(box),
+    );
+    // Shorts / waistband over the hips.
+    final band = Path()
+      ..moveTo(w0.dx - ax.dx * u * 0.04, w0.dy + u * 0.02)
+      ..lineTo(w1.dx + ax.dx * u * 0.04, w1.dy + u * 0.02)
+      ..quadraticBezierTo(h1.dx + ax.dx * u * 0.06, h1.dy, h1.dx, h1.dy + u * 0.1)
+      ..quadraticBezierTo(hc.dx, hc.dy + u * 0.2, h0.dx, h0.dy + u * 0.1)
+      ..quadraticBezierTo(h0.dx - ax.dx * u * 0.06, h0.dy, w0.dx - ax.dx * u * 0.04, w0.dy + u * 0.02)
+      ..close();
+    c.drawPath(
+      band,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            shade(k.bottom, 0.14).withValues(alpha: o),
+            shade(k.bottom, -0.3).withValues(alpha: o),
+          ],
+        ).createShader(band.getBounds()),
+    );
+    // The game's stripe across the chest, and a collar.
+    final chest = Offset.lerp(sc, hc, 0.3)!;
+    c.save();
+    c.clipPath(torso(0));
+    c.drawLine(
+      chest - ax * u,
+      chest + ax * u,
+      Paint()
+        ..color = k.trim.withValues(alpha: 0.95 * o)
+        ..strokeWidth = u * 0.085,
+    );
+    c.drawLine(
+      chest - ax * u + Offset(0, u * 0.09),
+      chest + ax * u + Offset(0, u * 0.09),
+      Paint()
+        ..color = k.trim.withValues(alpha: 0.4 * o)
+        ..strokeWidth = u * 0.03,
+    );
+    c.restore();
+  }
+
+  // Neck, then arms over the torso.
+  if (ok(head) && ok(lSh) && ok(rSh)) {
+    final sc = (p[lSh] + p[rSh]) / 2;
+    _limb(c, sc - Offset(0, u * 0.02), Offset.lerp(sc, p[head], 0.6)!, u * 0.09, u * 0.08, k.skin, o);
+  }
+  seg(lSh, lEl, u * 0.125, u * 0.1, k.top);
+  seg(rSh, rEl, u * 0.125, u * 0.1, k.top);
+  seg(lEl, lWr, u * 0.095, u * 0.075, forearm);
+  seg(rEl, rWr, u * 0.095, u * 0.075, forearm);
+  for (final w in [lWr, rWr]) {
+    if (!ok(w)) continue;
+    c.drawCircle(p[w], u * 0.115, Paint()..color = outline.withValues(alpha: 0.55 * o));
+    _ball(c, p[w], u * 0.095, k.skin, o);
+  }
+
+  if (ok(head)) {
+    final hc = p[head];
+    final r = u * 0.26;
+    c.drawCircle(hc, r + u * 0.03, Paint()..color = outline.withValues(alpha: 0.55 * o));
+    // Hair behind the face for the longer styles.
+    if (k.hairStyle == HairStyle.tied) {
+      _limb(c, hc + Offset(r * 0.5, -r * 0.2), hc + Offset(r * 0.95, r * 0.9), r * 0.3, r * 0.12, k.hair, o);
+    } else if (k.hairStyle == HairStyle.bun) {
+      _ball(c, hc + Offset(0, -r * 1.12), r * 0.36, k.hair, o);
+    }
+    _ball(c, hc, r, k.skin, o);
+    // Hair: a cap over the top of the head, with a hairline.
+    final cap = Path()
+      ..arcTo(Rect.fromCircle(center: hc, radius: r), math.pi * 1.02, math.pi * 0.96, true)
+      ..quadraticBezierTo(
+        hc.dx + r * 0.25,
+        hc.dy - r * (k.hairStyle == HairStyle.crop ? 0.72 : 0.5),
+        hc.dx - r * 0.99,
+        hc.dy - r * 0.06,
+      )
+      ..close();
+    c.drawPath(
+      cap,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [shade(k.hair, 0.22).withValues(alpha: o), shade(k.hair, -0.25).withValues(alpha: o)],
+        ).createShader(Rect.fromCircle(center: hc, radius: r)),
+    );
+    // Face: only when the head is big enough to read.
+    if (k.face && r >= 9) {
+      final ink = Paint()..color = const Color(0xFF1A1210).withValues(alpha: 0.9 * o);
+      final ey = hc.dy + r * 0.08;
+      for (final sx in [-1.0, 1.0]) {
+        final e = Offset(hc.dx + sx * r * 0.36, ey);
+        c.drawOval(Rect.fromCenter(center: e, width: r * 0.2, height: r * 0.25), ink);
+        c.drawCircle(e + Offset(-r * 0.03, -r * 0.05), r * 0.045, Paint()..color = Colors.white.withValues(alpha: 0.85 * o));
+        // Brow.
+        c.drawLine(
+          e + Offset(-r * 0.16, -r * 0.24),
+          e + Offset(r * 0.16, -r * 0.27 + sx * r * 0.02),
+          Paint()
+            ..color = shade(k.hair, -0.1).withValues(alpha: 0.9 * o)
+            ..strokeWidth = math.max(1.2, r * 0.07)
+            ..strokeCap = StrokeCap.round,
+        );
+      }
+      // Nose shadow and a calm mouth.
+      c.drawLine(
+        hc + Offset(r * 0.04, r * 0.2),
+        hc + Offset(r * 0.1, r * 0.42),
+        Paint()
+          ..color = shade(k.skin, -0.3).withValues(alpha: 0.7 * o)
+          ..strokeWidth = math.max(1, r * 0.06)
+          ..strokeCap = StrokeCap.round,
+      );
+      c.drawArc(
+        Rect.fromCenter(center: hc + Offset(0, r * 0.52), width: r * 0.55, height: r * 0.3),
+        math.pi * 0.15,
+        math.pi * 0.7,
+        false,
+        Paint()
+          ..color = shade(k.skin, -0.5).withValues(alpha: 0.85 * o)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = math.max(1.2, r * 0.07)
+          ..strokeCap = StrokeCap.round,
+      );
+    }
+  }
+}
+
+/// The mirror-mode figure: a light outline over the player's own image.
+void _avatarOutline(Canvas c, AvatarJoints j, Color accent, Color outline, double opacity) {
+  final u = j.unit;
+  final p = j.p, v = j.vis;
+  bool ok(int a) => v[a] > 0.35;
   final under = Paint()
     ..color = outline.withValues(alpha: 0.75 * opacity)
     ..strokeCap = StrokeCap.round;
-  final fill = Paint()
-    ..color = (outlineOnly ? Colors.white : limb).withValues(
-      alpha: (outlineOnly ? 0.85 : 1) * opacity,
-    )
+  final line = Paint()
+    ..color = Colors.white.withValues(alpha: 0.85 * opacity)
     ..strokeCap = StrokeCap.round;
   void bone(int a, int b, double w) {
     if (!ok(a) || !ok(b)) return;
     under.strokeWidth = w + u * 0.08;
-    fill.strokeWidth = outlineOnly ? math.max(3, w * 0.25) : w;
+    line.strokeWidth = math.max(3, w * 0.25);
     c.drawLine(p[a], p[b], under);
-    c.drawLine(p[a], p[b], fill);
+    c.drawLine(p[a], p[b], line);
   }
 
   const lSh = AvatarJoints.lSh, rSh = AvatarJoints.rSh;
   const lHip = AvatarJoints.lHip, rHip = AvatarJoints.rHip;
-  // Legs, then torso, then arms (arms in front).
   bone(lHip, AvatarJoints.lKn, u * 0.3);
   bone(AvatarJoints.lKn, AvatarJoints.lAn, u * 0.26);
   bone(rHip, AvatarJoints.rKn, u * 0.3);
@@ -191,47 +576,13 @@ void paintAvatar(
       ..lineTo(p[rHip].dx, p[rHip].dy)
       ..lineTo(p[lHip].dx, p[lHip].dy)
       ..close();
-    if (!outlineOnly) {
-      c.drawPath(
-        torso,
-        Paint()
-          ..color = outline.withValues(alpha: 0.75 * opacity)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = u * 0.36
-          ..strokeJoin = StrokeJoin.round,
-      );
-      c.drawPath(
-        torso,
-        Paint()
-          ..color = body.withValues(alpha: opacity)
-          ..style = PaintingStyle.fill,
-      );
-      c.drawPath(
-        torso,
-        Paint()
-          ..color = body.withValues(alpha: opacity)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = u * 0.28
-          ..strokeJoin = StrokeJoin.round,
-      );
-      // Scarf: the explorer's teal band, here in the game accent.
-      c.drawLine(
-        p[lSh] + Offset(0, u * 0.08),
-        p[rSh] + Offset(0, u * 0.08),
-        Paint()
-          ..color = accent.withValues(alpha: opacity)
-          ..strokeWidth = u * 0.16
-          ..strokeCap = StrokeCap.round,
-      );
-    } else {
-      c.drawPath(
-        torso,
-        Paint()
-          ..color = Colors.white.withValues(alpha: 0.7 * opacity)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 3,
-      );
-    }
+    c.drawPath(
+      torso,
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.7 * opacity)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3,
+    );
   }
   bone(lSh, AvatarJoints.lEl, u * 0.24);
   bone(AvatarJoints.lEl, AvatarJoints.lWr, u * 0.21);
@@ -240,42 +591,17 @@ void paintAvatar(
   for (final w in [AvatarJoints.lWr, AvatarJoints.rWr]) {
     if (!ok(w)) continue;
     c.drawCircle(p[w], u * 0.15, under);
-    c.drawCircle(
-      p[w],
-      u * (outlineOnly ? 0.1 : 0.13),
-      Paint()
-        ..color = (outlineOnly ? accent : const Color(0xFFF6EEDC)).withValues(
-          alpha: opacity,
-        ),
-    );
+    c.drawCircle(p[w], u * 0.1, Paint()..color = accent.withValues(alpha: opacity));
   }
   if (ok(AvatarJoints.head)) {
-    final hc = ok(lSh) && ok(rSh)
-        ? Offset(p[AvatarJoints.head].dx, p[AvatarJoints.head].dy)
-        : p[AvatarJoints.head];
-    final r = u * 0.24;
-    if (outlineOnly) {
-      c.drawCircle(
-        hc,
-        r,
-        Paint()
-          ..color = Colors.white.withValues(alpha: 0.7 * opacity)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 3,
-      );
-    } else {
-      c.drawCircle(
-        hc,
-        r + u * 0.05,
-        Paint()..color = outline.withValues(alpha: 0.75 * opacity),
-      );
-      c.drawCircle(hc, r, Paint()..color = limb.withValues(alpha: opacity));
-      c.drawCircle(
-        hc + Offset(-r * 0.3, -r * 0.3),
-        r * 0.35,
-        Paint()..color = Colors.white.withValues(alpha: 0.18 * opacity),
-      );
-    }
+    c.drawCircle(
+      p[AvatarJoints.head],
+      u * 0.24,
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.7 * opacity)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3,
+    );
   }
 }
 
@@ -508,4 +834,277 @@ void confetti(
       c.restore();
     }
   }
+}
+
+
+// ----------------------------------------------------------------- effects
+// Shared, cheap effects. Each is a pure function of its age [t] (0..1), so
+// nothing keeps state and nothing allocates beyond a few paints.
+
+/// Darkens the corners so the eye rests on the player.
+void vignette(Canvas c, Size s, {double strength = 0.55}) {
+  final rect = Offset.zero & s;
+  c.drawRect(
+    rect,
+    Paint()
+      ..shader = RadialGradient(
+        radius: 0.95,
+        colors: [
+          const Color(0x00000000),
+          const Color(0xFF000000).withValues(alpha: strength),
+        ],
+        stops: const [0.55, 1],
+      ).createShader(rect),
+  );
+}
+
+/// A floor receding to [horizon] (a y in pixels): a gradient, lines that
+/// converge on the vanishing point and cross-lines that bunch up with
+/// distance. [scroll] slides the cross-lines towards the viewer.
+void perspectiveFloor(
+  Canvas c,
+  Size s,
+  double horizon, {
+  required Color near,
+  required Color far,
+  Color line = const Color(0x22FFFFFF),
+  double scroll = 0,
+  int rays = 9,
+  int rows = 7,
+}) {
+  final rect = Rect.fromLTRB(0, horizon, s.width, s.height);
+  if (rect.height <= 0) return;
+  c.drawRect(
+    rect,
+    Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [far, near],
+      ).createShader(rect),
+  );
+  final p = Paint()
+    ..color = line
+    ..strokeWidth = 1;
+  final vp = Offset(s.width / 2, horizon);
+  for (var i = 0; i <= rays; i++) {
+    final x = -s.width * 0.6 + s.width * 2.2 * i / rays;
+    c.drawLine(vp, Offset(x, s.height), p);
+  }
+  for (var i = 0; i < rows; i++) {
+    final k = (i + scroll % 1) / rows;
+    final y = horizon + rect.height * k * k;
+    p.color = line.withValues(alpha: line.a * (0.3 + 0.7 * k));
+    c.drawLine(Offset(0, y), Offset(s.width, y), p);
+  }
+}
+
+/// A soft cone of light from [from] downwards.
+void lightShaft(
+  Canvas c,
+  Offset from,
+  double length,
+  double spread,
+  Color color, {
+  double alpha = 0.22,
+  double lean = 0,
+}) {
+  final path = Path()
+    ..moveTo(from.dx - spread * 0.08, from.dy)
+    ..lineTo(from.dx + spread * 0.08, from.dy)
+    ..lineTo(from.dx + lean + spread, from.dy + length)
+    ..lineTo(from.dx + lean - spread, from.dy + length)
+    ..close();
+  c.drawPath(
+    path,
+    Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          color.withValues(alpha: alpha),
+          color.withValues(alpha: 0),
+        ],
+      ).createShader(path.getBounds()),
+  );
+}
+
+/// An oval contact shadow.
+void softShadow(Canvas c, Offset at, double w, double h, {double alpha = 0.45}) {
+  final rect = Rect.fromCenter(center: at, width: w, height: h);
+  c.drawOval(
+    rect,
+    Paint()
+      ..shader = RadialGradient(
+        colors: [
+          const Color(0xFF000000).withValues(alpha: alpha),
+          const Color(0x00000000),
+        ],
+      ).createShader(rect),
+  );
+}
+
+/// A glossy sphere: body colour, a specular highlight, a rim and a little
+/// light bouncing up from below. For bubbles, orbs, gems and fruit.
+void glossSphere(Canvas c, Offset at, double r, Color color, {double alpha = 1}) {
+  final rect = Rect.fromCircle(center: at, radius: r);
+  c.drawCircle(
+    at,
+    r,
+    Paint()
+      ..shader = RadialGradient(
+        center: const Alignment(-0.4, -0.45),
+        radius: 1.2,
+        colors: [
+          shade(color, 0.55).withValues(alpha: alpha),
+          color.withValues(alpha: alpha),
+          shade(color, -0.55).withValues(alpha: alpha),
+        ],
+        stops: const [0, 0.45, 1],
+      ).createShader(rect),
+  );
+  // Bounce light on the lower right.
+  c.drawArc(
+    rect.deflate(r * 0.1),
+    math.pi * 0.1,
+    math.pi * 0.5,
+    false,
+    Paint()
+      ..color = shade(color, 0.5).withValues(alpha: 0.35 * alpha)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = math.max(1, r * 0.08)
+      ..strokeCap = StrokeCap.round,
+  );
+  // Specular highlight.
+  c.drawOval(
+    Rect.fromCenter(
+      center: at + Offset(-r * 0.36, -r * 0.42),
+      width: r * 0.5,
+      height: r * 0.3,
+    ),
+    Paint()..color = Colors.white.withValues(alpha: 0.75 * alpha),
+  );
+}
+
+/// Sparks flying out of [at] and falling: [t] 0..1 of their life.
+void sparkBurst(
+  Canvas c,
+  Offset at,
+  double t,
+  Color color, {
+  int n = 14,
+  double spread = 80,
+  int seed = 0,
+}) {
+  if (t <= 0 || t >= 1) return;
+  final out = Curves.easeOutCubic.transform(t);
+  final paint = Paint()
+    ..strokeCap = StrokeCap.round
+    ..strokeWidth = 2.6 * (1 - t) + 0.8;
+  for (var i = 0; i < n; i++) {
+    final a = (i / n) * math.pi * 2 + hash(seed + i * 3) * 0.9;
+    final d = spread * out * (0.45 + 0.55 * hash(seed + i * 7));
+    final dirV = Offset(math.cos(a), math.sin(a));
+    final head = at + dirV * d + Offset(0, 46 * t * t);
+    final tail = head - dirV * (10 + 14 * (1 - t));
+    paint.color = (i.isEven ? color : shade(color, 0.5)).withValues(
+      alpha: 1 - t,
+    );
+    c.drawLine(tail, head, paint);
+  }
+}
+
+/// A ring racing outwards from an impact.
+void shockRing(Canvas c, Offset at, double t, double radius, Color color) {
+  if (t <= 0 || t >= 1) return;
+  final k = Curves.easeOutCubic.transform(t);
+  c.drawCircle(
+    at,
+    radius * (0.3 + 0.9 * k),
+    Paint()
+      ..color = color.withValues(alpha: 0.8 * (1 - t))
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 5 * (1 - t) + 1,
+  );
+}
+
+/// A score popping out of an action: it lands with a small overshoot,
+/// rises and fades. [age] in seconds; lives about 1.1 s.
+void scorePop(
+  Canvas c,
+  String text,
+  Offset at,
+  double age,
+  Color color, {
+  bool big = false,
+}) {
+  if (age < 0 || age >= 1.1) return;
+  final enter = (age / 0.16).clamp(0.0, 1.0);
+  final scale = 0.6 + 0.4 * Curves.easeOutBack.transform(enter);
+  final fade = age < 0.7 ? 1.0 : (1 - (age - 0.7) / 0.4).clamp(0.0, 1.0);
+  final size = ((big ? 34 : 24) * scale / 2).round() * 2.0;
+  final pos = at + Offset(0, -18 - 46 * Curves.easeOutCubic.transform(age / 1.1));
+  if (big) glow(c, pos, size * 1.6, color, alpha: 0.35 * fade);
+  strokedText(c, text, pos, size: size, color: color, opacity: (fade * 10).round() / 10);
+}
+
+/// Out-of-focus lights drifting slowly in front of the scene: cheap depth.
+void bokeh(
+  Canvas c,
+  Size s,
+  double t,
+  List<Color> colors, {
+  int n = 9,
+  double minY = 0,
+  double maxY = 1,
+  double alpha = 0.16,
+  int seed = 0,
+}) {
+  final paint = Paint();
+  for (var i = 0; i < n; i++) {
+    final x = (hash(seed + i * 7 + 1) + t * 0.006 * (i.isEven ? 1 : -1)) % 1;
+    final y = minY + (maxY - minY) * hash(seed + i * 13 + 5);
+    final r = s.shortestSide * (0.03 + 0.05 * hash(seed + i * 3 + 2));
+    final tw = 0.6 + 0.4 * math.sin(t * 0.9 + i * 1.7);
+    final at = Offset(x * s.width, y * s.height);
+    paint.shader = RadialGradient(
+      colors: [
+        colors[i % colors.length].withValues(alpha: alpha * tw),
+        colors[i % colors.length].withValues(alpha: alpha * tw * 0.6),
+        colors[i % colors.length].withValues(alpha: 0),
+      ],
+      stops: const [0, 0.75, 1],
+    ).createShader(Rect.fromCircle(center: at, radius: r));
+    c.drawCircle(at, r, paint);
+  }
+}
+
+/// A band of haze: atmosphere between the far scenery and the action.
+void hazeBand(Canvas c, Size s, double y, double height, Color color, {double alpha = 0.3}) {
+  final rect = Rect.fromLTWH(0, y - height / 2, s.width, height);
+  c.drawRect(
+    rect,
+    Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          color.withValues(alpha: 0),
+          color.withValues(alpha: alpha),
+          color.withValues(alpha: 0),
+        ],
+      ).createShader(rect),
+  );
+}
+
+/// Light lying on a floor: a soft ellipse.
+void lightPool(Canvas c, Offset at, double w, double h, Color color, {double alpha = 0.3}) {
+  final rect = Rect.fromCenter(center: at, width: w, height: h);
+  c.drawOval(
+    rect,
+    Paint()
+      ..shader = RadialGradient(
+        colors: [color.withValues(alpha: alpha), color.withValues(alpha: 0)],
+      ).createShader(rect),
+  );
 }

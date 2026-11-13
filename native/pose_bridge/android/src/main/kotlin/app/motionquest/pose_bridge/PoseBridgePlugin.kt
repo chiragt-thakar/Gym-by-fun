@@ -20,14 +20,16 @@ import io.flutter.plugin.common.PluginRegistry
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * MotionQuest pose bridge.
+ * Joynetic pose bridge.
  *
  * Camera frames never leave native code (rule 4) and are never stored
  * (rule 2). Only 33 landmarks + visibility + timestamp cross into Dart, as a
- * flat DoubleArray: [t, w, h, inferenceMs, x0, y0, z0, v0, x1, ...].
+ * flat DoubleArray: [t, w, h, inferenceMs, x0, y0, z0, v0, x1, ...], with
+ * one 33-landmark block per detected body.
  *
  * Methods: hasPermission, requestPermission,
- * start {width, height, delegate, model, selfView}, stop.
+ * start {width, height, delegate, model, selfView, maxPoses, minDetection,
+ * minPresence, minTracking}, stop.
  * Event channel: landmark frames. Platform view "motionquest/self_view": the
  * optional camera mirror (native surface; FLAG_SECURE while it is shown).
  */
@@ -144,6 +146,9 @@ class PoseBridgePlugin :
         val preferGpu = (call.argument<String>("delegate") ?: "gpu") == "gpu"
         val fullModel = call.argument<String>("model") == "full"
         val selfView = call.argument<Boolean>("selfView") ?: false
+        val maxPoses = (call.argument<Int>("maxPoses") ?: 1).coerceIn(1, 4)
+        fun confidence(name: String, fallback: Double): Float =
+            (call.argument<Double>(name) ?: fallback).coerceIn(0.1, 0.9).toFloat()
         val p = PosePipeline(
             context = a.applicationContext,
             owner = owner,
@@ -152,6 +157,10 @@ class PoseBridgePlugin :
             preferGpu = preferGpu,
             fullModel = fullModel,
             selfView = selfView,
+            maxPoses = maxPoses,
+            minDetection = confidence("minDetection", 0.5),
+            minPresence = confidence("minPresence", 0.4),
+            minTracking = confidence("minTracking", 0.4),
             onFrame = { frame -> main.post { sink?.success(frame) } },
             onError = { msg -> main.post { sink?.error("pose_error", msg, null) } },
         )

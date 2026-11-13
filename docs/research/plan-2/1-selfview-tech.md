@@ -1,4 +1,4 @@
-# Self-view (mirror) technical research — MotionQuest
+# Self-view (mirror) technical research — Joynetic
 
 Status: research notes, no repo edits. Facts marked [src] are from the cited pages; [mem] = from prior knowledge, verify before relying on it; [est] = estimate, measure on device.
 

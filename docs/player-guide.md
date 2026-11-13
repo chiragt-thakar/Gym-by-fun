@@ -1,8 +1,8 @@
-# MotionQuest player guide
+# Joynetic player guide
 
 English · [हिंदी](#motionquest-खिलाड़ी-गाइड) · [ગુજરાતી](#motionquest-ખેલાડી-માર્ગદર્શિકા)
 
-> MotionQuest is a game for general fitness, not a medical product and not medical
+> Joynetic is a game for general fitness, not a medical product and not medical
 > advice. It is for adults 18+. Your camera video never leaves your phone.
 
 ---
@@ -17,7 +17,7 @@ English · [हिंदी](#motionquest-खिलाड़ी-गाइड) ·
 - **Clothes:** wear fairly fitted clothes and shoes with grip. Very loose clothes can hide your knees and hips.
 
 ### 2. Calibration (about 30 seconds)
-MotionQuest learns *your* comfortable range so the game fits your body. Follow the prompts:
+Joynetic learns *your* comfortable range so the game fits your body. Follow the prompts:
 1. Stand still for 2 seconds.
 2. Raise both arms and hold briefly.
 3. Do two comfortable squats.
@@ -76,7 +76,7 @@ Change these any time in Settings.
 You can also pick a difficulty (Beginner, Intermediate, Advanced). Harder levels give shorter warnings and more decisions.
 
 ### 11. Gym Crew and gym codes
-If your gym is a MotionQuest partner, ask the staff for a **gym code** and enter it in Gym Crew. Members of partner gyms get Premium free. Codes can have a member limit and an expiry date; if yours does not work, ask your gym for a new one. Your gym sees your activity only if you agree to share it, and then only your first name and activity summaries, never your body measurements. You can stop sharing any time.
+If your gym is a Joynetic partner, ask the staff for a **gym code** and enter it in Gym Crew. Members of partner gyms get Premium free. Codes can have a member limit and an expiry date; if yours does not work, ask your gym for a new one. Your gym sees your activity only if you agree to share it, and then only your first name and activity summaries, never your body measurements. You can stop sharing any time.
 
 ### 12. Privacy
 - Camera video is processed **on your phone only**. It is never stored or uploaded. Only body-point positions are used by the game.
@@ -89,11 +89,11 @@ If your gym is a MotionQuest partner, ask the staff for a **gym code** and enter
 - **Stop if anything hurts**, feels painful or makes you dizzy. Use the **pain report** button on the results screen to tell us.
 - Move only within your comfortable range. Low-impact mode is on by default.
 - Keep the play area clear and the floor dry.
-- MotionQuest is not medical advice. If you have a health condition, injury or are unsure whether exercise is right for you, talk to a doctor first.
+- Joynetic is not medical advice. If you have a health condition, injury or are unsure whether exercise is right for you, talk to a doctor first.
 - For adults 18+ only.
 
 ### 14. Troubleshooting FAQ
-**I denied camera permission.** Open your phone's Settings → Apps → MotionQuest → Permissions → Camera → Allow, then reopen the game.
+**I denied camera permission.** Open your phone's Settings → Apps → Joynetic → Permissions → Camera → Allow, then reopen the game.
 
 **It keeps saying "too far" or "step into frame".** Step a little closer, make sure head and feet are both visible, and check the phone is upright (portrait).
 
@@ -107,9 +107,9 @@ If your gym is a MotionQuest partner, ask the staff for a **gym code** and enter
 
 ---
 
-## MotionQuest खिलाड़ी गाइड
+## Joynetic खिलाड़ी गाइड
 
-> MotionQuest सामान्य फ़िटनेस के लिए एक गेम है, यह कोई मेडिकल प्रोडक्ट या मेडिकल सलाह नहीं है। यह केवल 18+ वयस्कों के लिए है। आपका कैमरा वीडियो कभी फ़ोन से बाहर नहीं जाता।
+> Joynetic सामान्य फ़िटनेस के लिए एक गेम है, यह कोई मेडिकल प्रोडक्ट या मेडिकल सलाह नहीं है। यह केवल 18+ वयस्कों के लिए है। आपका कैमरा वीडियो कभी फ़ोन से बाहर नहीं जाता।
 
 ### 1. फ़ोन और जगह तैयार करें
 - **जगह:** लगभग **2 × 2 मीटर** जगह खाली करें। मेज़, कुर्सी, खिलौने और पालतू जानवर हटा दें। हाथ ऊपर उठाने पर सिर के ऊपर कुछ न हो।
@@ -178,7 +178,7 @@ Settings में कभी भी बदलें।
 कठिनाई (Beginner, Intermediate, Advanced) भी चुन सकते हैं।
 
 ### 11. जिम क्रू और जिम कोड
-अगर आपका जिम MotionQuest पार्टनर है, तो स्टाफ़ से **जिम कोड** लें और Gym Crew में डालें। पार्टनर जिम के सदस्यों को Premium मुफ़्त मिलता है। कोड की सदस्य सीमा और समाप्ति तिथि हो सकती है; कोड न चले तो जिम से नया माँगें। आप सहमति दें तभी जिम आपकी गतिविधि देखता है, और तब भी सिर्फ़ पहला नाम और गतिविधि सारांश, शरीर के माप कभी नहीं। शेयर करना कभी भी बंद कर सकते हैं।
+अगर आपका जिम Joynetic पार्टनर है, तो स्टाफ़ से **जिम कोड** लें और Gym Crew में डालें। पार्टनर जिम के सदस्यों को Premium मुफ़्त मिलता है। कोड की सदस्य सीमा और समाप्ति तिथि हो सकती है; कोड न चले तो जिम से नया माँगें। आप सहमति दें तभी जिम आपकी गतिविधि देखता है, और तब भी सिर्फ़ पहला नाम और गतिविधि सारांश, शरीर के माप कभी नहीं। शेयर करना कभी भी बंद कर सकते हैं।
 
 ### 12. गोपनीयता
 - कैमरा वीडियो **सिर्फ़ आपके फ़ोन पर** प्रोसेस होता है। यह कभी सेव या अपलोड नहीं होता।
@@ -195,7 +195,7 @@ Settings में कभी भी बदलें।
 - केवल 18+ वयस्कों के लिए।
 
 ### 14. समस्या समाधान
-**मैंने कैमरा अनुमति मना कर दी।** फ़ोन Settings → Apps → MotionQuest → Permissions → Camera → Allow करें, फिर गेम दोबारा खोलें।
+**मैंने कैमरा अनुमति मना कर दी।** फ़ोन Settings → Apps → Joynetic → Permissions → Camera → Allow करें, फिर गेम दोबारा खोलें।
 
 **बार-बार "बहुत दूर" दिखता है।** थोड़ा पास आएँ, सिर और पैर दोनों दिखें, और फ़ोन सीधा (पोर्ट्रेट) हो।
 
@@ -209,9 +209,9 @@ Settings में कभी भी बदलें।
 
 ---
 
-## MotionQuest ખેલાડી માર્ગદર્શિકા
+## Joynetic ખેલાડી માર્ગદર્શિકા
 
-> MotionQuest સામાન્ય ફિટનેસ માટેની એક ગેમ છે, તે કોઈ મેડિકલ પ્રોડક્ટ કે તબીબી સલાહ નથી. તે ફક્ત 18+ પુખ્તો માટે છે. તમારો કૅમેરા વિડિયો ક્યારેય ફોનની બહાર જતો નથી.
+> Joynetic સામાન્ય ફિટનેસ માટેની એક ગેમ છે, તે કોઈ મેડિકલ પ્રોડક્ટ કે તબીબી સલાહ નથી. તે ફક્ત 18+ પુખ્તો માટે છે. તમારો કૅમેરા વિડિયો ક્યારેય ફોનની બહાર જતો નથી.
 
 ### 1. ફોન અને જગ્યા તૈયાર કરો
 - **જગ્યા:** લગભગ **2 × 2 મીટર** જગ્યા ખાલી કરો. ટેબલ, ખુરશી, રમકડાં અને પાળતુ પ્રાણીઓ દૂર કરો. હાથ ઉપર કરો ત્યારે માથા ઉપર કંઈ ન હોય.
@@ -280,7 +280,7 @@ Settings માં ગમે ત્યારે બદલો.
 મુશ્કેલી (Beginner, Intermediate, Advanced) પણ પસંદ કરી શકો.
 
 ### 11. જિમ ક્રૂ અને જિમ કોડ
-જો તમારું જિમ MotionQuest પાર્ટનર હોય, તો સ્ટાફ પાસેથી **જિમ કોડ** લો અને Gym Crew માં નાખો. પાર્ટનર જિમના સભ્યોને Premium મફત મળે છે. કોડની સભ્ય મર્યાદા અને સમાપ્તિ તારીખ હોઈ શકે; કોડ ન ચાલે તો જિમ પાસે નવો માગો. તમે સંમતિ આપો તો જ જિમ તમારી પ્રવૃત્તિ જુએ છે, અને ત્યારે પણ ફક્ત પહેલું નામ અને પ્રવૃત્તિ સારાંશ, શરીરનાં માપ ક્યારેય નહીં. શેરિંગ ગમે ત્યારે બંધ કરી શકો.
+જો તમારું જિમ Joynetic પાર્ટનર હોય, તો સ્ટાફ પાસેથી **જિમ કોડ** લો અને Gym Crew માં નાખો. પાર્ટનર જિમના સભ્યોને Premium મફત મળે છે. કોડની સભ્ય મર્યાદા અને સમાપ્તિ તારીખ હોઈ શકે; કોડ ન ચાલે તો જિમ પાસે નવો માગો. તમે સંમતિ આપો તો જ જિમ તમારી પ્રવૃત્તિ જુએ છે, અને ત્યારે પણ ફક્ત પહેલું નામ અને પ્રવૃત્તિ સારાંશ, શરીરનાં માપ ક્યારેય નહીં. શેરિંગ ગમે ત્યારે બંધ કરી શકો.
 
 ### 12. ગોપનીયતા
 - કૅમેરા વિડિયો **ફક્ત તમારા ફોન પર** પ્રોસેસ થાય છે. તે ક્યારેય સેવ કે અપલોડ થતો નથી.
@@ -297,7 +297,7 @@ Settings માં ગમે ત્યારે બદલો.
 - ફક્ત 18+ પુખ્તો માટે.
 
 ### 14. સમસ્યા નિવારણ
-**મેં કૅમેરા પરવાનગી નકારી દીધી.** ફોનના Settings → Apps → MotionQuest → Permissions → Camera → Allow કરો, પછી ગેમ ફરી ખોલો.
+**મેં કૅમેરા પરવાનગી નકારી દીધી.** ફોનના Settings → Apps → Joynetic → Permissions → Camera → Allow કરો, પછી ગેમ ફરી ખોલો.
 
 **વારંવાર "બહુ દૂર" દેખાય છે.** થોડા નજીક આવો, માથું અને પગ બંને દેખાય, અને ફોન ઊભો (પોર્ટ્રેટ) હોય.
 

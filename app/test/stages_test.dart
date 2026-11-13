@@ -3,12 +3,12 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:game_director/game_director.dart';
-import 'package:motionquest/game/forest_game.dart';
+import 'package:joynetic/game/forest_game.dart';
 import 'package:flutter/painting.dart';
-import 'package:motionquest/game/stage_info.dart';
-import 'package:motionquest/game/stages.dart';
-import 'package:motionquest/screens/home_screen.dart';
-import 'package:motionquest/services/settings.dart';
+import 'package:joynetic/game/stage_info.dart';
+import 'package:joynetic/game/stages.dart';
+import 'package:joynetic/screens/home_screen.dart';
+import 'package:joynetic/services/settings.dart';
 
 void main() {
   test('direct routes cannot bypass progression or premium access', () {

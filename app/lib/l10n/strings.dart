@@ -20,7 +20,7 @@ class S {
       _strings[key]?[lang] ?? _strings[key]?[AppLanguage.en] ?? key;
 
   static const Map<String, Map<AppLanguage, String>> _strings = {
-    'app_name': {AppLanguage.en: 'MotionQuest'},
+    'app_name': {AppLanguage.en: 'Joynetic'},
     'tagline': {
       AppLanguage.en: 'Your body is the controller.',
       AppLanguage.hi: 'आपका शरीर ही कंट्रोलर है।',
@@ -174,11 +174,11 @@ class S {
     },
     'not_medical': {
       AppLanguage.en:
-          'MotionQuest is a game for general fitness, not medical advice.',
+          'Joynetic is a game for general fitness, not medical advice.',
       AppLanguage.hi:
-          'MotionQuest सामान्य फिटनेस के लिए एक गेम है, चिकित्सा सलाह नहीं।',
+          'Joynetic सामान्य फिटनेस के लिए एक गेम है, चिकित्सा सलाह नहीं।',
       AppLanguage.gu:
-          'MotionQuest સામાન્ય ફિટનેસ માટેની ગેમ છે, તબીબી સલાહ નથી.',
+          'Joynetic સામાન્ય ફિટનેસ માટેની ગેમ છે, તબીબી સલાહ નથી.',
     },
   };
 }

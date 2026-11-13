@@ -142,7 +142,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/calibrate',
         builder: (_, st) => back(
-          CalibrationScreen(next: safeNext(st.uri.queryParameters['next'])),
+          CalibrationScreen(
+            next: safeNext(st.uri.queryParameters['next']),
+            quick: st.uri.queryParameters['quick'] == '1',
+          ),
         ),
       ),
       GoRoute(

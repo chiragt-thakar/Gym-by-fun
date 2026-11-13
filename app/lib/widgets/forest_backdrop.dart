@@ -219,10 +219,12 @@ class _WorldVistaPainter extends CustomPainter {
       old.theme != theme || old.restored != restored;
 }
 
-/// Procedural night-forest backdrop: a lantern glow, a few stars, two rows
-/// of rolling hills and pine silhouettes. Everything is generated from a
-/// fixed seed (always the same original scene) and the Paths are cached,
-/// so they are rebuilt only when the size changes. Nothing animates.
+/// The shell backdrop: quiet ink with two soft glows (volt top right, aqua
+/// bottom left) and a few thin arcs sweeping across, like the trail of a
+/// moving limb. Static: the shaders and the arc path are built once per
+/// size and nothing animates, so it costs nothing behind a scrolling list.
+///
+/// (The class keeps its original name; every page already uses it.)
 class ForestBackdrop extends StatelessWidget {
   const ForestBackdrop({super.key});
 
@@ -236,108 +238,56 @@ class ForestBackdrop extends StatelessWidget {
 
 class ForestBackdropPainter extends CustomPainter {
   Size? _size;
-  late Path _farHills;
-  late Path _nearHills;
-  late Path _farTrees;
-  late Path _nearTrees;
-  late List<Offset> _stars;
-  final Paint _glowPaint = Paint();
+  late Path _arcs;
+  final Paint _voltGlow = Paint();
+  final Paint _aquaGlow = Paint();
 
-  static final _farHillPaint = Paint()..color = const Color(0xFF12241B);
-  static final _farTreePaint = Paint()..color = const Color(0xFF16301F);
-  static final _nearHillPaint = Paint()..color = const Color(0xFF0E1D16);
-  static final _nearTreePaint = Paint()..color = const Color(0xFF09140F);
-  static final _starPaint = Paint()..color = const Color(0x66F6EEDC);
+  static final _arcPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1
+    ..color = const Color(0x12F3F5F7);
 
   void _build(Size s) {
     _size = s;
-    final rnd = math.Random(7);
     final w = s.width, h = s.height;
-    Path hills(double base, double amp, double waves, double phase) {
-      final p = Path()..moveTo(0, h);
-      for (var x = 0.0; x <= w; x += 12) {
-        final y =
-            base -
-            amp * math.sin(x / w * math.pi * waves + phase) -
-            amp * 0.4 * math.sin(x / w * math.pi * waves * 2.3 + phase);
-        p.lineTo(x, y);
-      }
-      return p
-        ..lineTo(w, h)
-        ..close();
-    }
-
-    double hillY(double x, double base, double amp, double waves, double ph) =>
-        base -
-        amp * math.sin(x / w * math.pi * waves + ph) -
-        amp * 0.4 * math.sin(x / w * math.pi * waves * 2.3 + ph);
-
-    Path trees(double base, double amp, double waves, double ph, double sz) {
-      final p = Path();
-      var x = rnd.nextDouble() * sz;
-      while (x < w + sz) {
-        final th = sz * (0.8 + rnd.nextDouble() * 0.7);
-        final tw = th * 0.42;
-        final y = hillY(x, base, amp, waves, ph) + 4;
-        // Three stacked rounded tiers: a chunky, friendly pine.
-        for (var t = 0; t < 3; t++) {
-          final top = y - th + t * th * 0.24;
-          final half = tw * (0.55 + t * 0.25);
-          final bottom = top + th * 0.42;
-          p
-            ..moveTo(x, top)
-            ..quadraticBezierTo(
-              x + half * 0.3,
-              top + th * 0.1,
-              x + half,
-              bottom,
-            )
-            ..quadraticBezierTo(x, bottom + th * 0.06, x - half, bottom)
-            ..quadraticBezierTo(x - half * 0.3, top + th * 0.1, x, top)
-            ..close();
-        }
-        p.addRect(
-          Rect.fromLTWH(x - tw * 0.08, y - th * 0.2, tw * 0.16, th * 0.3),
-        );
-        x += tw * (0.9 + rnd.nextDouble() * 1.6);
-      }
-      return p;
-    }
-
-    final farBase = h * 0.80, nearBase = h * 0.90;
-    _farHills = hills(farBase, h * 0.03, 2.2, 0.6);
-    _farTrees = trees(farBase, h * 0.03, 2.2, 0.6, h * 0.09);
-    _nearHills = hills(nearBase, h * 0.025, 1.6, 2.1);
-    _nearTrees = trees(nearBase, h * 0.025, 1.6, 2.1, h * 0.13);
-    _stars = [
-      for (var i = 0; i < 26; i++)
-        Offset(rnd.nextDouble() * w, rnd.nextDouble() * h * 0.45),
-    ];
-    _glowPaint.shader =
+    _voltGlow.shader =
         RadialGradient(
-          colors: [Lantern.glow.withAlpha(46), Lantern.glow.withAlpha(0)],
+          colors: [Jn.volt.withAlpha(30), Jn.volt.withAlpha(0)],
         ).createShader(
-          Rect.fromCircle(center: Offset(w * 0.85, h * 0.08), radius: w * 0.7),
+          Rect.fromCircle(center: Offset(w * 0.92, h * 0.04), radius: w * 0.8),
         );
+    _aquaGlow.shader =
+        RadialGradient(
+          colors: [Jn.aqua.withAlpha(20), Jn.aqua.withAlpha(0)],
+        ).createShader(
+          Rect.fromCircle(center: Offset(w * 0.02, h * 0.98), radius: w * 0.9),
+        );
+    // Concentric arcs around a point below the bottom-left corner.
+    final centre = Offset(-w * 0.15, h * 1.05);
+    final path = Path();
+    for (var i = 0; i < 6; i++) {
+      final r = w * (0.55 + i * 0.22);
+      path.addArc(
+        Rect.fromCircle(center: centre, radius: r),
+        -math.pi / 2,
+        math.pi / 2,
+      );
+    }
+    _arcs = path;
   }
 
   @override
   void paint(Canvas canvas, Size size) {
     if (size.isEmpty) return;
     if (_size != size) _build(size);
-    canvas.drawRect(Offset.zero & size, _glowPaint);
-    for (final s in _stars) {
-      canvas.drawCircle(s, 1.6, _starPaint);
-    }
+    final rect = Offset.zero & size;
     canvas
-      ..drawPath(_farHills, _farHillPaint)
-      ..drawPath(_farTrees, _farTreePaint)
-      ..drawPath(_nearHills, _nearHillPaint)
-      ..drawPath(_nearTrees, _nearTreePaint);
+      ..drawRect(rect, _voltGlow)
+      ..drawRect(rect, _aquaGlow)
+      ..drawPath(_arcs, _arcPaint);
   }
 
-  // The scene is static; Flutter repaints on size change via the
-  // RepaintBoundary/layout anyway, and paint() rebuilds the cache then.
+  // Static: paint() rebuilds its cache when the size changes.
   @override
   bool shouldRepaint(ForestBackdropPainter old) => old != this;
 }

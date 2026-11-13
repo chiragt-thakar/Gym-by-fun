@@ -745,7 +745,7 @@ The boss is a normal level JSON. Its "behaviour" is only encounter placement plu
 
 ## 6. Player journey and age bands
 
-MotionQuest is for adults (18+) only. Age band is an **optional preset the player picks**
+Joynetic is for adults (18+) only. Age band is an **optional preset the player picks**
 in onboarding or Settings ("How do you like to play?"). We never ask for a date of birth
 and never infer age from the camera. Only the band key is stored (on device, and synced
 with progress if signed in). **No pick = Gentle.** The player can change band at any
@@ -989,7 +989,7 @@ Premium stages, without any price pop-up.
 | Disclaimer | Fixed text below | Always visible on the sheet, and on first launch |
 
 **Standard disclaimer (en; translate for hi, gu):**
-> MotionQuest is a game for general fitness and fun. It is not a medical product and does
+> Joynetic is a game for general fitness and fun. It is not a medical product and does
 > not diagnose, treat or prevent any condition. The information here is general fitness
 > information. Move within your comfort, stop if something hurts or feels wrong, and talk
 > to a doctor before starting if you have a health condition, an injury or are pregnant.

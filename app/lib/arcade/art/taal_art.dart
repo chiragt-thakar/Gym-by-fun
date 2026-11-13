@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:game_director/game_director.dart';
 
+import 'looks.dart';
 import 'paint_kit.dart';
 
 const _kumkum = Color(0xFFFF4D6D);
@@ -44,7 +45,7 @@ IconData taalIcon(TaalMove m) => switch (m) {
   TaalMove.hoy => Icons.celebration_rounded,
 };
 
-void taalBackdrop(
+void _taalScene(
   Canvas c,
   Size s,
   double t, {
@@ -153,11 +154,39 @@ void _card(
     Rect.fromCenter(center: at, width: size, height: size),
     Radius.circular(size * 0.24),
   );
+  // A lit tile: a drop shadow, a face that falls from light to deep, and
+  // a gloss across its upper half.
+  c.drawRRect(
+    r.shift(Offset(0, size * 0.07)).inflate(2),
+    Paint()..color = const Color(0xFF000000).withValues(alpha: 0.35 * alpha),
+  );
   c.drawRRect(
     r.inflate(3),
     Paint()..color = const Color(0xFF050B08).withValues(alpha: alpha),
   );
-  c.drawRRect(r, Paint()..color = col.withValues(alpha: alpha));
+  c.drawRRect(
+    r,
+    Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          shade(col, 0.3).withValues(alpha: alpha),
+          col.withValues(alpha: alpha),
+          shade(col, -0.35).withValues(alpha: alpha),
+        ],
+      ).createShader(r.outerRect),
+  );
+  c.drawRRect(
+    RRect.fromRectAndCorners(
+      Rect.fromLTRB(r.left + size * 0.06, r.top + size * 0.05, r.right - size * 0.06, r.top + size * 0.42),
+      topLeft: Radius.circular(size * 0.2),
+      topRight: Radius.circular(size * 0.2),
+      bottomLeft: Radius.circular(size * 0.34),
+      bottomRight: Radius.circular(size * 0.34),
+    ),
+    Paint()..color = Colors.white.withValues(alpha: 0.16 * alpha),
+  );
   c.drawRRect(
     r.deflate(size * 0.08),
     Paint()
@@ -301,7 +330,7 @@ void taalPreview(Canvas c, Size s, int variant) {
     3 => AvatarJoints.demo(m, shoulderL: 165, shoulderR: 165),
     _ => AvatarJoints.demo(m, lean: -10, shoulderR: 140),
   };
-  paintAvatar(c, j, accent: _kumkum);
+  paintAvatar(c, j, look: taalLook);
   final horizon = Offset(s.width / 2, s.height * 0.28);
   void card(TaalMove mv, double k) {
     final (zx, zy) = taalZone(mv);
@@ -341,4 +370,50 @@ void taalPreview(Canvas c, Size s, int variant) {
       card(TaalMove.reachR, 0.6);
       card(TaalMove.clap, 0.2);
   }
+}
+
+/// The concert stage: beams, an LED floor and speaker stacks, seen from the
+/// front of the crowd — stage haze catches the beams, the floor throws
+/// light back up, and a row of hands in front bounces on the beat.
+void taalBackdrop(
+  Canvas c,
+  Size s,
+  double t, {
+  double beat = 0,
+  bool toofan = false,
+}) {
+  _taalScene(c, s, t, beat: beat, toofan: toofan);
+  final horizon = s.height * 0.66;
+  final pulse = math.pow(1 - (beat % 1), 3).toDouble();
+  hazeBand(c, s, horizon - s.height * 0.08, s.height * 0.3, toofan ? _marigold : _lilac, alpha: 0.14 + 0.1 * pulse);
+  lightPool(
+    c,
+    Offset(s.width / 2, horizon + (s.height - horizon) * 0.5),
+    s.width * 1.1,
+    (s.height - horizon) * 0.9,
+    toofan ? _marigold : _kumkum,
+    alpha: 0.12 + 0.16 * pulse,
+  );
+  bokeh(c, s, t, const [_kumkum, _marigold, _peacock, _lilac], n: 7, minY: 0.05, maxY: 0.5, alpha: 0.12, seed: 11);
+  // The crowd in front: heads and raised hands, dark against the stage.
+  final crowd = Paint()..color = const Color(0xF20A0510);
+  final arm = Paint()
+    ..color = const Color(0xF20A0510)
+    ..strokeWidth = s.width * 0.016
+    ..strokeCap = StrokeCap.round;
+  const people = 9;
+  for (var i = 0; i < people; i++) {
+    final x = s.width * (i + 0.5) / people + (hash(i) - 0.5) * 14;
+    final bob = pulse * (6 + 6 * hash(i * 3)) * (toofan ? 1.6 : 1);
+    final r = s.width * (0.036 + 0.014 * hash(i * 7));
+    final y = s.height - r * (0.7 + 0.9 * hash(i * 5)) - bob;
+    c.drawCircle(Offset(x, y), r, crowd);
+    c.drawRect(Rect.fromLTRB(x - r * 1.3, y + r * 0.7, x + r * 1.3, s.height), crowd);
+    if (i.isEven || toofan) {
+      final lift = r * (2.2 + 0.8 * hash(i * 11)) + bob;
+      c.drawLine(Offset(x - r, y + r), Offset(x - r * 1.5, y - lift), arm);
+      c.drawLine(Offset(x + r, y + r), Offset(x + r * 1.5, y - lift * 0.9), arm);
+    }
+  }
+  vignette(c, s, strength: 0.55);
 }

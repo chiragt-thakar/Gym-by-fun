@@ -127,7 +127,7 @@ export async function gymRoutes(app: FastifyInstance, ctx: AppContext) {
     if (!gym) throw notFound('gym_not_found');
     const link = await ctx.providers.paymentLinks.create({
       amountPaise: price.total,
-      description: `MotionQuest ${body.plan} licence (${body.period}) for ${gym.name}, incl. 18% GST`,
+      description: `Joynetic ${body.plan} licence (${body.period}) for ${gym.name}, incl. 18% GST`,
       customer: { name: gym.owner_name ?? undefined, contact: gym.owner_phone_enc ? ctx.pii.decrypt(gym.owner_phone_enc) : undefined },
       notes: { gym_id: id, plan: body.plan, period: body.period },
     });
@@ -199,7 +199,7 @@ function posterSvg(gymName: string, colour: string, code: string, qrSvg: string)
   <rect width="595" height="842" fill="#ffffff"/>
   <rect width="595" height="150" fill="${esc(colour)}"/>
   <text x="297" y="70" font-family="sans-serif" font-size="34" font-weight="700" fill="#fff" text-anchor="middle">${esc(gymName)}</text>
-  <text x="297" y="115" font-family="sans-serif" font-size="22" fill="#fff" text-anchor="middle">Crew on MotionQuest</text>
+  <text x="297" y="115" font-family="sans-serif" font-size="22" fill="#fff" text-anchor="middle">Crew on Joynetic</text>
   <text x="297" y="210" font-family="sans-serif" font-size="24" fill="#222" text-anchor="middle">Keep moving on rest days. Play with your body.</text>
   <g transform="translate(117,250)"><svg viewBox="0 0 360 360" width="360" height="360">${inner}</svg></g>
   <text x="297" y="660" font-family="sans-serif" font-size="20" fill="#444" text-anchor="middle">Scan, install, and enter your gym code:</text>

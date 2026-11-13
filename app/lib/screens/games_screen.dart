@@ -45,7 +45,14 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
               ),
               sliver: SliverList.list(
                 children: [
-                  Text(tr('LIBRARY'), style: Txt.overline),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(tr('LIBRARY'), style: Txt.overline),
+                      ),
+                      const JoyneticMark(size: 30),
+                    ],
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     tr('Games'),
@@ -54,7 +61,7 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
                   const SizedBox(height: 4),
                   Text(
                     tr(
-                      'Seven ways to move. Your body is the controller in every one.',
+                      'Eight ways to move. Your body is the controller in every one.',
                     ),
                     style: const TextStyle(color: Lantern.fog, fontSize: 14),
                   ),
@@ -137,6 +144,8 @@ class GameCard extends StatelessWidget {
   Widget build(BuildContext context) => AppCard(
     onTap: onTap,
     padding: EdgeInsets.zero,
+    // Each game owns its tile: its accent on the edge.
+    borderColor: game.accent.withValues(alpha: 0.38),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -154,8 +163,8 @@ class GameCard extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Color(0x00000000), Color(0x99000000)],
-                    stops: [0.55, 1],
+                    colors: [Color(0x00000000), Color(0xCC0A0C10)],
+                    stops: [0.45, 1],
                   ),
                 ),
               ),
@@ -186,7 +195,7 @@ class GameCard extends StatelessWidget {
                       child: Icon(
                         game.icon,
                         size: 18,
-                        color: const Color(0xFF0B1611),
+                        color: const Color(0xFF0A0C10),
                       ),
                     ),
                     const SizedBox(width: 10),

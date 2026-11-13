@@ -1,4 +1,4 @@
-# Game Mode B: TAAL TOOFAN (working name), a MotionQuest dance party mode
+# Game Mode B: TAAL TOOFAN (working name), a Joynetic dance party mode
 
 *"Taal" = rhythm, "Toofan" = storm. One line: beat-synced move cards fly at your on-screen
 avatar; you hit them with your body on the beat, build the band's sound layer by layer, and
@@ -368,7 +368,7 @@ from landmarks only:
 - **Render:** on device, offscreen Flame render → MediaCodec H.264, 1080×1920 at 30 fps, about 8 Mbps
   (about 15 MB), using the song's original audio (we own it). Overlays are the song title, the hook-step
   name, combo pops and an optional nickname and score (off by default). The watermark reads "Taal
-  Toofan · MotionQuest" with no link and no payment mention.
+  Toofan · Joynetic" with no link and no payment mention.
 - **Consent:** opt-in per clip. The first time, a screen explains: "Made from your movement points,
   not your camera. We don't upload anything; you choose where to share." Sharing goes through the
   Android share sheet only. The clip file sits in app cache and is deleted after 24 h unless the player

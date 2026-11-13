@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:game_director/game_director.dart';
 import 'package:motion_core/motion_core.dart';
 import 'package:motion_core/testing.dart';
@@ -86,4 +88,89 @@ BotStep dancer(TaalEngine e, int clock) {
     };
   }
   return (relaxed, {});
+}
+
+/// A frame with one hand at body-space ([x], [y]) (torso units from the
+/// shoulder centre, +y up) and the other resting by the side.
+PoseFrame handAt(double x, double y, {bool left = false, int t = 0}) {
+  final p = (0.375 + x * 0.18, 0.37 - y * 0.18);
+  return stickFrame(
+    t: t,
+    override: left ? {15: p, 17: p, 19: p} : {16: p, 18: p, 20: p},
+  );
+}
+
+/// A frame with both hands placed in body space.
+PoseFrame handsAt((double, double) l, (double, double) r) {
+  final lp = (0.375 + l.$1 * 0.18, 0.37 - l.$2 * 0.18);
+  final rp = (0.375 + r.$1 * 0.18, 0.37 - r.$2 * 0.18);
+  return stickFrame(
+      override: {15: lp, 17: lp, 19: lp, 16: rp, 18: rp, 20: rp});
+}
+
+/// A careful Neon Slice player: each hand drifts (too slowly to cut) to
+/// where its next fruit will peak, then sweeps straight through it. It
+/// never sweeps where a mine is.
+class SliceBot {
+  SliceBot(this.e);
+  final SliceEngine e;
+
+  /// Per frame: under the slowest blade speed at 30 fps.
+  static const _drift = 0.05;
+
+  final _hand = <(double, double)>[(-0.7, 0.2), (0.7, 0.2)];
+  final _skip = <int>{};
+
+  BotStep step(int clock) {
+    final at = clock - e.latencyMs;
+    for (var h = 0; h < 2; h++) {
+      _hand[h] = _move(h, at);
+    }
+    return (handsAt(_hand[0], _hand[1]), {});
+  }
+
+  (double, double) _move(int h, int at) {
+    final (hx, hy) = _hand[h];
+    for (final t in e.targets) {
+      if (t.done || t.isBomb || _skip.contains(t.id)) continue;
+      if (at < t.launchAt - 300 || t.progress(at) > 0.56) continue;
+      final peakX = (t.x0 + t.x1) / 2;
+      if ((peakX >= 0) != (h == 1)) continue;
+      final u = t.progress(at);
+      if (u >= 0.44 && t.reachable(at)) {
+        final (x, y) = t.at(at);
+        final ex = 2 * x - hx, ey = 2 * y - hy;
+        final dx = x - hx, dy = y - hy;
+        if (dx * dx + dy * dy > 0.75 * 0.75 || !_clear(hx, hy, ex, ey, at)) {
+          _skip.add(t.id);
+          continue;
+        }
+        return (ex, ey); // the sweep
+      }
+      // Drift to a spot beside the peak.
+      final gx = peakX + (hx >= peakX ? 0.45 : -0.45), gy = t.apexY;
+      final dx = gx - hx, dy = gy - hy;
+      final d = dx * dx + dy * dy;
+      if (d <= _drift * _drift) return (gx, gy);
+      final k = _drift / math.sqrt(d);
+      return (hx + dx * k, hy + dy * k);
+    }
+    return (hx, hy);
+  }
+
+  /// No mine near the sweep from (ax, ay) to (bx, by).
+  bool _clear(double ax, double ay, double bx, double by, int at) {
+    for (final t in e.targets) {
+      if (!t.isBomb || t.done || !t.inFlight(at)) continue;
+      final (px, py) = t.at(at);
+      final vx = bx - ax, vy = by - ay;
+      final l2 = vx * vx + vy * vy;
+      final u = l2 == 0
+          ? 0.0
+          : (((px - ax) * vx + (py - ay) * vy) / l2).clamp(0.0, 1.0);
+      final cx = ax + vx * u - px, cy = ay + vy * u - py;
+      if (math.sqrt(cx * cx + cy * cy) < e.stage.radius + 0.4) return false;
+    }
+    return true;
+  }
 }

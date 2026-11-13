@@ -111,6 +111,28 @@ void main() {
     }
   });
 
+  test('Neon Slice stages are fair, bounded and playable', () {
+    for (final j in list(load('neon-slice'), 'stages')) {
+      final stage = SliceStage.fromJson(j);
+      final e = SliceEngine(stage);
+      expect(e.targets.length, greaterThan(15), reason: stage.id);
+      for (final t in e.targets) {
+        expect(t.landAt, lessThan(stage.durationMs), reason: stage.id);
+        if (t.isBomb) {
+          expect(t.launchAt, greaterThan(10000),
+              reason: '${stage.id}: no mines while warming up');
+        }
+      }
+      expect(e.targets.where((t) => t.isBomb).isNotEmpty, stage.bombShare > 0,
+          reason: stage.id);
+      final bot = SliceBot(e);
+      drive(e, bot.step);
+      expect(e.finished, isTrue, reason: stage.id);
+      expect(e.summary.accuracy, greaterThan(0.4), reason: stage.id);
+      expect(e.bombsHit, 0, reason: stage.id);
+    }
+  });
+
   test('Tapeball formats and outcomes decode', () {
     final j = load('tapeball');
     final table = OutcomeTable.fromJson(j['outcomes'] as Map<String, dynamic>);

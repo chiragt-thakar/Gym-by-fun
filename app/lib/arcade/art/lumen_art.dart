@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:game_director/game_director.dart';
 
+import 'looks.dart';
 import 'paint_kit.dart';
 
 const _ice = Color(0xFF7FD8FF);
@@ -11,7 +12,7 @@ const _leaf = Color(0xFF7BD389);
 const _panel = Color(0xFF13233F);
 
 /// Orbit: stars, the Earth's limb and the habitat's glass ring.
-void lumenBackdrop(Canvas c, Size s, double t) {
+void _lumenScene(Canvas c, Size s, double t) {
   sky(c, s, const [Color(0xFF02040C), Color(0xFF07122A), Color(0xFF0E1B33)]);
   starfield(c, s, n: 70, maxY: 1, t: t * 0.5);
   // Earth limb.
@@ -575,7 +576,7 @@ void lumenPreview(Canvas c, Size s, int variant, {LumenBoard? board}) {
     2 => AvatarJoints.demo(m, dip: 0.55),
     _ => AvatarJoints.demo(m, shoulderL: 52),
   };
-  paintAvatar(c, j, accent: _ice);
+  paintAvatar(c, j, look: lumenLook);
   for (final e in lumenCards.entries) {
     final (x, y) = e.value;
     final at = m(x, y);
@@ -619,3 +620,53 @@ LumenBoard _demoBoard() => LumenBoard(
     LumenPiece(1, 2, PieceType.straight, 0, fixed: true),
   ],
 );
+
+/// Orbit, seen from inside the habitat: stars, the Earth's limb with the
+/// sun just breaking over it, and the window's frame in the foreground.
+void lumenBackdrop(Canvas c, Size s, double t) {
+  _lumenScene(c, s, t);
+  // Sunrise on the limb: a thin bright atmosphere and a flare.
+  final earth = Offset(s.width * 0.5, s.height * 1.55);
+  final r = s.height * 0.75;
+  c.drawArc(
+    Rect.fromCircle(center: earth, radius: r + 2),
+    -math.pi * 0.72,
+    math.pi * 0.44,
+    false,
+    Paint()
+      ..color = const Color(0xFFBFE6FF).withValues(alpha: 0.7)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5,
+  );
+  final sun = earth + Offset(math.cos(-math.pi * 0.36) * r, math.sin(-math.pi * 0.36) * r);
+  final breathe = 0.85 + 0.15 * math.sin(t * 0.6);
+  glow(c, sun, s.width * 0.45 * breathe, const Color(0xFFFFE9C2), alpha: 0.35);
+  glow(c, sun, s.width * 0.1, Colors.white, alpha: 0.9);
+  // A streak of flare across the window.
+  c.drawLine(
+    sun - Offset(s.width * 0.5, 0),
+    sun + Offset(s.width * 0.5, 0),
+    Paint()
+      ..shader = LinearGradient(
+        colors: [
+          Colors.white.withValues(alpha: 0),
+          Colors.white.withValues(alpha: 0.35 * breathe),
+          Colors.white.withValues(alpha: 0),
+        ],
+      ).createShader(Rect.fromCenter(center: sun, width: s.width, height: 4))
+      ..strokeWidth = 2,
+  );
+  // Sunlight falling into the cabin.
+  lightShaft(c, sun, s.height * 0.8, s.width * 0.3, const Color(0xFFFFE9C2), alpha: 0.1, lean: -s.width * 0.3);
+  // The window frame: two struts and a sill, close to the eye.
+  final strut = Paint()..color = const Color(0xFF060B16);
+  final edge = Paint()
+    ..color = _ice.withValues(alpha: 0.25)
+    ..strokeWidth = 1.5;
+  for (final x in [s.width * 0.035, s.width * 0.965]) {
+    final rect = Rect.fromCenter(center: Offset(x, s.height / 2), width: s.width * 0.05, height: s.height);
+    c.drawRect(rect, strut);
+    c.drawLine(Offset(x < s.width / 2 ? rect.right : rect.left, 0), Offset(x < s.width / 2 ? rect.right : rect.left, s.height), edge);
+  }
+  vignette(c, s, strength: 0.5);
+}

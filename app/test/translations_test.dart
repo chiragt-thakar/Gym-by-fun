@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:game_director/game_director.dart';
-import 'package:motionquest/game/stage_info.dart';
-import 'package:motionquest/l10n/strings.dart';
-import 'package:motionquest/l10n/tr.dart';
+import 'package:joynetic/game/stage_info.dart';
+import 'package:joynetic/l10n/strings.dart';
+import 'package:joynetic/l10n/tr.dart';
 
 void main() {
   tearDown(() => currentLanguage = AppLanguage.en);

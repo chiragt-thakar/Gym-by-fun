@@ -1,10 +1,9 @@
 import 'dart:math' as math;
 
+import 'events.dart' show BodySide;
 import 'landmarks.dart';
 
-/// The player's own side. In the mirrored selfie frame the player's left is
-/// on the screen's left (negative body-space x).
-enum BodySide { left, right }
+export 'events.dart' show BodySide;
 
 /// A point in body space: torso units from the shoulder centre, +y up,
 /// +x towards the player's right (screen right).

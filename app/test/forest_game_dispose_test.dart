@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:game_director/game_director.dart';
 import 'package:motion_core/motion_core.dart';
-import 'package:motionquest/game/forest_game.dart';
+import 'package:joynetic/game/forest_game.dart';
 
 class _SilentAudio implements GameAudio {
   @override

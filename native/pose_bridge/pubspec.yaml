@@ -1,5 +1,5 @@
 name: pose_bridge
-description: "MotionQuest native pose bridge: CameraX + MediaPipe Pose Landmarker on Android, landmarks only to Dart."
+description: "Joynetic native pose bridge: CameraX + MediaPipe Pose Landmarker on Android, landmarks only to Dart."
 version: 0.1.0
 publish_to: none
 homepage:

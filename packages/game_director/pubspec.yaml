@@ -1,5 +1,5 @@
 name: game_director
-description: Deterministic, config-driven workout director, level loader and run rules for MotionQuest.
+description: Deterministic, config-driven workout director, level loader and run rules for Joynetic.
 version: 0.1.0
 publish_to: none
 

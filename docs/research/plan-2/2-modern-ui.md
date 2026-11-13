@@ -1,4 +1,4 @@
-# 2 — Modern UI / visual language for three self-view games (MotionQuest)
+# 2 — Modern UI / visual language for three self-view games (Joynetic)
 
 Scope: 2025–2026 trend scan (cited) and an original visual language ("Lantern Pulse") for the
 self-view games, where the live front-camera image is the background. It extends the existing
@@ -14,7 +14,7 @@ legibility and accessibility guidance comes from research and platform guideline
 
 ## 1. Trend scan (2025–2026)
 
-| Trend | What sources say | Use for MotionQuest? |
+| Trend | What sources say | Use for Joynetic? |
 |---|---|---|
 | Fewer competing CTAs, clearer icon language, stronger contrast in live events | [pixune 2026 review](https://pixune.com/blog/best-examples-mobile-game-ui-design/), [appfollow 2026](https://appfollow.io/blog/mobile-gaming-trends-2026), [ejaw 2026](https://ejaw.net/how-mobile-game-ux-interface-design-drives-player-retention-in-2026) | **Yes, core.** At 2 m away, one message at a time. |
 | Depth layers, animated menus, micro-interactions, dark mode | [adrydapp 2026 guide](https://adrydapp.blogspot.com/2026/03/mobile-game-ui-design-trends-2026-guide.html), [barrettmedia 2026](https://barrettmedia.com/2026/01/21/graphic-design-for-video-games-trends-players-notice-in-2026/) | Yes. Fake depth with offset shadows and parallax, not blur. |

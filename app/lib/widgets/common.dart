@@ -6,6 +6,7 @@ import '../app/theme.dart';
 import 'quest_button.dart';
 import 'forest_backdrop.dart';
 
+export 'brand.dart';
 export 'forest_backdrop.dart';
 export 'lantern_card.dart';
 export 'quest_button.dart';
@@ -152,7 +153,7 @@ class SkeletonPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final f = frame;
     final outline = Paint()
-      ..color = (ok ? Colors.greenAccent : Colors.white54)
+      ..color = (ok ? Lantern.scarf : Colors.white54)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3;
     // Target outline: where the body should fit.
@@ -170,7 +171,7 @@ class SkeletonPainter extends CustomPainter {
     );
     if (f == null || !f.hasPerson) return;
     final bone = Paint()
-      ..color = ok ? Colors.greenAccent : Colors.amberAccent
+      ..color = ok ? Lantern.scarf : Lantern.warning
       ..strokeWidth = 6
       ..strokeCap = StrokeCap.round;
     Offset p(int i) => Offset(f[i].x * size.width, f[i].y * size.height);

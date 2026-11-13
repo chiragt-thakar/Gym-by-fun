@@ -31,7 +31,10 @@ class LandmarkRecording {
     Map<String, Object?>? meta,
   }) : meta = meta ?? {};
 
-  static const format = 'motionquest.landmarks';
+  static const format = 'joynetic.landmarks';
+
+  /// Recordings made before the app was renamed. Still readable.
+  static const legacyFormat = 'motionquest.landmarks';
   static const version = 1;
 
   final List<PoseFrame> frames;
@@ -56,8 +59,8 @@ class LandmarkRecording {
   String encode() => jsonEncode(toJson());
 
   factory LandmarkRecording.fromJson(Map<String, dynamic> j) {
-    if (j['format'] != format) {
-      throw const FormatException('Not a MotionQuest landmark recording');
+    if (j['format'] != format && j['format'] != legacyFormat) {
+      throw const FormatException('Not a Joynetic landmark recording');
     }
     final v = (j['version'] as num).toInt();
     if (v > version) throw FormatException('Unsupported recording version $v');

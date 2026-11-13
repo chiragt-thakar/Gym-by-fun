@@ -15,7 +15,7 @@ const Map<String, (String, String)> v2Strings = {
   'Good afternoon': ('नमस्ते', 'નમસ્તે'),
   'Good evening': ('शुभ संध्या', 'શુભ સાંજ'),
   'Continue your adventure': ('अपना रोमांच जारी रखें', 'તમારું સાહસ ચાલુ રાખો'),
-  'MotionQuest Trails': ('मोशनक्वेस्ट ट्रेल्स', 'મોશનક્વેસ્ટ ટ્રેલ્સ'),
+  'Joynetic Trails': ('जॉयनेटिक ट्रेल्स', 'જોયનેટિક ટ્રેલ્સ'),
   'Chapters': ('अध्याय', 'પ્રકરણો'),
   'Chapter': ('अध्याय', 'પ્રકરણ'),
   'chapters': ('अध्याय', 'પ્રકરણ'),
@@ -36,9 +36,9 @@ const Map<String, (String, String)> v2Strings = {
       ),
   // Library.
   'LIBRARY': ('लाइब्रेरी', 'લાઇબ્રેરી'),
-  'Seven ways to move. Your body is the controller in every one.': (
-    'हिलने-डुलने के सात तरीके। हर एक में आपका शरीर ही कंट्रोलर है।',
-    'હલનચલનની સાત રીતો. દરેકમાં તમારું શરીર જ કંટ્રોલર છે.',
+  'Eight ways to move. Your body is the controller in every one.': (
+    'हिलने-डुलने के आठ तरीके। हर एक में आपका शरीर ही कंट्रोलर है।',
+    'હલનચલનની આઠ રીતો. દરેકમાં તમારું શરીર જ કંટ્રોલર છે.',
   ),
   'All': ('सभी', 'બધી'),
   'Adventure': ('रोमांच', 'સાહસ'),

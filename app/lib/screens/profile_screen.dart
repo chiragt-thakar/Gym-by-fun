@@ -229,10 +229,12 @@ class ProfileScreen extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
+            const Center(child: JoyneticLogo(size: 24)),
+            const SizedBox(height: 8),
             Center(
               child: Text(
-                'MotionQuest 0.2.0${devUnlockAll ? ' · ${tr('developer build: everything unlocked')}' : ''}',
+                'Joynetic 0.2.0${devUnlockAll ? ' · ${tr('developer build: everything unlocked')}' : ''}',
                 style: Txt.caption.copyWith(fontSize: 11),
               ),
             ),

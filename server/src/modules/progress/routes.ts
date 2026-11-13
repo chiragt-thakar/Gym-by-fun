@@ -62,7 +62,8 @@ export async function progressRoutes(app: FastifyInstance, ctx: AppContext) {
     const body = parse(
       z.object({
         deviceId: z.string().uuid(),
-        profile: z.record(z.string(), z.number().finite()).refine((p) => Object.keys(p).length <= 20),
+        // Version 2 body profiles carry 22 numbers; leave room to grow.
+        profile: z.record(z.string().max(40), z.number().finite()).refine((p) => Object.keys(p).length <= 40),
       }),
       req.body,
     );

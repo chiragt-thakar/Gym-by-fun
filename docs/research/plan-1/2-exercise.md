@@ -1,4 +1,4 @@
-# 2. Exercise-science research: MotionQuest candidate moves
+# 2. Exercise-science research: Joynetic candidate moves
 
 Scope: adults 18+, low impact by default, 2x2 m home space, camera-only. Everything here is
 **general fitness information for design**, not advice and not a measurement. It builds on
@@ -71,7 +71,7 @@ Weekly framing (general info, WHO 2020):
 - For 65+: varied multicomponent activity with balance on 3 or more days.
 - Reduce sitting. "Some activity is better than none."
 - Copy example: "Public guidelines such as the WHO 2020 guidelines suggest adults aim for 150 to 300
-  minutes of moderate activity a week. MotionQuest minutes can be part of your active time."
+  minutes of moderate activity a week. Joynetic minutes can be part of your active time."
 
 ## D. Claims: safe vs forbidden
 

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:game_director/game_director.dart';
 import 'package:motion_core/motion_core.dart';
 
+import 'looks.dart';
 import 'paint_kit.dart';
 
 const _marigold = Color(0xFFFFB627);
@@ -11,8 +12,7 @@ const _kumkum = Color(0xFFFF4D6D);
 const _peacock = Color(0xFF00C2B8);
 const _lilac = Color(0xFFB98CFF);
 
-/// Dusk fairground: string lights, a slow Ferris wheel and striped stalls.
-void melaBackdrop(Canvas c, Size s, double t, {bool storm = false}) {
+void _melaScene(Canvas c, Size s, double t, {bool storm = false}) {
   sky(
     c,
     s,
@@ -214,32 +214,42 @@ void _object(
       c.drawCircle(at, r * 0.3, Paint()..color = _kumkum);
     default:
       if (tg.side == BodySide.right) {
+        // A paper lantern cut like a gem: lit from the upper left.
         c.drawPath(diamondPath(at, r * 1.08), dark);
-        c.drawPath(diamondPath(at, r), Paint()..color = color);
+        c.drawPath(
+          diamondPath(at, r),
+          Paint()
+            ..shader = LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [shade(color, 0.45), color, shade(color, -0.45)],
+            ).createShader(Rect.fromCircle(center: at, radius: r)),
+        );
         c.drawPath(
           diamondPath(at, r * 0.55),
           Paint()..color = Colors.white.withValues(alpha: 0.35),
         );
       } else {
+        // A soap bubble: a glossy sphere with a thin rainbow rim that
+        // slowly turns.
         c.drawCircle(at, r + 2.5, dark);
+        glossSphere(c, at, r, color);
         c.drawCircle(
           at,
-          r,
+          r * 0.94,
           Paint()
-            ..shader =
-                RadialGradient(
-                  colors: [
-                    Colors.white.withValues(alpha: 0.95),
-                    color,
-                    color.withValues(alpha: 0.9),
-                  ],
-                  stops: const [0, 0.35, 1],
-                ).createShader(
-                  Rect.fromCircle(
-                    center: at - Offset(r * 0.3, r * 0.3),
-                    radius: r * 1.4,
-                  ),
-                ),
+            ..shader = SweepGradient(
+              transform: GradientRotation(t * 0.8 + tg.id),
+              colors: const [
+                Color(0x66FF7ACB),
+                Color(0x667FE9FF),
+                Color(0x66C8F542),
+                Color(0x66FFD23F),
+                Color(0x66FF7ACB),
+              ],
+            ).createShader(Rect.fromCircle(center: at, radius: r))
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = math.max(1.5, r * 0.09),
         );
         if (tg.side == BodySide.left) {
           c.drawArc(
@@ -326,7 +336,7 @@ void melaPreview(Canvas c, Size s, int variant) {
     3 => AvatarJoints.demo(m, lean: 12, shoulderL: 150, shoulderR: 40),
     _ => AvatarJoints.demo(m, shoulderL: 145, shoulderR: 20),
   };
-  paintAvatar(c, j, accent: _marigold);
+  paintAvatar(c, j, look: melaLook);
   final r = m.unit * 0.42;
   void bubble(
     double x,
@@ -384,4 +394,33 @@ void melaPreview(Canvas c, Size s, int variant) {
       bubble(-0.75, 1.15, _kumkum, 0.92);
       bubble(1.3, 0.05, _peacock, 0.45, diamond: true);
   }
+}
+
+/// Dusk fairground: string lights, a slow Ferris wheel and striped stalls,
+/// with evening haze over the stalls, warm light lying on the ground,
+/// out-of-focus lights in the foreground and darkened corners.
+void melaBackdrop(Canvas c, Size s, double t, {bool storm = false}) {
+  _melaScene(c, s, t, storm: storm);
+  final ground = s.height * 0.86;
+  hazeBand(
+    c,
+    s,
+    ground - 40,
+    s.height * 0.22,
+    storm ? const Color(0xFF6A5A8C) : const Color(0xFFFFB88A),
+    alpha: 0.22,
+  );
+  // Each stall throws its lantern light onto the ground in front of it.
+  for (var i = 0; i < 4; i++) {
+    lightPool(
+      c,
+      Offset(s.width * (0.12 + i * 0.26), ground + (s.height - ground) * 0.55),
+      s.width * 0.42,
+      (s.height - ground) * 1.1,
+      _marigold,
+      alpha: storm ? 0.14 : 0.24,
+    );
+  }
+  bokeh(c, s, t, const [_marigold, _kumkum, _peacock, _lilac], n: 8, minY: 0.05, maxY: 0.8, seed: 3);
+  vignette(c, s, strength: storm ? 0.65 : 0.5);
 }

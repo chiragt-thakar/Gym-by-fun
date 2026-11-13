@@ -66,7 +66,7 @@ class ArcadeResultsScreen extends ConsumerWidget {
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [Color(0x00000000), Color(0xEE0B1611)],
+                          colors: [Color(0x00000000), Color(0xEE0A0C10)],
                           stops: [0.45, 1],
                         ),
                       ),

@@ -39,7 +39,14 @@ class Settings {
     this.cameraMirror = true,
     this.heroLook = HeroLook.fox,
     this.missionLevels = const {},
+    this.player = defaultPlayer,
+    this.otherPlayers = const {},
+    this.multiPerson = false,
+    this.diagnostics = false,
+    this.haptics = true,
   });
+
+  static const defaultPlayer = 'Me';
 
   final AppLanguage language;
   final Difficulty difficulty;
@@ -76,6 +83,46 @@ class Settings {
 
   /// Optional mission stars: only earned by a completed real run.
   final Set<String> missionLevels;
+
+  /// Who is playing. [calibration] is this player's body profile; other
+  /// people who share the device keep theirs in [otherPlayers].
+  final String player;
+  final Map<String, CalibrationProfile> otherPlayers;
+
+  /// Ask the camera for every body in view so tracking stays locked onto
+  /// the player when someone else is in the room. Costs frame rate.
+  final bool multiPerson;
+
+  /// Show the tracking diagnostics overlay (landmarks, confidence, state,
+  /// calibration quality, frame rate) on camera screens.
+  final bool diagnostics;
+
+  /// Short vibration cues (calibration steps, tracking lost / found).
+  final bool haptics;
+
+  /// Everyone with a body profile on this device, the active player first.
+  List<String> get players => [player, ...otherPlayers.keys];
+
+  /// Makes [name] the active player, keeping the current player's profile.
+  /// A new name starts without a profile (they calibrate at first play).
+  Settings switchPlayer(String name) {
+    final next = name.trim();
+    if (next.isEmpty || next == player) return this;
+    final others = {...otherPlayers};
+    final current = calibration;
+    if (current != null) others[player] = current;
+    final profile = others.remove(next);
+    return copyWith(
+      player: next,
+      otherPlayers: others,
+      calibration: profile,
+      clearCalibration: profile == null,
+    );
+  }
+
+  /// Forgets another player's body profile.
+  Settings removePlayer(String name) =>
+      copyWith(otherPlayers: {...otherPlayers}..remove(name));
 
   /// Extra warning time used by the director. Gentle + assist gives 1.5x
   /// base warning time (1.2 x 1.25), before encounter-spacing limits.
@@ -127,6 +174,11 @@ class Settings {
     bool? cameraMirror,
     HeroLook? heroLook,
     Set<String>? missionLevels,
+    String? player,
+    Map<String, CalibrationProfile>? otherPlayers,
+    bool? multiPerson,
+    bool? diagnostics,
+    bool? haptics,
   }) => Settings(
     language: language ?? this.language,
     difficulty: difficulty ?? this.difficulty,
@@ -147,6 +199,11 @@ class Settings {
     cameraMirror: cameraMirror ?? this.cameraMirror,
     heroLook: heroLook ?? this.heroLook,
     missionLevels: missionLevels ?? this.missionLevels,
+    player: player ?? this.player,
+    otherPlayers: otherPlayers ?? this.otherPlayers,
+    multiPerson: multiPerson ?? this.multiPerson,
+    diagnostics: diagnostics ?? this.diagnostics,
+    haptics: haptics ?? this.haptics,
   );
 
   Map<String, Object?> toJson() => {
@@ -169,7 +226,25 @@ class Settings {
     'cameraMirror': cameraMirror,
     'heroLook': heroLook.name,
     'missionLevels': [...missionLevels],
+    'player': player,
+    'players': {
+      for (final e in otherPlayers.entries) e.key: e.value.toJson(),
+    },
+    'multiPerson': multiPerson,
+    'diagnostics': diagnostics,
+    'haptics': haptics,
   };
+
+  /// A stored body profile, or null when it is missing or damaged. A bad
+  /// profile must only cost a re-calibration, never the other settings.
+  static CalibrationProfile? _profile(Object? raw) {
+    if (raw is! Map) return null;
+    try {
+      return CalibrationProfile.fromJson(Map<String, dynamic>.from(raw));
+    } catch (_) {
+      return null;
+    }
+  }
 
   factory Settings.fromJson(Map<String, dynamic> j) => Settings(
     language: AppLanguage.values.asNameMap()[j['language']] ?? AppLanguage.en,
@@ -182,11 +257,7 @@ class Settings {
     setupDone: j['setupDone'] as bool? ?? false,
     tutorialDone: j['tutorialDone'] as bool? ?? false,
     signedIn: j['signedIn'] as bool? ?? false,
-    calibration: j['calibration'] == null
-        ? null
-        : CalibrationProfile.fromJson(
-            Map<String, dynamic>.from(j['calibration'] as Map),
-          ),
+    calibration: _profile(j['calibration']),
     deviceTier: DeviceTier.values.asNameMap()[j['deviceTier']],
     seenTypes: {
       for (final n in (j['seenTypes'] as List<dynamic>? ?? const []))
@@ -206,6 +277,18 @@ class Settings {
       for (final id in j['missionLevels'] as List<dynamic>? ?? [])
         if (id is String) id,
     },
+    player: j['player'] is String && (j['player'] as String).isNotEmpty
+        ? j['player'] as String
+        : defaultPlayer,
+    otherPlayers: {
+      if (j['players'] case final Map<dynamic, dynamic> m)
+        for (final e in m.entries)
+          if (e.key is String)
+            if (_profile(e.value) case final p?) e.key as String: p,
+    },
+    multiPerson: j['multiPerson'] as bool? ?? false,
+    diagnostics: j['diagnostics'] as bool? ?? false,
+    haptics: j['haptics'] as bool? ?? true,
   );
 }
 

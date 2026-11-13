@@ -177,7 +177,7 @@ class HomeScreen extends ConsumerWidget {
               ],
               SectionHeader(
                 'Continue your adventure',
-                overline: 'MotionQuest Trails',
+                overline: 'Joynetic Trails',
                 action: 'Chapters',
                 onAction: () => context.push('/game/$adventureId'),
               ),
@@ -276,13 +276,25 @@ class _Greeting extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              (gymName ?? 'MotionQuest').toUpperCase(),
-              style: Txt.overline,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 4),
+            // The brand, or the player's gym beside the brand mark.
+            if (gymName == null)
+              const JoyneticLogo(size: 26)
+            else
+              Row(
+                children: [
+                  const JoyneticMark(size: 22),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      gymName!.toUpperCase(),
+                      style: Txt.overline,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            const SizedBox(height: 10),
             Text(greeting, style: Theme.of(context).textTheme.headlineMedium),
             const SizedBox(height: 2),
             Text(

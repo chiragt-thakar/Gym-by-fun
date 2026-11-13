@@ -122,7 +122,7 @@ describe('formatReport', () => {
     const r = await buildWeeklyReport(t.ctx, gymId, START);
     expect(r).toMatchObject({ members: 0, activeMembers: 0, sessions: 0, activeMinutes: 0, goingQuiet: [], topPlayers: [], quests: [] });
     expect(formatReport(r)).toBe(
-      [`*Quiet Gym — MotionQuest weekly report (${r.week})*`, '', 'Active members: 0 of 0 sharing', 'Home sessions: 0 · 0 active minutes'].join(
+      [`*Quiet Gym — Joynetic weekly report (${r.week})*`, '', 'Active members: 0 of 0 sharing', 'Home sessions: 0 · 0 active minutes'].join(
         '\n',
       ),
     );

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:game_director/game_director.dart';
 import 'package:motion_core/motion_core.dart';
 
+import 'looks.dart';
 import 'paint_kit.dart';
 
 const _peacock = Color(0xFF00C2B8);
@@ -13,7 +14,7 @@ const _tape = Color(0xFFFFD23F);
 
 /// Evening gully: houses with lit windows, a streetlight, a washing line
 /// and the pitch running back to the bowler.
-void cricketBackdrop(Canvas c, Size s, double t) {
+void _cricketScene(Canvas c, Size s, double t) {
   sky(
     c,
     s,
@@ -146,53 +147,105 @@ void paintGolu(
   double run, {
   bool bowl = false,
 }) {
-  final body = Paint()..color = const Color(0xFF8E96A3);
-  final dark = Paint()..color = const Color(0xFF050B08);
-  final bob = math.sin(run * math.pi * 6) * size * 0.04;
+  const hide = Color(0xFF8E96A3);
+  const dark = Color(0xFF07090D);
+  final cycle = math.sin(run * math.pi * 6);
+  final bob = cycle * size * 0.04;
   final b = at + Offset(0, bob);
+  softShadow(c, at + Offset(0, size * 0.66), size * 0.9, size * 0.16, alpha: 0.4);
+
+  // Legs: a short running stride, the far leg first.
+  for (final side in [-1.0, 1.0]) {
+    final hip = b + Offset(side * size * 0.14, size * 0.28);
+    final foot = at + Offset(side * size * 0.16 + side * cycle * size * 0.1, size * 0.62 - (side * cycle > 0 ? size * 0.06 : 0));
+    shadedLimb(c, hip, foot, size * 0.1, size * 0.085, shade(hide, -0.15));
+    shadedLimb(c, foot, foot + Offset(side * size * 0.08, size * 0.02), size * 0.07, size * 0.06, const Color(0xFFF2F0E6));
+  }
+  // Barrel body in a team vest.
+  final body = Rect.fromCenter(center: b, width: size * 0.62, height: size * 0.8);
+  c.drawOval(body.inflate(2.5), Paint()..color = dark);
   c.drawOval(
-    Rect.fromCenter(
-      center: b,
-      width: size * 0.62,
-      height: size * 0.8,
-    ).inflate(2),
-    dark,
-  );
-  c.drawOval(
-    Rect.fromCenter(center: b, width: size * 0.62, height: size * 0.8),
     body,
+    Paint()
+      ..shader = RadialGradient(
+        center: const Alignment(-0.4, -0.5),
+        radius: 1.1,
+        colors: [shade(hide, 0.25), hide, shade(hide, -0.45)],
+        stops: const [0, 0.5, 1],
+      ).createShader(body),
   );
-  final head = b - Offset(0, size * 0.5);
-  c.drawCircle(head, size * 0.24 + 2, dark);
-  c.drawCircle(head, size * 0.24, body);
-  final horn = Path()
-    ..moveTo(head.dx - size * 0.05, head.dy - size * 0.05)
-    ..lineTo(head.dx, head.dy - size * 0.32)
-    ..lineTo(head.dx + size * 0.05, head.dy - size * 0.05)
-    ..close();
-  c.drawPath(horn, Paint()..color = _chalk);
-  // Cap.
-  c.drawArc(
-    Rect.fromCircle(center: head, radius: size * 0.24),
-    math.pi,
-    math.pi,
-    true,
-    Paint()..color = _peacock,
+  c.save();
+  c.clipPath(Path()..addOval(body));
+  c.drawRect(
+    Rect.fromLTRB(body.left, b.dy - size * 0.2, body.right, b.dy + size * 0.24),
+    Paint()
+      ..shader = LinearGradient(
+        colors: [shade(_peacock, 0.15), shade(_peacock, -0.4)],
+      ).createShader(body),
   );
-  c.drawCircle(head + Offset(-size * 0.08, size * 0.02), size * 0.03, dark);
-  c.drawCircle(head + Offset(size * 0.08, size * 0.02), size * 0.03, dark);
-  final arm = Paint()
-    ..color = const Color(0xFF7A828F)
-    ..strokeWidth = size * 0.12
-    ..strokeCap = StrokeCap.round;
+  c.drawRect(
+    Rect.fromLTRB(body.left, b.dy - size * 0.02, body.right, b.dy + size * 0.04),
+    Paint()..color = _tape,
+  );
+  c.restore();
+
+  // Arms: the bowling arm comes over the top as he releases.
   final sh = b - Offset(0, size * 0.25);
-  final swing = bowl ? -math.pi * 0.9 * run : math.sin(run * math.pi * 6) * 0.6;
-  c.drawLine(
-    sh,
-    sh + Offset(math.sin(swing) * size * 0.4, -math.cos(swing) * size * 0.4),
-    arm,
+  final swing = bowl ? -math.pi * 0.9 * run : cycle * 0.6;
+  shadedLimb(c, sh + Offset(-size * 0.2, size * 0.04), sh + Offset(-size * 0.36, size * 0.3), size * 0.07, size * 0.06, hide);
+  final hand = sh + Offset(size * 0.2, 0) + Offset(math.sin(swing) * size * 0.42, -math.cos(swing) * size * 0.42);
+  shadedLimb(c, sh + Offset(size * 0.2, size * 0.02), hand, size * 0.075, size * 0.06, hide);
+
+  // Head: ears, a broad snout, the horn and a cap.
+  final head = b - Offset(0, size * 0.5);
+  for (final side in [-1.0, 1.0]) {
+    shadedBall(c, head + Offset(side * size * 0.2, -size * 0.16), size * 0.07, shade(hide, -0.1));
+  }
+  c.drawCircle(head, size * 0.24 + 2.5, Paint()..color = dark);
+  shadedBall(c, head, size * 0.24, hide);
+  final snout = head + Offset(0, size * 0.1);
+  c.drawOval(
+    Rect.fromCenter(center: snout, width: size * 0.3, height: size * 0.2),
+    Paint()..color = shade(hide, 0.12),
   );
-  c.drawLine(sh, sh + Offset(-size * 0.3, size * 0.25), arm);
+  final horn = Path()
+    ..moveTo(snout.dx - size * 0.06, snout.dy - size * 0.03)
+    ..quadraticBezierTo(snout.dx - size * 0.02, snout.dy - size * 0.2, snout.dx + size * 0.02, snout.dy - size * 0.3)
+    ..quadraticBezierTo(snout.dx + size * 0.05, snout.dy - size * 0.14, snout.dx + size * 0.06, snout.dy - size * 0.03)
+    ..close();
+  c.drawPath(
+    horn,
+    Paint()
+      ..shader = const LinearGradient(
+        colors: [Color(0xFFFFFBEF), Color(0xFFC9C2AE)],
+      ).createShader(horn.getBounds()),
+  );
+  for (final side in [-1.0, 1.0]) {
+    c.drawCircle(snout + Offset(side * size * 0.07, size * 0.03), size * 0.016, Paint()..color = dark);
+    final eye = head + Offset(side * size * 0.1, -size * 0.03);
+    c.drawCircle(eye, size * 0.04, Paint()..color = const Color(0xFFF7F4EA));
+    c.drawCircle(eye + Offset(size * 0.008, size * 0.006), size * 0.022, Paint()..color = dark);
+  }
+  // Cap with a peak.
+  c.drawArc(
+    Rect.fromCircle(center: head, radius: size * 0.245),
+    math.pi * 1.05,
+    math.pi * 0.9,
+    true,
+    Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [shade(_peacock, 0.25), shade(_peacock, -0.3)],
+      ).createShader(Rect.fromCircle(center: head, radius: size * 0.245)),
+  );
+  c.drawRRect(
+    RRect.fromRectAndRadius(
+      Rect.fromLTWH(head.dx - size * 0.26, head.dy - size * 0.1, size * 0.34, size * 0.05),
+      Radius.circular(size * 0.03),
+    ),
+    Paint()..color = shade(_peacock, -0.35),
+  );
 }
 
 /// The bat in the player's hands: from the hand midpoint, away from the
@@ -301,7 +354,7 @@ void cricketPlay(
       ),
       Paint()..color = const Color(0x55000000),
     );
-    c.drawCircle(at, 7 + 5 * k, Paint()..color = const Color(0xFFF2F0E6));
+    glossSphere(c, at, 7 + 5 * k, const Color(0xFFF2F0E6));
     c.drawArc(
       Rect.fromCircle(center: at, radius: 7 + 5 * k),
       -0.6,
@@ -379,7 +432,7 @@ void cricketPreview(Canvas c, Size s, int variant) {
       lean: 4,
     ),
   };
-  paintAvatar(c, j, accent: _peacock);
+  paintAvatar(c, j, look: cricketLook);
   final hands = (j.p[AvatarJoints.lWr] + j.p[AvatarJoints.rWr]) / 2;
   if (variant != 1) {
     final tip = variant == 2
@@ -417,7 +470,7 @@ void cricketPreview(Canvas c, Size s, int variant) {
   final ball =
       Offset.lerp(release, hit, k)! +
       Offset(0, -math.sin(k * math.pi) * m.unit * 0.8);
-  c.drawCircle(ball, 9, Paint()..color = _chalk);
+  glossSphere(c, ball, 9, _chalk);
   if (variant == 2) {
     strokedText(
       c,
@@ -432,4 +485,48 @@ void cricketPreview(Canvas c, Size s, int variant) {
       Color(0xFFFF4D6D),
     ], spread: m.unit * 2);
   }
+}
+
+/// The gully at the end of the day: the sun low behind the houses, long
+/// shadows across the road, the streetlight just on, dust hanging in the
+/// warm air.
+void cricketBackdrop(Canvas c, Size s, double t) {
+  _cricketScene(c, s, t);
+  final horizon = s.height * 0.52;
+  final depth = s.height - horizon;
+  // Low sun at the end of the lane.
+  final sun = Offset(s.width * 0.5, horizon - 6);
+  glow(c, sun, s.width * 0.5, const Color(0xFFFFB45A), alpha: 0.45);
+  glow(c, sun, s.width * 0.16, const Color(0xFFFFF0C8), alpha: 0.6);
+  // Long shadows of the houses, falling towards the player.
+  for (final (x0, x1) in [(0.0, 0.3), (1.0, 0.7)]) {
+    final shadow = Path()
+      ..moveTo(s.width * x0, horizon)
+      ..lineTo(s.width * x1, horizon)
+      ..lineTo(s.width * (x1 + (x1 - 0.5) * 0.5), s.height)
+      ..lineTo(s.width * x0, s.height)
+      ..close();
+    c.drawPath(
+      shadow,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0x66101822), Color(0x22101822)],
+        ).createShader(Rect.fromLTRB(0, horizon, s.width, s.height)),
+    );
+  }
+  // Sunlight down the middle of the pitch.
+  lightPool(c, Offset(s.width / 2, horizon + depth * 0.4), s.width * 0.5, depth * 1.2, const Color(0xFFFFD9A0), alpha: 0.22);
+  // The streetlight's cone.
+  lightShaft(c, Offset(s.width * 0.9 - 18, horizon + 16 - s.height * 0.3), s.height * 0.36, s.width * 0.14, const Color(0xFFFFE6A0), alpha: 0.2, lean: -s.width * 0.04);
+  hazeBand(c, s, horizon, s.height * 0.14, const Color(0xFFFFC08A), alpha: 0.3);
+  final mote = Paint();
+  for (var i = 0; i < 16; i++) {
+    final x = (hash(i * 7 + 3) + t * 0.004 * (1 + hash(i))) % 1 * s.width;
+    final y = horizon - s.height * 0.1 + depth * hash(i * 5 + 2);
+    mote.color = const Color(0xFFFFE9C2).withValues(alpha: 0.1 + 0.2 * hash(i));
+    c.drawCircle(Offset(x, y + math.sin(t * 0.7 + i) * 4), 1.3, mote);
+  }
+  vignette(c, s, strength: 0.45);
 }

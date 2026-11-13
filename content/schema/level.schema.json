@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://motionquest.app/schema/level.schema.json",
-  "title": "MotionQuest level",
+  "title": "Joynetic level",
   "description": "A hand-designed level. Validated in CI and by the server before it reaches phones.",
   "type": "object",
   "required": ["id", "version", "schemaVersion", "world", "name", "lanes", "durationS", "difficulty", "scoring", "segments", "encounters"],

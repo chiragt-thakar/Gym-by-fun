@@ -1,5 +1,102 @@
 # Progress
 
+## Joynetic: tracking engine v2, pairing backend and redesign - 2026-11-13
+
+**Not built or run.** This machine has no Flutter, Dart, Gradle or Node, so
+every change below was written and re-read by hand. Nothing has been compiled,
+analysed or tested yet. Run the commands in AGENTS.md first; expect a small
+number of compile or lint fixes.
+
+**Renamed to Joynetic** in everything a player sees, in class names and in the
+Dart package (`package:joynetic/…`). Deliberately unchanged, because changing
+them breaks installs, tokens or links: the Android application id and Kotlin
+package (`app.motionquest`), platform channel names, the `motionquest://join`
+link scheme, the JWT issuer, the job queue name, database names and the
+`motionquest.app` domains. Landmark recordings are written as
+`joynetic.landmarks`; the old format name still loads.
+
+**Tracking engine (`packages/motion_core`, see [tracking.md](tracking.md)).**
+- Root cause of "tracking drops when I move a little": the quality gate paused
+  the game when any one of nine landmarks dipped or neared the image edge.
+  Now only the torso is required; everything else is `degraded` and play
+  continues, with each detector checking the landmarks it needs.
+- New `BodyTracker` front end shared by every screen: `SubjectLock` (primary
+  player), `FacingCanonicaliser` (left is always the player's left), graded
+  `QualityGate`, `LandmarkStabiliser` (One Euro + confidence gate + ≤ 250 ms
+  prediction for all 33 landmarks), `TrackingStateMachine` (tracking / degraded
+  / lost / recovering, each transition with its own dwell).
+- Calibration v2: robust statistics (medians, percentiles, spike-dropping rep
+  bottoms), a body model (limb proportions, camera distance and roll), a
+  quality score with named issues, live condition guidance, one automatic
+  retry for a poor result, quick re-calibration, versioned JSON (v1 still
+  loads), per-player profiles in the app.
+- `DriftCorrector`: the profile is re-scaled / re-centred passively when the
+  player ends up nearer, further or elsewhere; inside a dead band nothing
+  changes.
+- Squat works with the feet out of view (thigh-span fallback). Raise-arms no
+  longer believes a wrist that has left the image.
+- Plug-in `DetectorRegistry` with typed configs; new detectors `jump`, `punch`,
+  `twist`, `kneeLift` (all opt-in) and one `GestureEvent` type; `MotionSignals`
+  and the `MotionInput` interface for games.
+- Tests added (not run): robust statistics, stabiliser, state machine, subject
+  lock, body tracker / partial visibility, calibration v2, drift, detectors and
+  signals. Existing tests were kept; one app test (frame watchdog) was updated
+  because resuming after a stall now waits for a steady spell.
+
+**Native bridge.** Optional multi-person output (`maxPoses`), MediaPipe presence
+and tracking confidence 0.5 → 0.4, CameraX camera-state errors reported to Dart,
+typed frame list passed through without copying.
+
+**App.** One `BodyTracker` per camera session; screens consume `TrackedFrame`s
+instead of running their own gate and smoother. Stalled camera: moves end, the
+game holds, the camera is restarted (3 attempts) and then a clear "camera
+stopped" state with Retry. Falls back to the light model once if the accurate
+one cannot hold 15 fps. Diagnostics overlay (Settings → Tracking). Developer
+input without a camera: `--dart-define=JOYNETIC_INPUT=sim` or `=recorded`.
+
+**Backend.** New `pairing` module (`/v1/pair`): single-use codes, hashed
+per-device tokens, strict message schemas (events, signals, tracking state, game
+control — nothing that could carry landmarks or video), per-direction sequence
+numbers with a bounded replay log for reconnection, Redis pub/sub fan-out.
+Transport is POST + Server-Sent Events: no new dependency (a WebSocket adapter
+needs `@fastify/websocket`, which could not be installed here). The app has no
+pairing client yet. Calibration backup accepts v2 profiles (40 keys).
+
+**Redesign (see [design.md](design.md)).** New "Ink & Volt" tokens (`Jn`), with
+the old token names aliased so every screen picks them up; pill buttons, new
+backdrop, brand mark, trust panel, `StateView` for errors. Rewritten: welcome,
+the camera-permission explainer, calibration, Settings → Tracking, error and
+camera-stopped states. Restyled through tokens and shared components: home,
+games, progress, profile, results, get-ready, pause, HUD. Their layouts were
+not rewritten.
+
+**What to test first**
+1. `dart analyze && dart test` in `packages/motion_core`, then
+   `packages/game_director`; `flutter analyze && flutter test` in `app`;
+   `npm run lint && npm run typecheck && npm test` in `server`.
+2. The replay accuracy gate (`replay_accuracy_test.dart`) — it must still pass
+   unchanged.
+3. On a phone, with Settings → Tracking → Diagnostics overlay on: stand so your
+   feet are cut off and squat; lean until a hand leaves the frame; step out and
+   back in; walk closer mid-game; have someone walk behind you.
+4. Left / right: raise your right hand and check the right-hand side responds
+   in an arcade game, and whether diagnostics shows "L/R swapped".
+5. Calibration in a dim room and with the feet hidden (expect the fix-and-retry
+   card).
+6. Frame rate with "Other people in the room" on.
+
+**Known risks**
+- Unbuilt code (above).
+- The MediaPipe confidence change and `maxPoses` 2 are untested on device.
+- Left/right canonicalisation is derived from how pose models label a mirrored
+  image; if arcade sides were correct before, confirm they still are.
+- One Euro constants were kept (the accuracy gate was tuned on them); a
+  lower-lag tuning is described in tracking.md and needs the gate plus a device.
+- New English strings have no Hindi / Gujarati yet.
+- Drift correction re-centres a player who stands more than a torso length off
+  their spot for 2.5 s; in side-step lane mode a very large held step would be
+  re-centred.
+
 ## App v2: new shell, game library and six new games - 2026-11-09
 **Shell and UX (owner request: production-grade look, working back button,
 separate pages, a game list with previews).**
@@ -135,7 +232,7 @@ Thresholds for the new gestures are first estimates and need recorded data.
   camera mirror off to use the landmark-only body avatar.
 
 ## Installed and launched on phone - 2026-11-09
-- Updated MotionQuest on the user's authorized Vivo V2348 (Android API 36)
+- Updated Joynetic on the user's authorized Vivo V2348 (Android API 36)
   using `adb install -r` and the newly built debug APK. Installation returned
   Success; existing application data was retained.
 - Granted `android.permission.CAMERA` through the authorized ADB connection;

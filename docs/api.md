@@ -1,4 +1,4 @@
-# MotionQuest REST API
+# Joynetic REST API
 
 Source of truth: `server/src/modules/**/routes.ts`. All `/v1` bodies are JSON (`content-type: application/json`, max 512 KB).
 
@@ -159,6 +159,40 @@ Re-sending a `clientId` is a no-op and is reported in `duplicates`. Implausible 
 | GET | `/v1/content/manifest` | none | — | `{ levels: manifestEntry[] }` (latest version of each level). `cache-control: public, max-age=300` |
 | GET | `/v1/content/levels/:id` | none | `?version=n` | Level JSON. `etag` = sha256. Versioned requests are cached immutable. `404 level_not_found` |
 | POST | `/v1/admin/content/levels` | admin | Level JSON (validated against `content/schema/level.schema.json` + invariants) | `201 { levelId, version, unchanged: false }`, or `200 { ..., unchanged: true }` if identical. `400 invalid_level`, `409 version_exists_with_different_content` |
+
+## Pairing
+
+Pairs the player's phone (`host`, which tracks the body) with one other screen
+(`peer`). State lives only in Redis and expires by itself (session 2 h idle,
+code 5 min). Device auth is the `x-pair-token` header (never the URL).
+
+| Method | Path | Auth | Request → Response |
+|---|---|---|---|
+| POST | `/v1/pair/sessions` | user | → `201 { sessionId, code, token, role: "host", expiresInS }`. 20 per user per hour. |
+| POST | `/v1/pair/join` | none | `{ code }` → `{ sessionId, token, role: "peer" }`. The code works once. `404 pair_code_invalid`. 10 attempts per IP per 10 min. |
+| GET | `/v1/pair/sessions/:id` | pair token | → `{ role, paired, hostOnline, peerOnline }` |
+| POST | `/v1/pair/sessions/:id/messages` | pair token | `{ messages: PairMessage[1..32] }` → `{ seq }` (the last sequence number given to the other device). The whole batch is refused if one message is invalid. 1200 batches per device per minute; exempt from the global per-IP limit. |
+| GET | `/v1/pair/sessions/:id/stream` | pair token | Server-Sent Events. Each event: `id: <seq>`, `data: { seq, from, at, msg }`. Send `Last-Event-ID` (or `?after=<seq>`) to receive what was missed. A comment line every 15 s keeps the connection open. |
+| DELETE | `/v1/pair/sessions/:id` | pair token | `204`. Both devices receive `{ t: "end" }`. |
+
+Errors: `404 pair_session_not_found`, `403 pair_token_invalid`,
+`429 pair_rate_limited`.
+
+### `PairMessage`
+
+Strict objects: unknown fields are rejected. Nothing here can carry landmarks,
+images or video.
+
+| `t` | Fields |
+|---|---|
+| `event` | `kind` (`move` \| `gesture`), `name`, `phase` (`started` \| `held` \| `ended` \| `fired` \| `rejected`), `side?`, `strength?` 0–10, `heldMs?`, `ts` |
+| `signal` | `ts`, `squat`, `lean`, `sideStep`, `armLeft`, `armRight`, `hipX`, `hipRise` (each −10…10). Latest-value: never replayed. |
+| `tracking` | `state` (`tracking` \| `degraded` \| `lost` \| `recovering`), `issue?`, `ts` |
+| `game` | `action` (`select` \| `start` \| `pause` \| `resume` \| `end`), `gameId?`, `stageId?`, `score?` |
+
+The server adds `{ t: "joined" }` (to the host when the peer joins) and
+`{ t: "end" }`. The last 64 replayable messages per direction are kept for
+reconnection.
 
 ## Web pages (no prefix, HTML)
 

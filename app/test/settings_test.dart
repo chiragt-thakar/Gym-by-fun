@@ -4,13 +4,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:motionquest/screens/settings_screen.dart';
-import 'package:motionquest/services/api_client.dart';
-import 'package:motionquest/services/coach_service.dart';
-import 'package:motionquest/services/local_data.dart';
-import 'package:motionquest/services/settings.dart';
-import 'package:motionquest/game/forest_game.dart';
-import 'package:motionquest/services/session_queue.dart';
+import 'package:joynetic/screens/settings_screen.dart';
+import 'package:joynetic/services/api_client.dart';
+import 'package:joynetic/services/coach_service.dart';
+import 'package:joynetic/services/local_data.dart';
+import 'package:joynetic/services/settings.dart';
+import 'package:joynetic/game/forest_game.dart';
+import 'package:joynetic/services/session_queue.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _EmptyQueue extends SessionQueue {

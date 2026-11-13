@@ -183,6 +183,38 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
+  Future<void> _addPlayer() async {
+    final controller = TextEditingController();
+    final name = await showDialog<String>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: Text(tr('Add player')),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLength: 16,
+          textCapitalization: TextCapitalization.words,
+          decoration: InputDecoration(labelText: tr('Name')),
+          onSubmitted: (v) => Navigator.pop(c, v),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(c),
+            child: Text(tr('Cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(c, controller.text),
+            child: Text(tr('Add')),
+          ),
+        ],
+      ),
+    );
+    final clean = name?.trim() ?? '';
+    if (clean.isEmpty || !mounted) return;
+    ref.read(settingsProvider.notifier).update((x) => x.switchPlayer(clean));
+    _snack(tr('Their body profile is measured before their first game.'));
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = ref.watch(settingsProvider);
@@ -317,14 +349,53 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               n.update((x) => x.copyWith(bodyStyle: v.first)),
         ),
         const SizedBox(height: 8),
+        const _H('Tracking'),
+        Text(
+          s.calibration == null
+              ? tr('No body profile yet. It is measured before your first game.')
+              : '${tr('Body profile')}: ${s.player} · ${tr(_qualityLabel(s.calibration!.quality))}',
+          style: const TextStyle(fontSize: 16),
+        ),
+        const SizedBox(height: 8),
+        // Everyone who plays on this phone keeps their own body profile.
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final name in s.players)
+              InputChip(
+                key: ValueKey('player-$name'),
+                selected: name == s.player,
+                selectedColor: Lantern.glow.withValues(alpha: 0.22),
+                label: Text(name),
+                onPressed: () => n.update((x) => x.switchPlayer(name)),
+                onDeleted: name == s.player
+                    ? null
+                    : () => n.update((x) => x.removePlayer(name)),
+              ),
+            ActionChip(
+              key: const ValueKey('add-player'),
+              avatar: const Icon(Icons.person_add_alt_1_rounded, size: 18),
+              label: Text(tr('Add player')),
+              onPressed: _addPlayer,
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (s.calibration != null)
+          BigButton(
+            tr('Quick re-check (5 seconds)'),
+            key: const ValueKey('quick-recalibrate'),
+            icon: Icons.my_location_rounded,
+            secondary: true,
+            onPressed: () => context.push('/calibrate?quick=1'),
+          ),
         BigButton(
           tr('Recalibrate'),
           icon: Icons.accessibility_new,
           secondary: true,
-          onPressed: () {
-            n.update((x) => x.copyWith(clearCalibration: true));
-            context.push('/calibrate');
-          },
+          // The current profile stays until the new one is finished.
+          onPressed: () => context.push('/calibrate'),
         ),
         BigButton(
           tr('Redo space setup'),
@@ -335,7 +406,46 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             context.push('/setup');
           },
         ),
+        SwitchListTile(
+          key: const ValueKey('multi-person'),
+          title: Text(
+            tr('Other people in the room'),
+            style: const TextStyle(fontSize: 18),
+          ),
+          subtitle: Text(
+            tr(
+              'Keeps tracking locked onto you when someone else is in view. Uses more battery.',
+            ),
+          ),
+          value: s.multiPerson,
+          onChanged: (v) => n.update((x) => x.copyWith(multiPerson: v)),
+        ),
+        SwitchListTile(
+          key: const ValueKey('haptics'),
+          title: Text(tr('Vibration cues'), style: const TextStyle(fontSize: 18)),
+          subtitle: Text(
+            tr('A short buzz when a step is done or tracking changes.'),
+          ),
+          value: s.haptics,
+          onChanged: (v) => n.update((x) => x.copyWith(haptics: v)),
+        ),
+        SwitchListTile(
+          key: const ValueKey('diagnostics'),
+          title: Text(
+            tr('Diagnostics overlay'),
+            style: const TextStyle(fontSize: 18),
+          ),
+          subtitle: Text(
+            tr(
+              'Shows what tracking sees on camera screens: body points, confidence, state and frame rate.',
+            ),
+          ),
+          value: s.diagnostics,
+          onChanged: (v) => n.update((x) => x.copyWith(diagnostics: v)),
+        ),
         const _H('Privacy'),
+        const CameraTrustPanel(),
+        const SizedBox(height: 8),
         Text(s.s.t('video_never_leaves')),
         if (signedIn) ...[
           SwitchListTile(
@@ -418,6 +528,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 }
+
+/// Plain words for a calibration quality score (0 = not scored).
+String _qualityLabel(double q) => q <= 0
+    ? 'quick estimate'
+    : q >= 0.75
+    ? 'good quality'
+    : q >= 0.5
+    ? 'fair quality'
+    : 'low quality — recalibrate in better conditions';
 
 const _bandBlurb = {
   AgeBand.gentle: 'Gentle: more warning time, low-impact and assist on.',

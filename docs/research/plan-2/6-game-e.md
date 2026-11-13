@@ -17,7 +17,7 @@ wall look, sound or catchphrase.
 
 ---
 
-## 1. Why this game fits MotionQuest
+## 1. Why this game fits Joynetic
 
 | Constraint | How Pataka Pose meets it |
 |---|---|

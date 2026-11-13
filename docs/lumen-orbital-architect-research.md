@@ -2,7 +2,7 @@
 
 > **Implementation note (2026-11-09):** a first playable version of the games in this document now ships in the app (v2). See [progress.md](progress.md) for what was built, what deliberately differs, and what is still open; rules live in [game-design.md](game-design.md#arcade-games-v2-2026-11-09).
 
-Research and design proposal for MotionQuest | 9 November 2026
+Research and design proposal for Joynetic | 9 November 2026
 
 **Status: proposal only. Await the owner's explicit instruction to start implementation.**
 No game, recogniser, onboarding, calibration or phone installation changes are authorised by this document itself. The explore-first flow below belongs to the same proposed implementation, pending that instruction.
@@ -13,7 +13,7 @@ Add one separate game: a body-controlled construction puzzle in which the player
 
 The player makes decisions about a system, rather than following a stream of exercise commands. Movement operates tools in a meaningful game state. There is no advancing obstacle wall, chase, required jump, beat deadline or penalty for thinking.
 
-Also let adults explore MotionQuest before camera setup. Ask for movement preparation when they choose **Play**, retain the exact game/stage/pace they selected, and return them there after preparation. Browsing must never start the camera.
+Also let adults explore Joynetic before camera setup. Ask for movement preparation when they choose **Play**, retain the exact game/stage/pace they selected, and return them there after preparation. Browsing must never start the camera.
 
 This concept was developed from the current implementation and external research. Existing future-game proposal documents were not opened or used as design inputs. The name is a working title, not a trademark-clearance claim. This is an original proposed combination, not a claim to have invented motion-controlled puzzles.
 

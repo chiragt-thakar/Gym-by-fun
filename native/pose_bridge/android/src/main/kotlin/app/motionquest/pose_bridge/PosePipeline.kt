@@ -8,6 +8,7 @@ import android.util.Rational
 import android.util.Size
 import android.view.Surface
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.CameraState
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
@@ -19,6 +20,8 @@ import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.Observer
 import com.google.mediapipe.framework.image.BitmapImageBuilder
 import com.google.mediapipe.tasks.core.BaseOptions
 import com.google.mediapipe.tasks.core.Delegate
@@ -41,6 +44,12 @@ import java.util.concurrent.atomic.AtomicBoolean
  * frames go straight to a native PreviewView surface (GPU), never to Dart
  * and never to storage. Analysis and Preview share one 3:4 portrait
  * ViewPort, so landmark (0..1) coordinates line up with the preview.
+ *
+ * People: with [maxPoses] > 1 every detected body is sent (33 landmarks
+ * each, one block after another); the Dart tracking engine locks onto the
+ * player. Camera trouble (in use by another app, disabled, fatal) is
+ * reported through [onError] with a "camera_error:<code>" message; CameraX
+ * reopens the camera by itself when it can.
  */
 internal class PosePipeline(
     private val context: Context,
@@ -50,6 +59,10 @@ internal class PosePipeline(
     private val preferGpu: Boolean,
     private val fullModel: Boolean,
     private val selfView: Boolean,
+    private val maxPoses: Int,
+    private val minDetection: Float,
+    private val minPresence: Float,
+    private val minTracking: Float,
     private val onFrame: (DoubleArray) -> Unit,
     private val onError: (String) -> Unit,
 ) {
@@ -75,6 +88,17 @@ internal class PosePipeline(
     private var preview: Preview? = null
     private var previewSurface: Preview.SurfaceProvider? = null
     @Volatile private var modelUsed = "lite"
+
+    // Main thread only. Watches the camera for errors while it is bound.
+    private var cameraState: LiveData<CameraState>? = null
+    private var lastCameraError = -1
+    private val cameraObserver = Observer<CameraState> { state ->
+        val code = state.error?.code ?: -1
+        if (code != lastCameraError) {
+            lastCameraError = code
+            if (code >= 0 && !stopped) onError("camera_error:$code")
+        }
+    }
 
     /**
      * Shows the preview on [surface] (a PreviewView), or stops feeding it
@@ -159,7 +183,11 @@ internal class PosePipeline(
                         group.addUseCase(pv)
                     }
                     p.unbindAll()
-                    p.bindToLifecycle(owner, CameraSelector.DEFAULT_FRONT_CAMERA, group.build())
+                    val camera =
+                        p.bindToLifecycle(owner, CameraSelector.DEFAULT_FRONT_CAMERA, group.build())
+                    val state = camera.cameraInfo.cameraState
+                    state.observe(owner, cameraObserver)
+                    cameraState = state
                     onStarted(
                         mapOf(
                             "delegate" to delegateUsed,
@@ -185,10 +213,10 @@ internal class PosePipeline(
             val options = PoseLandmarker.PoseLandmarkerOptions.builder()
                 .setBaseOptions(base)
                 .setRunningMode(RunningMode.LIVE_STREAM)
-                .setNumPoses(1)
-                .setMinPoseDetectionConfidence(0.5f)
-                .setMinPosePresenceConfidence(0.5f)
-                .setMinTrackingConfidence(0.5f)
+                .setNumPoses(maxPoses)
+                .setMinPoseDetectionConfidence(minDetection)
+                .setMinPosePresenceConfidence(minPresence)
+                .setMinTrackingConfidence(minTracking)
                 .setResultListener(::onResult)
                 .setErrorListener { e -> onError(e.message ?: "pose error") }
                 .build()
@@ -272,22 +300,22 @@ internal class PosePipeline(
         if (stopped) return
         val ts = result.timestampMs()
         val poses = result.landmarks()
-        val out: DoubleArray
-        if (poses.isEmpty()) {
-            out = doubleArrayOf(ts.toDouble(), w.toDouble(), h.toDouble(), inference)
-        } else {
-            val pose = poses[0]
-            out = DoubleArray(4 + pose.size * 4)
-            out[0] = ts.toDouble()
-            out[1] = w.toDouble()
-            out[2] = h.toDouble()
-            out[3] = inference
-            for ((i, p) in pose.withIndex()) {
-                val o = 4 + i * 4
+        // Header + one 33-landmark block per body. A body with an unexpected
+        // landmark count is skipped so the blocks always line up.
+        val bodies = poses.filter { it.size == LANDMARKS }
+        val out = DoubleArray(4 + bodies.size * LANDMARKS * 4)
+        out[0] = ts.toDouble()
+        out[1] = w.toDouble()
+        out[2] = h.toDouble()
+        out[3] = inference
+        var o = 4
+        for (pose in bodies) {
+            for (p in pose) {
                 out[o] = p.x().toDouble()
                 out[o + 1] = p.y().toDouble()
                 out[o + 2] = p.z().toDouble()
                 out[o + 3] = p.visibility().orElse(0f).toDouble()
+                o += 4
             }
         }
         onFrame(out)
@@ -298,6 +326,8 @@ internal class PosePipeline(
         stopped = true
         try {
             ContextCompat.getMainExecutor(context).execute {
+                cameraState?.removeObserver(cameraObserver)
+                cameraState = null
                 preview?.setSurfaceProvider(null)
                 preview = null
                 provider?.unbindAll()
@@ -314,5 +344,9 @@ internal class PosePipeline(
         } catch (_: Exception) {
         }
         executor.shutdown()
+    }
+
+    private companion object {
+        const val LANDMARKS = 33
     }
 }

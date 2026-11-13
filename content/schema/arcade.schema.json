@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://motionquest.app/schema/arcade.schema.json",
-  "title": "MotionQuest arcade game content",
+  "title": "Joynetic arcade game content",
   "description": "Stages, songs, guardians, poses and boards for the camera arcade games. Validated in CI; the engines in packages/game_director decode exactly these shapes.",
   "type": "object",
   "required": ["game", "schemaVersion", "version"],
   "properties": {
     "game": {
-      "enum": ["mirror-mela", "pataka-pose", "craftguard", "taal-toofan", "tapeball", "lumen"]
+      "enum": ["mirror-mela", "pataka-pose", "craftguard", "taal-toofan", "tapeball", "lumen", "neon-slice"]
     },
     "schemaVersion": { "const": 1 },
     "version": { "type": "integer", "minimum": 1 }
@@ -56,6 +56,13 @@
         "stages": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/lumenStage" } }
       },
       "required": ["stages"]
+    },
+    {
+      "properties": {
+        "game": { "const": "neon-slice" },
+        "stages": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/sliceStage" } }
+      },
+      "required": ["stages"]
     }
   ],
   "$defs": {
@@ -70,6 +77,25 @@
         "good": { "type": "integer", "minimum": 120, "maximum": 600 },
         "ok": { "type": "integer", "minimum": 120, "maximum": 700 },
         "lateBias": { "type": "integer", "minimum": 0, "maximum": 200 }
+      }
+    },
+    "sliceStage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "durationMs", "startPerMin", "peakPerMin"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "$ref": "#/$defs/text" },
+        "blurb": { "$ref": "#/$defs/text" },
+        "durationMs": { "type": "integer", "minimum": 30000, "maximum": 120000 },
+        "startPerMin": { "type": "integer", "minimum": 10, "maximum": 50 },
+        "peakPerMin": { "type": "integer", "minimum": 10, "maximum": 70 },
+        "bombShare": { "type": "number", "minimum": 0, "maximum": 0.5 },
+        "waveShare": { "type": "number", "minimum": 0, "maximum": 0.7 },
+        "flightMs": { "type": "integer", "minimum": 1600, "maximum": 4000 },
+        "radius": { "type": "number", "minimum": 0.25, "maximum": 0.6 },
+        "minSpeed": { "type": "number", "minimum": 1, "maximum": 4 },
+        "seed": { "type": "integer", "minimum": 0 }
       }
     },
     "melaStage": {

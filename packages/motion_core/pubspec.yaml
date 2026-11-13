@@ -1,5 +1,5 @@
 name: motion_core
-description: Pure-Dart motion pipeline for MotionQuest — quality gate, One Euro smoothing, calibration and move recognisers.
+description: Pure-Dart motion pipeline for Joynetic — quality gate, One Euro smoothing, calibration and move recognisers.
 version: 0.1.0
 publish_to: none
 

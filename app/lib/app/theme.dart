@@ -1,35 +1,120 @@
 import 'package:flutter/material.dart';
 
-/// "Forest Lantern" palette: deep forest night, warm lantern-orange accent
-/// (the fox-orange hero) and a teal secondary (the hero's scarf).
+/// Joynetic design tokens. See docs/design.md.
 ///
-/// Every pairing below is high contrast. Colour is never the only signal:
-/// widgets pair it with icons, shapes or text.
-abstract final class Lantern {
-  static const night = Color(0xFF0B1611); // scaffold background
-  static const canopy = Color(0xFF13241C); // panels
-  static const moss = Color(0xFF1C3328); // raised panels / inputs
-  static const ridge = Color(0xFF2A4A3A); // borders, far silhouettes
-  static const glow = Color(0xFFFF9A3C); // lantern orange (primary)
-  static const ember = Color(0xFFE0701F); // pressed / deep orange
-  static const scarf = Color(0xFF3FD0C0); // teal (secondary)
-  static const parchment = Color(0xFFF6EEDC); // main text
-  static const fog = Color(0xFFB9C9BF); // secondary text
-  static const warning = Color(0xFFFFC857); // amber warnings
+/// **Ink & Volt**: a near-black, slightly cool ink; one high-energy colour
+/// (volt, a yellow-green) for the single most important action on a screen;
+/// one calm colour (aqua) that always and only means "the tracker sees
+/// you". Amber warns, coral is for errors. Nothing else carries meaning.
+///
+/// Every text/background pairing below is at least 7:1, because the screen
+/// is read from two metres away. Colour is never the only signal: widgets
+/// pair it with an icon, a shape or words.
+abstract final class Jn {
+  // Surfaces, darkest first.
+  static const ink = Color(0xFF0A0C10); // page background
+  static const panel = Color(0xFF12151B); // cards, sheets, bars
+  static const raised = Color(0xFF1A1E26); // inputs, raised panels
+  static const inset = Color(0xFF161A21); // cards inside panels
+  static const line = Color(0xFF242A35); // hairlines, dividers
+  static const edge = Color(0xFF343C4A); // stronger borders
+  static const scrim = Color(0xE605070A); // over the game / the camera
+
+  // Brand.
+  static const volt = Color(0xFFC8F542); // primary action
+  static const voltDeep = Color(0xFFA6D62B); // pressed
+  static const onVolt = Color(0xFF0E1200);
+  static const aqua = Color(0xFF5EE6D0); // tracking, success, links
+  static const onAqua = Color(0xFF03231F);
+
+  /// Depth: a cool violet used only in gradients and glows, never for
+  /// meaning.
+  static const violet = Color(0xFF8B7CFF);
+
+  /// The brand gradient (the logo tile, the primary button, hero accents).
+  static const brand = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [volt, aqua],
+  );
+
+  /// The primary button: volt, warming a little towards the top left.
+  static const action = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFD8FF5E), volt, Color(0xFFA9E63A)],
+    stops: [0, 0.45, 1],
+  );
+
+  /// Cards: lit from above, so a panel reads as a raised surface.
+  static const surface = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF181C24), Color(0xFF101319)],
+  );
+
+  /// The shadow under a raised card.
+  static const cardShadow = [
+    BoxShadow(color: Color(0x66000000), blurRadius: 18, offset: Offset(0, 8)),
+  ];
+
+  // Text.
+  static const text = Color(0xFFF3F5F7);
+  static const textDim = Color(0xFFAEB6C2);
+  static const textFaint = Color(0xFF7C8594);
+
+  // Status.
+  static const warning = Color(0xFFFFC857);
   static const danger = Color(0xFFFF6B5A);
-  static const onGlow = Color(0xFF231203); // text on orange
+
+  /// Corner radii: controls 16, cards 24, pills fully round.
+  static const radiusControl = 16.0;
+  static const radiusCard = 24.0;
+}
+
+/// Motion: three durations, two curves. Decorative motion is skipped when
+/// the system asks for reduced motion (`MediaQuery.disableAnimations`).
+abstract final class Motion {
+  /// Press feedback, toggles.
+  static const quick = Duration(milliseconds: 120);
+
+  /// Things that change state in place (a step finishing, a chip).
+  static const standard = Duration(milliseconds: 250);
+
+  /// Things that move across the screen (the frame finder growing).
+  static const slow = Duration(milliseconds: 380);
+
+  static const enter = Curves.easeOutCubic;
+  static const pop = Curves.easeOutBack;
+}
+
+/// The token names the screens were written with, kept so every existing
+/// widget picks up the Joynetic palette. New code uses [Jn].
+abstract final class Lantern {
+  static const night = Jn.ink; // scaffold background
+  static const canopy = Jn.panel; // panels
+  static const moss = Jn.raised; // raised panels / inputs
+  static const ridge = Jn.edge; // borders
+  static const glow = Jn.volt; // primary
+  static const ember = Jn.voltDeep; // pressed primary
+  static const scarf = Jn.aqua; // secondary
+  static const parchment = Jn.text; // main text
+  static const fog = Jn.textDim; // secondary text
+  static const warning = Jn.warning;
+  static const danger = Jn.danger;
+  static const onGlow = Jn.onVolt; // text on the primary colour
 
   /// Hairline borders and dividers on panels.
-  static const line = Color(0xFF223B2F);
+  static const line = Jn.line;
 
   /// Slightly raised surface for cards inside panels.
-  static const surface2 = Color(0xFF172C22);
+  static const surface2 = Jn.inset;
 
   /// Tertiary text (captions, timestamps).
-  static const mist = Color(0xFF8DA397);
+  static const mist = Jn.textFaint;
 
-  static const radius = 20.0;
-  static const chunkyShadow = Color(0xFF050B08);
+  static const radius = Jn.radiusCard;
+  static const chunkyShadow = Color(0xFF05070A);
 }
 
 /// Spacing scale: every gap in the shell comes from here.
@@ -45,26 +130,51 @@ abstract final class Space {
   static const gutter = 20.0;
 }
 
-/// Text styles for the shell (hand-held screens). In-game HUD text is much
-/// larger and lives with the game renderers.
+/// Text styles beyond the theme's text theme.
+///
+/// Two scales: **hand** (the phone is in the hand: 12–32 sp) and **stage**
+/// (the player stands two metres away: 20 sp and up, heavy weights, at most
+/// two lines).
 abstract final class Txt {
   static const overline = TextStyle(
     fontSize: 12,
     fontWeight: FontWeight.w800,
-    letterSpacing: 1.4,
-    color: Lantern.scarf,
+    letterSpacing: 1.6,
+    color: Jn.aqua,
   );
   static const caption = TextStyle(
     fontSize: 13,
-    color: Lantern.mist,
+    color: Jn.textFaint,
     height: 1.35,
   );
   static const numeral = TextStyle(
     fontSize: 26,
     fontWeight: FontWeight.w800,
-    color: Lantern.parchment,
+    color: Jn.text,
     fontFeatures: [FontFeature.tabularFigures()],
     height: 1.1,
+  );
+
+  /// Stage scale: the one line a player must read from across the room.
+  static const stage = TextStyle(
+    fontSize: 28,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -0.4,
+    height: 1.15,
+    color: Jn.text,
+  );
+
+  /// Stage scale: supporting line under [stage].
+  static const stageSub = TextStyle(fontSize: 20, height: 1.3, color: Jn.textDim);
+
+  /// Stage scale: a countdown or a score.
+  static const stageNumeral = TextStyle(
+    fontSize: 96,
+    fontWeight: FontWeight.w900,
+    letterSpacing: -3,
+    height: 1,
+    color: Jn.text,
+    fontFeatures: [FontFeature.tabularFigures()],
   );
 }
 
@@ -77,11 +187,11 @@ ThemeData buildTheme({Color seed = Lantern.glow, String? fontFamily}) {
       ).copyWith(
         primary: Lantern.glow,
         onPrimary: Lantern.onGlow,
-        primaryContainer: const Color(0xFF5A3210),
+        primaryContainer: const Color(0xFF2C3A0E),
         onPrimaryContainer: Lantern.parchment,
         secondary: Lantern.scarf,
-        onSecondary: const Color(0xFF032420),
-        secondaryContainer: const Color(0xFF0F3E39),
+        onSecondary: Jn.onAqua,
+        secondaryContainer: const Color(0xFF103A35),
         onSecondaryContainer: Lantern.parchment,
         tertiary: Lantern.warning,
         error: Lantern.danger,
@@ -102,8 +212,8 @@ ThemeData buildTheme({Color seed = Lantern.glow, String? fontFamily}) {
   const heading = TextStyle(
     fontWeight: FontWeight.w800,
     color: Lantern.parchment,
-    letterSpacing: -0.3,
-    height: 1.2,
+    letterSpacing: -0.4,
+    height: 1.15,
   );
   final f = fontFamily;
   return ThemeData(
@@ -115,7 +225,11 @@ ThemeData buildTheme({Color seed = Lantern.glow, String? fontFamily}) {
     splashFactory: InkSparkle.splashFactory,
     visualDensity: VisualDensity.standard,
     textTheme: TextTheme(
-      displaySmall: heading.copyWith(fontSize: 32, letterSpacing: -0.8),
+      displaySmall: heading.copyWith(
+        fontSize: 34,
+        fontWeight: FontWeight.w900,
+        letterSpacing: -1.1,
+      ),
       headlineMedium: heading.copyWith(fontSize: 26, letterSpacing: -0.5),
       headlineSmall: heading.copyWith(fontSize: 22),
       titleLarge: heading.copyWith(fontSize: 20, fontWeight: FontWeight.w800),
@@ -181,8 +295,8 @@ ThemeData buildTheme({Color seed = Lantern.glow, String? fontFamily}) {
       backgroundColor: Lantern.canopy,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
-      height: 68,
-      indicatorColor: Lantern.glow.withValues(alpha: 0.18),
+      height: 72,
+      indicatorColor: Lantern.glow.withValues(alpha: 0.16),
       indicatorShape: const StadiumBorder(),
       labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       iconTheme: WidgetStateProperty.resolveWith(
@@ -205,9 +319,9 @@ ThemeData buildTheme({Color seed = Lantern.glow, String? fontFamily}) {
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        minimumSize: const Size(0, 54),
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        minimumSize: const Size(0, 56),
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        shape: const StadiumBorder(),
         textStyle: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w800,
@@ -217,10 +331,10 @@ ThemeData buildTheme({Color seed = Lantern.glow, String? fontFamily}) {
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        minimumSize: const Size(0, 50),
+        minimumSize: const Size(0, 52),
         foregroundColor: Lantern.parchment,
         side: const BorderSide(color: Lantern.ridge, width: 1.5),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: const StadiumBorder(),
         textStyle: TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w700,
@@ -239,9 +353,15 @@ ThemeData buildTheme({Color seed = Lantern.glow, String? fontFamily}) {
       ),
     ),
     chipTheme: ChipThemeData(
-      secondaryLabelStyle: TextStyle(fontFamily: f),
+      // Selected: solid volt with ink text, so the choice is unmistakable.
+      secondaryLabelStyle: TextStyle(
+        fontFamily: f,
+        fontSize: 13,
+        fontWeight: FontWeight.w800,
+        color: Lantern.onGlow,
+      ),
       backgroundColor: Lantern.surface2,
-      selectedColor: Lantern.glow.withValues(alpha: 0.2),
+      selectedColor: Lantern.glow,
       side: const BorderSide(color: Lantern.line),
       shape: const StadiumBorder(),
       labelStyle: TextStyle(
@@ -293,12 +413,12 @@ ThemeData buildTheme({Color seed = Lantern.glow, String? fontFamily}) {
         ),
         backgroundColor: WidgetStateProperty.resolveWith(
           (s) => s.contains(WidgetState.selected)
-              ? Lantern.scarf
+              ? Lantern.parchment
               : Lantern.surface2,
         ),
         foregroundColor: WidgetStateProperty.resolveWith(
           (s) => s.contains(WidgetState.selected)
-              ? const Color(0xFF032420)
+              ? Lantern.night
               : Lantern.parchment,
         ),
         side: const WidgetStatePropertyAll(

@@ -1,4 +1,4 @@
-"""Generates MotionQuest's original placeholder sound cues (no third-party audio).
+"""Generates Joynetic's original placeholder sound cues (no third-party audio).
 
 Each obstacle type has its own shape so players can play by ear:
   beam      low falling "whoosh" tone  -> squat

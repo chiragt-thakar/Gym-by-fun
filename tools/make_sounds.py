@@ -1,4 +1,4 @@
-"""Synthesises MotionQuest's original arcade sound effects (no samples)."""
+"""Synthesises Joynetic's original arcade sound effects (no samples)."""
 import math
 import random
 import struct

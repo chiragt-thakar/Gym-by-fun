@@ -21,6 +21,12 @@ class OneEuroFilter {
   double _dx = 0;
   int? _lastMs;
 
+  /// The filtered value, or null before the first sample.
+  double? get value => _x;
+
+  /// Smoothed rate of change in units per second (0 before two samples).
+  double get velocity => _dx;
+
   static double _alpha(double cutoff, double dtS) {
     final tau = 1 / (2 * math.pi * cutoff);
     return 1 / (1 + tau / dtS);

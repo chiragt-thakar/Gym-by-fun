@@ -15,20 +15,20 @@ Future<void> main() async {
   runApp(
     ProviderScope(
       overrides: [sharedPrefsProvider.overrideWithValue(prefs)],
-      child: const MotionQuestApp(),
+      child: const JoyneticApp(),
     ),
   );
 }
 
-class MotionQuestApp extends ConsumerWidget {
-  const MotionQuestApp({super.key});
+class JoyneticApp extends ConsumerWidget {
+  const JoyneticApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Rebuild everything when the language changes.
     ref.watch(settingsProvider.select((s) => s.language));
     return MaterialApp.router(
-      title: 'MotionQuest',
+      title: 'Joynetic',
       debugShowCheckedModeBanner: false,
       theme: buildTheme(),
       routerConfig: ref.watch(routerProvider),

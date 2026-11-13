@@ -16,6 +16,7 @@ import { contentRoutes } from './modules/content/routes.js';
 import { seedContent } from './modules/content/service.js';
 import { gymRoutes } from './modules/gyms/routes.js';
 import { identityRoutes } from './modules/identity/routes.js';
+import { pairingRoutes } from './modules/pairing/routes.js';
 import { progressRoutes } from './modules/progress/routes.js';
 import { webRoutes } from './modules/web/routes.js';
 
@@ -127,6 +128,7 @@ export async function buildApp(opts: BuildOptions): Promise<{ app: FastifyInstan
       await gymRoutes(v1, ctx);
       await billingRoutes(v1, ctx);
       await contentRoutes(v1, ctx);
+      await pairingRoutes(v1, ctx);
     },
     { prefix: '/v1' },
   );

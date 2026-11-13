@@ -1,4 +1,4 @@
-# MotionQuest
+# Joynetic
 
 An Android-first phone game where the **front camera is the controller**. Prop
 the phone up, step back 2–2.5 m, and play a 2.5D fantasy adventure runner by
@@ -22,7 +22,7 @@ WhatsApp report.
 | [`server`](server) | TypeScript Fastify modular monolith (PostgreSQL, Redis, BullMQ) | `npm test` (real Postgres + Redis) |
 | [`content`](content) | Level JSON + JSON Schema | `npm run content:validate` |
 | [`tools`](tools) | Landmark replay CLI, sound-cue generator, content sync | |
-| [`docs`](docs) | [architecture](docs/architecture.md) · [security](docs/security.md) · [game design](docs/game-design.md) · [progress](docs/progress.md) | |
+| [`docs`](docs) | [architecture](docs/architecture.md) · [tracking](docs/tracking.md) · [design](docs/design.md) · [security](docs/security.md) · [game design](docs/game-design.md) · [progress](docs/progress.md) | |
 
 Coding agents: read [AGENTS.md](AGENTS.md) first.
 

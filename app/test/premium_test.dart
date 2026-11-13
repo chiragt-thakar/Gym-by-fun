@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:motionquest/services/premium.dart';
+import 'package:joynetic/services/premium.dart';
 
 void main() {
   const on = PaywallPolicy(enabled: true);

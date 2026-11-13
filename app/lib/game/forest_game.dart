@@ -599,6 +599,44 @@ class ForestPainter {
   /// Encounters can be drawn up to this long after they arrive.
   static const _afterArriveMs = 350;
 
+  // Depth and lighting, shared by every theme. The gradients are built once
+  // per canvas size and reused, so they cost nothing per frame.
+  static Size? _fxSize;
+  static final Paint _vignette = Paint();
+  static final Paint _horizonHaze = Paint();
+  static final Paint _roadDepth = Paint();
+  static final Paint _lit = Paint()..color = const Color(0x30FFFFFF);
+  static final Paint _shaded = Paint()..color = const Color(0x38000000);
+  static final Paint _softShadow = Paint()..color = const Color(0x2605120F);
+  static final Paint _softGlow = Paint()..color = const Color(0x2200E5FF);
+  static final Paint _sheen = Paint()
+    ..color = const Color(0x55FFFFFF)
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round;
+
+  void _buildFx() {
+    _fxSize = size;
+    _vignette.shader = Gradient.radial(
+      Offset(w / 2, h / 2),
+      math.sqrt(w * w + h * h) / 2,
+      const [Color(0x00000000), Color(0x8A000000)],
+      const [0.6, 1],
+    );
+    _horizonHaze.shader = Gradient.linear(
+      Offset(0, horizon - h * 0.09),
+      Offset(0, horizon + h * 0.1),
+      const [Color(0x00FFFFFF), Color(0x2EFFFFFF), Color(0x00FFFFFF)],
+      const [0, 0.5, 1],
+    );
+    // The road is darker in the distance and catches light near the hero.
+    _roadDepth.shader = Gradient.linear(
+      Offset(0, horizon),
+      Offset(0, h),
+      const [Color(0x59000000), Color(0x00000000), Color(0x14FFFFFF)],
+      const [0, 0.55, 1],
+    );
+  }
+
   /// Upper bound on how long before arrival an encounter is warned.
   int get _maxLeadMs => warningMs + Director.wideBlockExtraMs;
 
@@ -627,6 +665,14 @@ class ForestPainter {
     _hills(c, 0.35, pp.hillNear, 0.34, 90);
     _trees(c, pp);
     _road(c, pp);
+    if (_fxSize != size) _buildFx();
+    // Atmosphere: the road falls into shade with distance, and haze sits
+    // on the horizon between the scenery and the action.
+    c.drawRect(Rect.fromLTRB(0, horizon, w, h), _roadDepth);
+    c.drawRect(
+      Rect.fromLTRB(0, horizon - h * 0.09, w, horizon + h * 0.1),
+      _horizonHaze,
+    );
     _beacon(c);
     // The plan is sorted by arrival time. Visible window:
     // warnMs <= clock <= arriveMs + 350. Draw far (latest arrival) first.
@@ -648,6 +694,8 @@ class ForestPainter {
     _weather(c);
     _hero(c);
     _companion(c);
+    // Darkened corners keep the eye on the trail.
+    c.drawRect(Offset.zero & size, _vignette);
     if (successPulse > 0) {
       final x = laneX(heroLane, 0), y = heroY - h * 0.1;
       final radius = w * (0.05 + (1 - successPulse) * 0.12);
@@ -1020,8 +1068,25 @@ class ForestPainter {
           y - h * 0.24 * s,
         );
         final rr = RRect.fromRectAndRadius(r, Radius.circular(10 * s));
+        // Its shadow on the road, then the beam with a lit top edge.
+        c.drawOval(
+          Rect.fromLTRB(left, y - h * 0.012 * s, right, y + h * 0.012 * s),
+          _softShadow,
+        );
         c.drawRRect(rr, pp.beam);
+        c.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTRB(r.left, r.center.dy, r.right, r.bottom),
+            Radius.circular(10 * s),
+          ),
+          _shaded,
+        );
         c.drawRRect(rr, outline);
+        c.drawLine(
+          Offset(left + 14 * s, r.top + 5 * s),
+          Offset(right - 14 * s, r.top + 5 * s),
+          _sheen..strokeWidth = 3 * s,
+        );
         // Chevrons pointing down.
         final chevron = _chevron..strokeWidth = 5 * s;
         for (var i = 0; i < 3; i++) {
@@ -1044,14 +1109,54 @@ class ForestPainter {
             ..lineTo(x + rw * 0.2, y - rh * 1.1)
             ..lineTo(x + rw / 2, y)
             ..close();
+          c.drawOval(
+            Rect.fromCenter(
+              center: Offset(x, y),
+              width: rw * 1.25,
+              height: rh * 0.22,
+            ),
+            _softShadow,
+          );
           c.drawPath(rock, pp.block);
           c.drawPath(rock, outline);
+          // Two facets: the face towards the light, and the one away.
+          final litFace = _path2
+            ..reset()
+            ..moveTo(x - rw / 2, y)
+            ..lineTo(x - rw * 0.35, y - rh)
+            ..lineTo(x - rw * 0.08, y - rh * 0.45)
+            ..lineTo(x - rw * 0.16, y)
+            ..close();
+          c.drawPath(litFace, _lit);
+          final darkFace = _path2
+            ..reset()
+            ..moveTo(x + rw * 0.2, y - rh * 1.1)
+            ..lineTo(x + rw / 2, y)
+            ..lineTo(x + rw * 0.12, y)
+            ..close();
+          c.drawPath(darkFace, _shaded);
         }
       case EncounterType.orb:
         final x = laneX(p.lanes.first.toDouble(), dd);
         final cy = y - h * 0.34 * s;
+        // The orb floats: a shadow far below it, a wide halo that breathes
+        // and a bright highlight.
+        c.drawOval(
+          Rect.fromCenter(
+            center: Offset(x, y),
+            width: 44 * s,
+            height: 9 * s,
+          ),
+          _softShadow,
+        );
+        c.drawCircle(
+          Offset(x, cy),
+          (40 + 5 * math.sin(t * 5 + p.index)) * s,
+          _softGlow,
+        );
         c.drawCircle(Offset(x, cy), 30 * s, _orbGlow);
         c.drawCircle(Offset(x, cy), 18 * s, _orbCore);
+        c.drawCircle(Offset(x - 6 * s, cy - 7 * s), 4.5 * s, _white);
         // Star shape so it reads without colour.
         final star = _path..reset();
         for (var i = 0; i < 10; i++) {
@@ -1086,6 +1191,14 @@ class ForestPainter {
           Offset(right, y),
           Offset(right, top + (right - left) * 0.3),
           arch,
+        );
+        // A thin bright line along the arch: light catching its edge.
+        c.drawArc(
+          Rect.fromLTRB(left, top, right, y + (right - left) * 0.3),
+          math.pi * 1.08,
+          math.pi * 0.5,
+          false,
+          _sheen..strokeWidth = 4 * s,
         );
         // Up arrows: raise your arms.
         final cx = (left + right) / 2;
@@ -1131,6 +1244,15 @@ class ForestPainter {
         );
       }
     }
+    // A wide soft shadow under a tighter one: the hero stands on the road.
+    c.drawOval(
+      Rect.fromCenter(
+        center: Offset(x, heroY + 6),
+        width: w * 0.3,
+        height: h * 0.024,
+      ),
+      _softShadow,
+    );
     c.drawOval(
       Rect.fromCenter(
         center: Offset(x, heroY + 5),
@@ -1188,6 +1310,32 @@ class ForestPainter {
       ),
       _heroBody,
     );
+    // Volume: the coat is lit from the left and falls into shade on the
+    // right.
+    c.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTRB(
+          x - w * 0.06,
+          top + body * 0.3,
+          x - w * 0.025,
+          top + body * 0.82,
+        ),
+        const Radius.circular(13),
+      ),
+      _lit,
+    );
+    c.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTRB(
+          x + w * 0.022,
+          top + body * 0.3,
+          x + w * 0.06,
+          top + body * 0.82,
+        ),
+        const Radius.circular(13),
+      ),
+      _shaded,
+    );
     c.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromCenter(
@@ -1238,6 +1386,19 @@ class ForestPainter {
       }
       c.drawCircle(head, radius, _heroBody);
     }
+    // A highlight on the brow and a shaded cheek round the head.
+    c.drawCircle(
+      head + Offset(-radius * 0.36, -radius * 0.4),
+      radius * 0.42,
+      _lit,
+    );
+    c.drawArc(
+      Rect.fromCircle(center: head, radius: radius),
+      -math.pi * 0.3,
+      math.pi * 0.85,
+      false,
+      _shaded,
+    );
     c.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromCenter(

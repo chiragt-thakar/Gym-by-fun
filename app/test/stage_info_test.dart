@@ -3,12 +3,12 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:motionquest/game/stage_info.dart';
-import 'package:motionquest/game/stages.dart';
-import 'package:motionquest/screens/stage_info_sheet.dart';
-import 'package:motionquest/services/premium.dart';
-import 'package:motionquest/services/settings.dart';
-import 'package:motionquest/widgets/body_map.dart';
+import 'package:joynetic/game/stage_info.dart';
+import 'package:joynetic/game/stages.dart';
+import 'package:joynetic/screens/stage_info_sheet.dart';
+import 'package:joynetic/services/premium.dart';
+import 'package:joynetic/services/settings.dart';
+import 'package:joynetic/widgets/body_map.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> pumpSheet(

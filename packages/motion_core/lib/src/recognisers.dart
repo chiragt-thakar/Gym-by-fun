@@ -1,6 +1,7 @@
 import 'calibration.dart';
 import 'events.dart';
 import 'features.dart';
+import 'landmarks.dart';
 
 /// Recogniser thresholds. Starting values from the motion spec; tune only
 /// with recorded data, and only while the replay tests still pass
@@ -19,6 +20,7 @@ class MotionThresholds {
     this.confirmFrames = 2,
     this.heldIntervalMs = 100,
     this.minLegVisibility = 0.5,
+    this.minArmVisibility = 0.5,
   });
 
   /// Low-impact profile: a half squat counts and one arm is enough.
@@ -59,6 +61,10 @@ class MotionThresholds {
   /// Squat guard: hips and knees must be at least this visible.
   final double minLegVisibility;
 
+  /// Raise-arms guard: a wrist below this is not believed; the elbow is
+  /// used instead (see [RaiseArmsRecogniser]).
+  final double minArmVisibility;
+
   Map<String, Object> toJson() => {
         'squatStart': squatStart,
         'squatEnd': squatEnd,
@@ -72,20 +78,35 @@ class MotionThresholds {
       };
 }
 
-/// Common interface so the engine and the debug screen can treat every
-/// recogniser the same way.
+/// The plug-in interface every detector implements, built-in or added
+/// later (see `DetectorRegistry` and docs/tracking.md).
+///
+/// A detector is a small state machine over [BodyFeatures]. It must use
+/// hysteresis (separate start and end levels), check the visibility of the
+/// landmarks it reads, and measure in the player's own calibrated range.
 abstract class Recogniser {
+  /// Stable id: the registry key and the name in snapshots and signals.
+  String get id;
+
   /// Human-readable current state for the debug screen.
   String get state;
 
-  /// The live measure (fraction of calibrated range) for the debug screen.
+  /// The live measure (fraction of calibrated range) for the debug screen
+  /// and for continuous game input.
   double get measure;
 
   void update(BodyFeatures b, List<MotionEvent> out);
 
   /// Called when tracking pauses: end anything in progress without credit.
   void interrupt(int timestampMs, List<MotionEvent> out);
+
+  /// The calibration was re-positioned (drift correction): use [c] from
+  /// the next frame on. State is kept.
+  void recalibrate(CalibrationProfile c);
 }
+
+/// The name games use for a plug-in detector.
+typedef MotionDetector = Recogniser;
 
 enum _SquatState { up, down }
 
@@ -95,8 +116,13 @@ enum _SquatState { up, down }
 /// not move the measure, so it never counts.
 class SquatRecogniser implements Recogniser {
   SquatRecogniser(this.cal, this.t);
-  final CalibrationProfile cal;
+  CalibrationProfile cal;
   final MotionThresholds t;
+
+  @override
+  String get id => 'squat';
+  @override
+  void recalibrate(CalibrationProfile c) => cal = c;
 
   _SquatState _s = _SquatState.up;
   int _confirm = 0;
@@ -178,8 +204,13 @@ enum _LeanState { centre, left, right }
 /// re-arms below [MotionThresholds.leanRearm]; cooldown between starts.
 class LeanRecogniser implements Recogniser {
   LeanRecogniser(this.cal, this.t);
-  final CalibrationProfile cal;
+  CalibrationProfile cal;
   final MotionThresholds t;
+
+  @override
+  String get id => 'lean';
+  @override
+  void recalibrate(CalibrationProfile c) => cal = c;
 
   _LeanState _s = _LeanState.centre;
   int _confirm = 0;
@@ -259,9 +290,19 @@ enum _ArmsState { armed, rising, up, lowering }
 
 /// Raise arms: wrists above the nose line for [MotionThresholds.raiseHoldMs];
 /// arms must drop below the shoulders before the next activation.
+///
+/// Visibility: a wrist the tracker does not trust (often because the hand
+/// left the top of the image) is not believed either way. The elbow then
+/// decides: clearly above its shoulder means the arm is up, below means it
+/// is down, in between is unknown and changes nothing.
 class RaiseArmsRecogniser implements Recogniser {
   RaiseArmsRecogniser(this.t);
   final MotionThresholds t;
+
+  @override
+  String get id => 'raiseArms';
+  @override
+  void recalibrate(CalibrationProfile c) {}
 
   _ArmsState _s = _ArmsState.armed;
   int _riseMs = 0, _startMs = 0, _lastHeldMs = 0;
@@ -272,14 +313,38 @@ class RaiseArmsRecogniser implements Recogniser {
   @override
   double get measure => _measure;
 
+  /// Elbow this far (torso lengths) above its shoulder counts as arm up.
+  static const _elbowUpTorso = 0.15;
+
+  /// True = up, false = down, null = cannot tell.
+  bool? _up(BodyFeatures b, Landmark wrist, Landmark elbow, Landmark sh) {
+    final v = t.minArmVisibility;
+    if (wrist.visibility >= v) return wrist.y < b.nose.y;
+    if (elbow.visibility >= v && sh.visibility >= v) {
+      if (elbow.y < sh.y - _elbowUpTorso * b.torsoLength) return true;
+      if (elbow.y > sh.y) return false;
+    }
+    return null;
+  }
+
+  /// True = below the shoulders, false = not, null = cannot tell.
+  bool? _down(BodyFeatures b, Landmark wrist, Landmark elbow, Landmark sh) {
+    final v = t.minArmVisibility;
+    if (wrist.visibility >= v) return wrist.y > b.shoulderCenter.y;
+    if (elbow.visibility >= v && sh.visibility >= v) return elbow.y > sh.y;
+    return null;
+  }
+
   @override
   void update(BodyFeatures b, List<MotionEvent> out) {
-    final above = t.allowOneArm
-        ? (b.leftWristAboveNose || b.rightWristAboveNose)
-        : (b.leftWristAboveNose && b.rightWristAboveNose);
-    final below = t.allowOneArm
-        ? (b.leftWristBelowShoulders && b.rightWristBelowShoulders)
-        : (b.leftWristBelowShoulders || b.rightWristBelowShoulders);
+    final lUp = _up(b, b.leftWrist, b.leftElbow, b.leftShoulder) ?? false;
+    final rUp = _up(b, b.rightWrist, b.rightElbow, b.rightShoulder) ?? false;
+    final lDown =
+        _down(b, b.leftWrist, b.leftElbow, b.leftShoulder) ?? false;
+    final rDown =
+        _down(b, b.rightWrist, b.rightElbow, b.rightShoulder) ?? false;
+    final above = t.allowOneArm ? (lUp || rUp) : (lUp && rUp);
+    final below = t.allowOneArm ? (lDown && rDown) : (lDown || rDown);
     // Measure: how far the higher wrist is above the nose, in torso units.
     final hi = b.leftWrist.y < b.rightWrist.y ? b.leftWrist.y : b.rightWrist.y;
     _measure = (b.nose.y - hi) / b.torsoLength;

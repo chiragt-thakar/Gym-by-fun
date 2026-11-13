@@ -9,7 +9,7 @@ const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 
 export function page(title: string, body: string) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(title)} · MotionQuest</title><style>body{font-family:system-ui,sans-serif;max-width:720px;margin:24px auto;padding:0 16px;line-height:1.55;color:#1b1b1b}
+<title>${esc(title)} · Joynetic</title><style>body{font-family:system-ui,sans-serif;max-width:720px;margin:24px auto;padding:0 16px;line-height:1.55;color:#1b1b1b}
 h1{font-size:28px}h2{font-size:20px;margin-top:28px}a.btn{display:block;text-align:center;background:#1b5e20;color:#fff;padding:16px;border-radius:12px;text-decoration:none;font-size:20px;margin:12px 0}
 code{font-size:24px;letter-spacing:2px}</style></head><body>${body}</body></html>`;
 }
@@ -32,10 +32,10 @@ export async function webRoutes(app: FastifyInstance, ctx: AppContext) {
     return reply.type('text/html; charset=utf-8').send(
       page(
         'Join your gym crew',
-        `<h1>Join your gym crew on MotionQuest</h1>
+        `<h1>Join your gym crew on Joynetic</h1>
 <p>Your gym code:</p><p><code>${esc(c)}</code></p>
-<a class="btn" href="${esc(intent)}">Open in MotionQuest</a>
-<a class="btn" href="${esc(store)}">Get MotionQuest on Google Play</a>
+<a class="btn" href="${esc(intent)}">Open in Joynetic</a>
+<a class="btn" href="${esc(store)}">Get Joynetic on Google Play</a>
 <p>After installing, open <b>Gym Crew</b> and enter the code above. Members of partner gyms get Premium free.</p>
 <p style="color:#666;font-size:14px">Adults 18+. A game for general fitness, not medical advice. Video never leaves your phone.</p>`,
       ),

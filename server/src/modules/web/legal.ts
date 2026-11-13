@@ -4,7 +4,7 @@
 export function privacyPolicy(email: string) {
   return `<h1>Privacy policy</h1>
 <p><i>Last updated: November 2026</i></p>
-<p>MotionQuest is a camera-controlled fitness game for adults (18+). This policy explains what we collect, why, and your rights under India's Digital Personal Data Protection Act, 2023.</p>
+<p>Joynetic is a camera-controlled fitness game for adults (18+). This policy explains what we collect, why, and your rights under India's Digital Personal Data Protection Act, 2023.</p>
 <h2>The camera</h2>
 <p>The game reads your body position on your phone. <b>Camera images and video are processed only on your device, are never saved, and are never uploaded.</b> Only the game results (for example, how many moves you did) leave the phone.</p>
 <h2>What we collect</h2>
@@ -27,7 +27,7 @@ export function privacyPolicy(email: string) {
 <h2>Your rights</h2>
 <p>In Settings you can download your data, withdraw consent, and delete your account. You can also ask us to correct or erase data.</p>
 <h2>Children</h2>
-<p>MotionQuest is only for adults aged 18 and over. We do not knowingly collect children's data.</p>
+<p>Joynetic is only for adults aged 18 and over. We do not knowingly collect children's data.</p>
 <h2>Grievances</h2>
 <p>Contact our Grievance Officer at <a href="mailto:${email}">${email}</a>. We respond within 30 days, and in any case within 90 days. You may also approach the Data Protection Board of India.</p>`;
 }
@@ -36,7 +36,7 @@ export function termsOfUse(email: string) {
   return `<h1>Terms of use</h1>
 <p><i>Last updated: November 2026</i></p>
 <h2>A game, not medical advice</h2>
-<p>MotionQuest is a game for general fitness. It is not a medical device and does not give medical advice, diagnose, or treat anything. It makes no weight-loss or health claims. Talk to a doctor before starting any new exercise, especially if you have a health condition, are pregnant, or are recovering from injury.</p>
+<p>Joynetic is a game for general fitness. It is not a medical device and does not give medical advice, diagnose, or treat anything. It makes no weight-loss or health claims. Talk to a doctor before starting any new exercise, especially if you have a health condition, are pregnant, or are recovering from injury.</p>
 <h2>Play safely</h2>
 <p>Clear a 2 × 2 m space away from furniture. Move within your comfortable range. Stop if anything hurts. You play at your own risk.</p>
 <h2>Who can use it</h2>

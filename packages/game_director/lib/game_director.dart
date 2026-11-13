@@ -1,4 +1,4 @@
-/// MotionQuest game director: level configs in, a paced, fair run out.
+/// Joynetic game director: level configs in, a paced, fair run out.
 ///
 /// Deterministic and config-driven — no cloud AI in gameplay.
 library;
@@ -15,3 +15,4 @@ export 'src/arcade/duel.dart';
 export 'src/arcade/taal.dart';
 export 'src/arcade/cricket.dart';
 export 'src/arcade/lumen.dart';
+export 'src/arcade/slice.dart';

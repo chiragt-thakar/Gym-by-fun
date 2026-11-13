@@ -232,7 +232,7 @@ export async function identityRoutes(app: FastifyInstance, ctx: AppContext) {
     const moves = sessionIds.length ? await ctx.db.selectFrom('session_moves').selectAll().where('session_id', 'in', sessionIds).execute() : [];
     return {
       exportedAt: ctx.now(),
-      note: 'MotionQuest never stores camera images or video. This is all the data held about you.',
+      note: 'Joynetic never stores camera images or video. This is all the data held about you.',
       user: { ...user, phone: user.phone },
       consents,
       devices,

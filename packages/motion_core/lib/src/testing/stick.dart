@@ -19,6 +19,9 @@ import '../landmarks.dart';
 /// - [dip]: 0..1 hip drop (a squat, in torso lengths × 0.5).
 /// - [shiftX]: whole-body shift in image-height units.
 /// - [liftL]/[liftR]: 0..1 knee lift (foot leaves the floor).
+/// - [riseY]: whole-body lift in image-height units (a jump).
+/// - [twist]: torso rotation in degrees, positive = chest towards the
+///   player's right. Narrows the shoulder line and sets shoulder depth.
 PoseFrame stickFrame({
   int t = 0,
   double shoulderL = 10,
@@ -34,6 +37,8 @@ PoseFrame stickFrame({
   double shiftX = 0,
   double liftL = 0,
   double liftR = 0,
+  double riseY = 0,
+  double twist = 0,
   double visibility = 0.95,
   Map<int, double> hidden = const {},
   Map<int, (double, double)> override = const {},
@@ -41,10 +46,13 @@ PoseFrame stickFrame({
   const w = 480, h = 640;
   const aspect = w / h;
   const torso = 0.18;
-  const shoulderHalf = 0.065;
+  const shoulderFull = 0.065;
   const hipHalf = 0.045;
   const upperArm = 0.11, foreArm = 0.10, thigh = 0.15, shin = 0.15;
   double rad(double d) => d * math.pi / 180;
+  final shoulderHalf = shoulderFull * math.cos(rad(twist));
+  // Depth of each shoulder (same scale as x; smaller = nearer the camera).
+  final shoulderDepth = shoulderFull * math.sin(rad(twist));
   (double, double) rot((double, double) v, double deg) {
     final a = rad(deg);
     return (
@@ -129,7 +137,14 @@ PoseFrame stickFrame({
     imageHeight: h,
     landmarks: [
       for (var i = 0; i < Lm.count; i++)
-        Landmark(pts[i].$1 / aspect, pts[i].$2, 0, hidden[i] ?? visibility),
+        Landmark(
+          pts[i].$1 / aspect,
+          pts[i].$2 - riseY,
+          i == Lm.leftShoulder
+              ? -shoulderDepth / aspect
+              : (i == Lm.rightShoulder ? shoulderDepth / aspect : 0),
+          hidden[i] ?? visibility,
+        ),
     ],
   );
 }

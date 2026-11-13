@@ -542,7 +542,7 @@ decision (§9).
   shape is never revealed), *Neon Lines*, and *Silhouette* (the player's own proportions, opt-in).
 - **Render**: offscreen Flame render on device → MediaCodec H.264, 1080×1920 at 30 fps, about 8 Mbps (about
   15 MB), with our own song audio. Overlays: title, hook name and combo pops. Nickname and score are off by
-  default. The watermark reads "Taal Toofan · MotionQuest", with no link and no price.
+  default. The watermark reads "Taal Toofan · Joynetic", with no link and no price.
 - **Consent and storage**:
   - Opt-in per clip. The first time, an explanation reads: "Made from your movement points, not your camera.
     Nothing is uploaded."
@@ -722,7 +722,7 @@ low-impact values in brackets. **All values are starting points.** Tune them onl
 - **Stop rule on every song and guardian sheet**: "Stop if you feel pain, dizziness, chest discomfort or unusual
   breathlessness." Tapping "This doesn't feel right" ends the run gently and keeps progress.
 - **Allowed copy**: "gets your whole body moving", "raises your breathing", "practises balance and coordination",
-  "public guidelines such as WHO 2020 suggest 150–300 minutes of moderate activity a week; MotionQuest minutes
+  "public guidelines such as WHO 2020 suggest 150–300 minutes of moderate activity a week; Joynetic minutes
   can be part of your active time", "not a medical device; consult a healthcare professional for medical
   advice".
 - **Forbidden copy**: calories or kcal, METs shown as measured values, "fat-burning", "lose weight", "tone",

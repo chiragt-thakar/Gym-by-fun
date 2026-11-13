@@ -6,11 +6,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:motion_core/motion_core.dart';
 import 'package:motion_core/testing.dart';
-import 'package:motionquest/app/router.dart';
-import 'package:motionquest/screens/get_ready_screen.dart';
-import 'package:motionquest/screens/setup_screen.dart';
-import 'package:motionquest/services/pose_service.dart';
-import 'package:motionquest/services/settings.dart';
+import 'package:joynetic/app/router.dart';
+import 'package:joynetic/screens/get_ready_screen.dart';
+import 'package:joynetic/screens/setup_screen.dart';
+import 'package:joynetic/services/pose_service.dart';
+import 'package:joynetic/services/settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'fakes.dart';

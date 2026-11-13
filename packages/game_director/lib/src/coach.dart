@@ -3,7 +3,7 @@ import 'package:motion_core/motion_core.dart';
 import 'level.dart';
 import 'run_engine.dart';
 
-// Coach Kavi: MotionQuest's on-device coach.
+// Coach Kavi: Joynetic's on-device coach.
 //
 // Fully rule-based, deterministic and offline (rule 8): the same history
 // always gives the same advice. Every output is a message key plus

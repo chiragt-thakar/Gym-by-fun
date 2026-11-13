@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:game_director/game_director.dart';
 import 'package:motion_core/motion_core.dart';
 
+import 'looks.dart';
 import 'paint_kit.dart';
 
 const _lilac = Color(0xFFB98CFF);
@@ -11,8 +12,7 @@ const _mehendi = Color(0xFF9BCB3C);
 const _marigold = Color(0xFFFFB627);
 const _kumkum = Color(0xFFFF4D6D);
 
-/// Night mela: indigo sky, slow fireworks and a rangoli-light floor.
-void patakaBackdrop(Canvas c, Size s, double t) {
+void _patakaScene(Canvas c, Size s, double t) {
   sky(
     c,
     s,
@@ -258,7 +258,7 @@ void patakaPreview(Canvas c, Size s, int variant) {
     );
   }
   final j = ghostFor(m, variant == 0 ? goalpost : target);
-  paintAvatar(c, j, accent: _lilac);
+  paintAvatar(c, j, look: patakaLook);
   if (variant == 2) {
     confetti(
       c,
@@ -286,4 +286,26 @@ void patakaPreview(Canvas c, Size s, int variant) {
       width: 6,
     );
   }
+}
+
+/// Night mela: indigo sky, slow fireworks and a rangoli-light floor, lit
+/// like a stage: each firework lights the sky around it, two spotlights
+/// cross on the player's mark and the corners fall away.
+void patakaBackdrop(Canvas c, Size s, double t) {
+  _patakaScene(c, s, t);
+  // The same three bursts as the scene: their glow and falling sparks.
+  for (var i = 0; i < 3; i++) {
+    final phase = (t * 0.35 + i / 3) % 1.0;
+    final at = Offset(s.width * (0.2 + 0.3 * i), s.height * (0.12 + 0.06 * (i % 2)));
+    final col = [_marigold, _lilac, _kumkum][i];
+    glow(c, at, 70 + 50 * phase, col, alpha: 0.3 * (1 - phase));
+    sparkBurst(c, at, phase, col, n: 12, spread: 62, seed: i * 31);
+  }
+  final horizon = s.height * 0.62;
+  final mark = Offset(s.width / 2, horizon + (s.height - horizon) * 0.55);
+  lightShaft(c, Offset(s.width * 0.04, 0), mark.dy, s.width * 0.26, _lilac, alpha: 0.2, lean: s.width * 0.46);
+  lightShaft(c, Offset(s.width * 0.96, 0), mark.dy, s.width * 0.26, _marigold, alpha: 0.16, lean: -s.width * 0.46);
+  lightPool(c, mark, s.width * 0.95, (s.height - horizon) * 0.7, const Color(0xFFFFF1D0), alpha: 0.22);
+  hazeBand(c, s, horizon, s.height * 0.12, _lilac, alpha: 0.18);
+  vignette(c, s, strength: 0.6);
 }

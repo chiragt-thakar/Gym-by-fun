@@ -21,19 +21,51 @@ enum TrackingIssue {
   tooClose,
 }
 
-class QualityResult {
-  const QualityResult.pass(this.bodyHeight) : issue = null;
-  const QualityResult.fail(TrackingIssue this.issue, [this.bodyHeight = 0]);
+/// How far a frame can be trusted.
+enum FrameQuality {
+  /// The whole body is in frame and clearly visible.
+  good,
 
+  /// The torso is tracked but something else is not ideal (feet cut off,
+  /// a hidden knee, a little too close). Play continues: each detector
+  /// checks the landmarks it needs itself.
+  degraded,
+
+  /// Nothing usable: nobody there, or the torso itself is hidden / outside
+  /// the image / far too small.
+  bad,
+}
+
+class QualityResult {
+  const QualityResult.pass(this.bodyHeight)
+      : issue = null,
+        level = FrameQuality.good;
+  const QualityResult.fail(TrackingIssue this.issue, [this.bodyHeight = 0])
+      : level = FrameQuality.bad;
+
+  /// Not ideal, but the torso is tracked: [issue] says what to improve.
+  const QualityResult.degraded(TrackingIssue this.issue, this.bodyHeight)
+      : level = FrameQuality.degraded;
+
+  /// The most important thing wrong with the frame, or null when it is
+  /// [FrameQuality.good].
   final TrackingIssue? issue;
+
+  final FrameQuality level;
 
   /// Normalised height of the body bounding box (0..1), for UI guidance.
   final double bodyHeight;
 
+  /// True only for a clean, full-body frame.
   bool get ok => issue == null;
 
+  /// True when the frame can drive play (good or degraded).
+  bool get usable => level != FrameQuality.bad;
+
   @override
-  String toString() => ok ? 'QualityResult.ok' : 'QualityResult.fail($issue)';
+  String toString() => ok
+      ? 'QualityResult.ok'
+      : 'QualityResult.${usable ? 'degraded' : 'fail'}($issue)';
 }
 
 class QualityGateConfig {
@@ -44,6 +76,9 @@ class QualityGateConfig {
     this.minBodyHeight = 0.35,
     this.maxBodyHeight = 0.98,
     this.minBodyPixels = 256,
+    this.coreMinVisibility = 0.4,
+    this.coreOutside = 0.03,
+    this.farSlack = 0.85,
   });
 
   /// Every full-body key point must be at least this visible.
@@ -61,9 +96,25 @@ class QualityGateConfig {
 
   /// ML Kit advises a subject of at least 256 × 256 px.
   final int minBodyPixels;
+
+  /// Shoulders and hips must each be at least this visible for a frame to
+  /// be usable at all.
+  final double coreMinVisibility;
+
+  /// Shoulders and hips may sit this far outside the image (the estimator
+  /// extrapolates a little past the edge) before the frame is unusable.
+  final double coreOutside;
+
+  /// A body between this fraction of the minimum size and the minimum is
+  /// only [FrameQuality.degraded], so a player hovering at the limit does
+  /// not flip between playing and paused.
+  final double farSlack;
 }
 
-/// Decides, frame by frame, whether landmarks are trustworthy enough to play.
+/// Grades each frame: [FrameQuality.good] (clean full body),
+/// [FrameQuality.degraded] (torso tracked, something else not ideal) or
+/// [FrameQuality.bad]. Stateless; debouncing and hysteresis over time live
+/// in `TrackingStateMachine`.
 class QualityGate {
   const QualityGate([this.config = const QualityGateConfig()]);
 
@@ -98,20 +149,41 @@ class QualityGate {
     final height =
         math.max(maxY - minY, torso * 3.3).clamp(0.0, 1.0).toDouble();
 
-    if (outOfFrame) return QualityResult.fail(TrackingIssue.outOfFrame, height);
-    if (lowVis || sumVis / Lm.fullBody.length < config.minMeanVisibility) {
-      return QualityResult.fail(TrackingIssue.lowVisibility, height);
-    }
-    if (maxY - minY > config.maxBodyHeight) {
-      return QualityResult.fail(TrackingIssue.tooClose, height);
-    }
-    if (height < config.minBodyHeight) {
-      return QualityResult.fail(TrackingIssue.tooFar, height);
-    }
+    // The first thing wrong, in a fixed order, so the guidance is stable.
     final h = frame.imageHeight;
-    if (h != null && height * h < config.minBodyPixels) {
-      return QualityResult.fail(TrackingIssue.tooFar, height);
+    final TrackingIssue? issue;
+    var far = 1.0; // size as a fraction of the minimum, when too far
+    if (outOfFrame) {
+      issue = TrackingIssue.outOfFrame;
+    } else if (lowVis || sumVis / Lm.fullBody.length < config.minMeanVisibility) {
+      issue = TrackingIssue.lowVisibility;
+    } else if (maxY - minY > config.maxBodyHeight) {
+      issue = TrackingIssue.tooClose;
+    } else if (height < config.minBodyHeight) {
+      issue = TrackingIssue.tooFar;
+      far = height / config.minBodyHeight;
+    } else if (h != null && height * h < config.minBodyPixels) {
+      issue = TrackingIssue.tooFar;
+      far = height * h / config.minBodyPixels;
+    } else {
+      issue = null;
     }
-    return QualityResult.pass(height);
+    if (issue == null) return QualityResult.pass(height);
+
+    // Still playable if the torso itself is tracked and big enough.
+    var core = true;
+    final o = config.coreOutside;
+    for (final i in Lm.core) {
+      final l = frame[i];
+      if (!(l.visibility >= config.coreMinVisibility) ||
+          !(l.x >= -o && l.x <= 1 + o && l.y >= -o && l.y <= 1 + o)) {
+        core = false;
+        break;
+      }
+    }
+    if (!core || (issue == TrackingIssue.tooFar && far < config.farSlack)) {
+      return QualityResult.fail(issue, height);
+    }
+    return QualityResult.degraded(issue, height);
   }
 }

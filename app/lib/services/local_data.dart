@@ -17,7 +17,7 @@ const localDataKeys = [
   'arcade.progress.v1', // ArcadeProgressNotifier.key
 ];
 
-/// Removes everything MotionQuest keeps on this device: settings, auth tokens,
+/// Removes everything Joynetic keeps on this device: settings, auth tokens,
 /// on-device Coach history, a pending gym code and the offline session queue.
 /// A missing queue file or unavailable directory is fine.
 Future<void> wipeLocalData(
