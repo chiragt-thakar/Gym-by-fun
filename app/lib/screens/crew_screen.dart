@@ -139,7 +139,7 @@ class _CrewState extends ConsumerState<CrewScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(body: BrandLoader());
     }
     final gym = _gym;
     if (gym == null) {

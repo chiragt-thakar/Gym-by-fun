@@ -190,26 +190,102 @@ class StatTile extends StatelessWidget {
 
 /// Earned stars, shape + colour (filled vs outlined), never colour alone.
 class StarRow extends StatelessWidget {
-  const StarRow(this.stars, {super.key, this.max = 3, this.size = 18});
+  const StarRow(
+    this.stars, {
+    super.key,
+    this.max = 3,
+    this.size = 18,
+    this.reveal = false,
+  });
   final int stars;
   final int max;
   final double size;
 
+  /// Results pages: each earned star pops in after the one before it, with
+  /// a warm halo. Plays once; skipped when the system asks for reduced
+  /// motion.
+  final bool reveal;
+
   @override
-  Widget build(BuildContext context) => Semantics(
-    label: '$stars of $max stars',
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (var i = 0; i < max; i++)
-          Icon(
-            i < stars ? Icons.star_rounded : Icons.star_outline_rounded,
-            size: size,
-            color: i < stars ? Lantern.warning : Lantern.ridge,
+  Widget build(BuildContext context) {
+    final still = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    return Semantics(
+      label: '$stars of $max stars',
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < max; i++)
+            if (reveal && !still && i < stars)
+              _StarPop(index: i, size: size)
+            else
+              Icon(
+                i < stars ? Icons.star_rounded : Icons.star_outline_rounded,
+                size: size,
+                color: i < stars ? Lantern.warning : Lantern.ridge,
+              ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One earned star landing: it waits its turn, then scales in with a small
+/// overshoot while a halo fades behind it.
+class _StarPop extends StatelessWidget {
+  const _StarPop({required this.index, required this.size});
+  final int index;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    // Every star shares one clock; star [index] starts 220 ms after the
+    // one before it and takes 420 ms to land.
+    const land = 420, gap = 220;
+    final total = land + gap * index;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: Duration(milliseconds: total),
+      builder: (context, v, child) {
+        final t = ((v * total - gap * index) / land).clamp(0.0, 1.0);
+        // Before its turn the empty outline sits at full size.
+        final scale = t == 0 ? 1.0 : Motion.pop.transform(t);
+        return SizedBox(
+          width: size,
+          height: size,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              if (t > 0 && t < 1)
+                // The halo grows past the star's own box without moving
+                // its neighbours.
+                Transform.scale(
+                  scale: 1 + 1.2 * t,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Lantern.warning.withValues(alpha: 0.28 * (1 - t)),
+                    ),
+                    child: SizedBox.square(dimension: size),
+                  ),
+                ),
+              Transform.scale(
+                scale: scale,
+                child: t == 0
+                    ? Icon(
+                        Icons.star_outline_rounded,
+                        size: size,
+                        color: Lantern.ridge,
+                      )
+                    : child,
+              ),
+            ],
           ),
-      ],
-    ),
-  );
+        );
+      },
+      child: Icon(Icons.star_rounded, size: size, color: Lantern.warning),
+    );
+  }
 }
 
 /// Tiny uppercase badge ("NEW", "PREMIUM", "PARTY").

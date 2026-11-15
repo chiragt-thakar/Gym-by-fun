@@ -99,7 +99,12 @@ class ArcadeResultsScreen extends ConsumerWidget {
                     runSpacing: 8,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      StarRow(s.stars, max: s.maxStars, size: 30),
+                      StarRow(
+                        s.stars,
+                        max: s.maxStars,
+                        size: 30,
+                        reveal: true,
+                      ),
                       if (best) TagBadge(tr('New best'), color: Lantern.scarf),
                     ],
                   ),

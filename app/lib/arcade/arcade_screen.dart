@@ -1099,6 +1099,16 @@ class _ArcadeScreenState extends ConsumerState<ArcadeScreen>
     return null;
   }
 
+  /// The three acts of a Neon Slice round (`SliceEngine.phase`).
+  static const _sliceActs = ['WARM-UP', 'HEAT', 'OVERDRIVE'];
+
+  /// Time left in a timed round, as m:ss. It stops with the game clock, so
+  /// a tracking hold never eats the round.
+  static String _timeLeft(ArcadeEngine e) {
+    final s = ((e.durationMs - e.clockMs) / 1000).ceil().clamp(0, 5999);
+    return '${s ~/ 60}:${(s % 60).toString().padLeft(2, '0')}';
+  }
+
   Widget _scorePlate(ArcadeEngine? e) {
     final (label, value, extra) = switch (e) {
       MelaEngine m => (
@@ -1129,7 +1139,7 @@ class _ArcadeScreenState extends ConsumerState<ArcadeScreen>
         '${c.ballsLeft} balls left',
       ),
       SliceEngine n => (
-        const ['WARM-UP', 'HEAT', 'OVERDRIVE'][n.phase],
+        '${_sliceActs[n.phase]} · ${_timeLeft(n)}',
         '${n.score}',
         n.combo > 1 ? '×${n.combo} combo' : null,
       ),

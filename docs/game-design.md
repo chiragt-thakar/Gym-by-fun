@@ -391,7 +391,7 @@ calibration does not yet record a standing ankle x. Tests: `test/extra_recognise
   0 hits, slow bot finishes, all encounters feasible.
 
 ## Arcade games (v2, 2026-11-09)
-Six new games share one pattern: **pure-Dart rule engines in
+Six new games (and Neon Slice, added later: see the end of this file) share one pattern: **pure-Dart rule engines in
 `packages/game_director/lib/src/arcade/`**, content in `content/arcade/*.json`
 (validated by `content/schema/arcade.schema.json` and by the engine tests),
 body geometry from `motion_core` (`BodyPose`, `PoseMatcher`, `SwingRecogniser`),
@@ -431,3 +431,107 @@ danced (> 80 % accuracy) by a competent bot on every level; Tapeball formats
 finish with no wickets lost for an idle beginner; the app's bundled copies equal
 the canonical JSON. No core recogniser threshold (squat/lean/raise/barrier/step)
 was changed.
+
+## Neon Slice (2026-11-13)
+
+The seventh arcade game. Glowing fruit arcs up in front of the player; a fast
+sweep of either hand cuts it; static mines fly with the fruit and must be left
+alone. It was chosen because hand position is the most reliable signal the
+tracker produces (wrists are visible in almost every frame, squats and leans are
+not needed), and because a sweep is a large, natural, low-impact movement.
+
+Same pattern as the other arcade games: the rules are the pure-Dart
+`SliceEngine` (`packages/game_director/lib/src/arcade/slice.dart`), the rounds
+are `content/arcade/neon-slice.json` (schema `sliceStage`), the app only draws
+(`app/lib/arcade/art/slice_art.dart`). No new gesture detector and no change to
+`motion_core`: the engine reads `BodyPose.leftHand` / `rightHand`, the same
+smoothed, body-space hand points Mirror Mela uses.
+
+### What is a cut
+
+The segment a hand travelled between two tracked frames is a **blade**, but only
+when all of these hold:
+
+| Rule | Value | Why |
+|---|---|---|
+| Hand speed | ≥ `minSpeed` torso lengths / s (1.8 – 2.2 by round; × 0.7 with Assist) | A hand resting where fruit passes cuts nothing (rule 6) |
+| Step between frames | ≤ 1.6 torso lengths | A bigger jump is a tracking glitch, not a sweep |
+| Gap between frames | ≤ 250 ms | A hand seen again after a gap never cuts on its first frame |
+| Hand visibility | ≥ 0.5 | An unseen hand lifts its blade |
+| Distance blade → fruit centre | ≤ radius + 0.12 T | Point-to-segment distance, so a fast hand cannot skip through a fruit between frames |
+| Fruit height | ≥ −1.25 T (`reachY`) | Nothing is cut below where hands reach |
+
+Fruit is judged where it was 100 ms ago (`latencyMs`), like every arcade game.
+**A fruit can be cut once**: it is marked `sliced` at the first cut and skipped
+by every later test, from either hand, so double scoring is impossible.
+
+### Scoring
+
+- Fruit 100, prism 300; a cut within 40 % of the radius is *Perfect* (full
+  points), otherwise *Good* (70 %).
+- Combo: every cut in a row adds 5 % (up to × 2). A fruit that lands uncut
+  resets it. Mines left alone do not.
+- **Multi-cut**: three or more in one unbroken sweep of one hand earn
+  50 × (count − 2) on top, once per extra fruit. The sweep ends when the hand
+  slows below blade speed.
+- **Neon Frenzy**: every 12th cut in a row gives × 1.5 for 6 s.
+- **Static mine**: −150 (never below zero), the combo and any frenzy end, and
+  both blades are dead for 1.2 s. Mines are drawn as a dark spiked core with a
+  warning ring, so they read by shape as well as colour.
+- Stars from accuracy (points earned / points possible, forgiven fruit
+  excluded): 45 % · 65 % · 85 %.
+
+### Pacing
+
+A round is a timed plan made once from the stage and a seed (the same seed gives
+the same round on every phone; Daily uses the day seed).
+
+- Launch rate climbs smoothly from `startPerMin` to `peakPerMin` (smoothstep
+  over the round). Three acts — warm-up (first third), heat, overdrive (last
+  30 %) — are announced and drive the backdrop.
+- Waves of two or three become more likely as the round goes on; a wave earns a
+  longer breath after it.
+- No mines in the first 10 s, never two within 2.5 s, and none on First Cut.
+- A 7 % chance of a prism in place of a single fruit after 8 s.
+- The round ends on a fan of five golden fruit, left to right.
+- Everything lands before the round ends.
+
+| Round | Length | Launches / min | Mines | Fruit radius | Blade speed |
+|---|---|---|---|---|---|
+| First Cut | 60 s | 20 → 34 | none | 0.38 T | 1.8 T/s |
+| Night Market | 75 s | 24 → 44 | up to 22 % of launches | 0.35 T | 2.0 T/s |
+| Overdrive | 90 s | 28 → 56 | up to 34 % | 0.33 T | 2.2 T/s |
+
+Assist: fruit 25 % bigger and in the air 20 % longer, blade speed × 0.7, half the
+mines, peak rate × 0.8.
+
+### Fairness and safety
+
+- A red tracking light freezes the clock, so fruit hangs in the air; fruit that
+  lands within 800 ms of tracking returning is forgiven and leaves the maximum
+  (rule 5). A pause is treated the same way.
+- Fruit stays within ± 1.45 T sideways and peaks between 0.25 and 1.35 T above
+  the shoulders: everything is reachable with a sweep in front of or beside the
+  body. Nothing asks for a jump, a lunge or a reach towards the phone (rule 9).
+- The game page asks for about an arm and a half of clear space on each side.
+
+### Feedback
+
+| Moment | Seen | Heard / felt |
+|---|---|---|
+| Launch | Fruit rises with a floor shadow | `a_whoosh` (once per frame, however many launch) |
+| Cut | White slash, two halves fly apart and fall, sparks, shock ring, score pop | `a_pop0–4` by fruit |
+| Three in one sweep | Large "3 IN ONE +50" with confetti | `a_chime` |
+| Neon Frenzy | Volt frame pulses round the screen, combo counter turns volt | `a_bell`, voice |
+| Mine | Red wash, grey blades, "Blades recharging…" | `a_thud`, heavy haptic, voice |
+| New act | Signs brighten, floor runs faster, caption | `a_drum` |
+
+The HUD plate shows the act and the time left (m:ss, which stops with the game
+clock), the score, the combo and a progress bar.
+
+Tests: `packages/game_director/test/slice_test.dart` (what cuts and what does
+not, single scoring, combo, multi-cut, frenzy, mines, tracking holds, the seeded
+plan, assist, a bot round), `arcade_content_test.dart` (every round is bounded
+and playable by a careful bot without touching a mine) and
+`app/test/neon_slice_app_test.dart` (catalogue, bundled content, engine
+building, every scene paints).

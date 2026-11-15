@@ -1,5 +1,102 @@
 # Progress
 
+## Visual pass: theme, logo, game art and Neon Slice - 2026-11-15
+
+**Not built or run.** Same machine, no Flutter / Dart / Node. Everything below
+was written and re-read by hand; brackets were checked with a script, nothing
+else was. Expect a few analyser fixes on the first `flutter analyze`.
+
+Scope was visuals, brand and one new game. Not touched: `motion_core`
+(tracking, calibration, detectors, thresholds), the native bridge, the server,
+the level and arcade rules of the existing games.
+
+**Theme (see [design.md](design.md)).** Ink & Volt keeps its colours and gains
+depth: standard cards are lit from above with one soft shadow (`Jn.surface`,
+`Jn.cardShadow`), the primary button has a gradient face and a volt halo
+(`Jn.action`), game tiles carry their game's accent on the border, the leftover
+green-black and Material accent colours in the play screens, HUD and skeleton
+were moved onto tokens. Stage screens stay flat. No new dependency, no blur.
+
+**Logo.** Joy + kinetic: a "J" whose dot has leapt away, with speed lines, on a
+volt-to-aqua tile; wordmark with "joy" in volt. One file holds it
+(`app/lib/widgets/brand.dart`) and one image (`app/assets/brand/logo_mark.png`,
+made by `tools/make_brand.py` together with the launcher icons). Used on the
+launcher and launch screen, Welcome, the Home and Games headers, the Profile
+footer and every loading state (`BrandLoader`). Replacing the PNG replaces the
+logo everywhere without moving a layout.
+
+**Game art.** A shared kit (`paint_kit.dart`): a lit, clothed character with a
+face that follows the player's joints, glossy and shaded volumes, perspective
+floor, light shafts and pools, haze, bokeh, vignette, contact shadows, sparks,
+shock rings, score pops. Every game got its own lead character (`looks.dart`)
+and a lighting pass on its scene and objects:
+- Runner: road depth, horizon haze, vignette, lit and shaded faces on beams,
+  rocks, orbs, arches and the explorer.
+- Mirror Mela: lantern light on the ground, haze, bokeh, glossy bubbles with a
+  rainbow rim, gem-cut lanterns.
+- Pataka Pose: crossing spotlights, fireworks that light the sky.
+- Craftguard Duels: brazier light, moonlight shaft, dust, guardian shadow and
+  aura.
+- Taal Toofan: stage haze, LED floor light, a crowd that bounces on the beat,
+  lit move tiles.
+- Tapeball Tamasha: low sun, long shadows, streetlight, a redrawn bowler,
+  glossy ball.
+- LUMEN: sunrise on the Earth's limb, flare, window struts.
+- Arcade results: earned stars land one by one (`StarRow(reveal: true)`).
+
+**Neon Slice** (new, see [game-design.md](game-design.md)). Fruit arcs up, a
+fast sweep of either hand cuts it, mines are left alone. Pure-Dart
+`SliceEngine`, three rounds in `content/arcade/neon-slice.json`, its own alley
+scene, fruit, mines, blade trails and cut effect. Combo, multi-cut bonus, Neon
+Frenzy, three acts, a closing golden fan, Assist, Daily seed. Uses the existing
+hand points; no new detector. Integrated through the same catalogue, game page,
+play screen (framing card with instructions, 3-2-1, pause / hands-free resume,
+tracking hold) and results page as the other arcade games. The HUD shows the
+act, the time left and the combo.
+
+**Tests added (not run)**
+- `packages/game_director/test/slice_test.dart`: 24 cases (cuts, no double
+  scoring, glitch and gap rejection, scoring, multi-cut, frenzy, mines,
+  tracking holds, seeded plan, assist, bot round).
+- `packages/game_director/test/arcade_content_test.dart`: every Neon Slice round
+  is bounded and playable by a careful bot.
+- `app/test/neon_slice_app_test.dart`: catalogue entry, one look per game,
+  bundled rounds, engine building and assist, daily seed, every scene paints
+  (backdrop in each act, a live round with a cut and a stun, the four
+  previews), the logo asset and sizing, the star reveal.
+- The existing catalogue-wide app tests (levels for every game, an engine for
+  every stage) now cover Neon Slice as well.
+
+**What to test first**
+1. `dart analyze && dart test` in `packages/game_director`, then
+   `flutter analyze && flutter test` in `app`, `npm run content:validate` in
+   `server`.
+2. Launch: icon, launch screen, Welcome. Then Home, Games, a game page, Profile:
+   card depth, the button, the logo, text contrast.
+3. Neon Slice → First Cut with the camera mirror off, then on. Check: a slow
+   hand cuts nothing, a fast sweep does, left and right hands both work, one
+   fruit never scores twice, the timer stops when you step out of frame.
+4. Night Market: mines read as "do not touch"; hitting one greys the blades.
+5. One round of each older game and one runner stage: nothing lost, frame rate
+   as before (Settings → Tracking → Diagnostics overlay shows fps).
+6. Pause, hands-free resume and the results page in any arcade game.
+
+**Known limitations and risks**
+- Unbuilt code (above).
+- Blade speed (1.8 – 2.2 torso lengths / s) and fruit size are first estimates
+  with no recorded data behind them. If cuts feel hard, lower `minSpeed` or
+  raise `radius` in `content/arcade/neon-slice.json`; no code change.
+- Hands that leave the camera image cannot cut. In a narrow room, wide fruit
+  may be out of view: step back, or turn Assist on.
+- The character is drawn with about 30 small gradients a frame. That is cheap,
+  but frame rate on a budget phone has not been measured after this pass.
+- Characters are stylised, lit 2D figures drawn in code, not 3D models or
+  photographs: the project has no 3D renderer and adding one was out of scope.
+- New English strings (Neon Slice, loader label) have no Hindi / Gujarati yet;
+  they fall back to English.
+- No new sounds: Neon Slice reuses the existing original cues.
+- The player guide and the Play Store listing do not mention Neon Slice yet.
+
 ## Joynetic: tracking engine v2, pairing backend and redesign - 2026-11-13
 
 **Not built or run.** This machine has no Flutter, Dart, Gradle or Node, so
